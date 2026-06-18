@@ -1,0 +1,2150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/aneviaro/stratz-mcp/docs/tool-contracts.json",
+  "contractVersion": "1.0.0-draft.2",
+  "mcpProtocolVersion": "2025-11-25",
+  "description": "Canonical machine-readable MCP tool contract registry. Build tooling dereferences shared definitions before publishing each MCP Tool.inputSchema and Tool.outputSchema.",
+  "rawGraphqlPolicy": {
+    "operationTypes": {
+      "query": "allow_subject_to_root_policy",
+      "mutation": "deny",
+      "subscription": "deny"
+    },
+    "rootFieldDefault": "deny",
+    "allowedRootFields": [
+      "constants",
+      "guild",
+      "heroStats",
+      "leaderboard",
+      "league",
+      "leagues",
+      "live",
+      "match",
+      "matches",
+      "player",
+      "players",
+      "team",
+      "teams"
+    ],
+    "deniedRootFields": [
+      "plus",
+      "stratz",
+      "vendor",
+      "yogurt"
+    ],
+    "metaFields": {
+      "__typename": "allow",
+      "__schema": "allow_only_with_runtime_introspection_flag",
+      "__type": "allow_only_with_runtime_introspection_flag"
+    },
+    "unknownRootFields": "deny_until_policy_revision"
+  },
+  "$defs": {
+    "detailLevel": {
+      "type": "string",
+      "enum": ["summary", "standard", "full"],
+      "default": "standard"
+    },
+    "matchId": {
+      "type": "string",
+      "pattern": "^[0-9]{1,20}$"
+    },
+    "playerIdentifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Steam account ID, SteamID64, or an https://stratz.com/players/... profile URL."
+    },
+    "heroIdentifier": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      ]
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nullableDateTime": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "paginationInput": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        },
+        "cursor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "retrieved_at": {
+          "$ref": "#/$defs/dateTime"
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detail_level": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/detailLevel"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cache": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["hit", "miss", "stale", "bypass", "disabled"]
+            },
+            "age_seconds": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            }
+          },
+          "required": ["status", "age_seconds"],
+          "additionalProperties": false
+        },
+        "patch": {
+          "type": ["object", "null"],
+          "properties": {
+            "id": {
+              "type": ["string", "null"]
+            },
+            "name": {
+              "type": ["string", "null"]
+            }
+          },
+          "required": ["id", "name"],
+          "additionalProperties": false
+        },
+        "date_range": {
+          "type": ["object", "null"],
+          "properties": {
+            "from": {
+              "$ref": "#/$defs/nullableDateTime"
+            },
+            "to": {
+              "$ref": "#/$defs/nullableDateTime"
+            }
+          },
+          "required": ["from", "to"],
+          "additionalProperties": false
+        },
+        "rate_limits": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "properties": {
+              "window": {
+                "type": "string",
+                "enum": ["second", "minute", "hour", "day", "unknown"]
+              },
+              "limit": {
+                "type": ["integer", "null"],
+                "minimum": 0
+              },
+              "remaining": {
+                "type": ["integer", "null"],
+                "minimum": 0
+              },
+              "reset_at": {
+                "$ref": "#/$defs/nullableDateTime"
+              },
+              "source": {
+                "type": ["string", "null"],
+                "maxLength": 128
+              }
+            },
+            "required": ["window", "limit", "remaining", "reset_at", "source"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "retrieved_at",
+        "operation",
+        "schema_version",
+        "detail_level",
+        "cache",
+        "patch",
+        "date_range",
+        "rate_limits"
+      ],
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "INVALID_ARGUMENT",
+            "NOT_FOUND",
+            "PRIVATE",
+            "DATA_NOT_READY",
+            "RATE_LIMITED",
+            "UPSTREAM_TIMEOUT",
+            "UPSTREAM_NETWORK_ERROR",
+            "UPSTREAM_TLS_ERROR",
+            "UPSTREAM_WAF_BLOCKED",
+            "UPSTREAM_PROTOCOL_ERROR",
+            "UPSTREAM_PARTIAL_ERROR",
+            "UPSTREAM_ERROR",
+            "RESPONSE_TOO_LARGE",
+            "QUERY_DOCUMENT_TOO_LARGE",
+            "QUERY_VARIABLES_TOO_LARGE",
+            "QUERY_DEPTH_EXCEEDED",
+            "QUERY_ALIAS_LIMIT_EXCEEDED",
+            "QUERY_FIELD_LIMIT_EXCEEDED",
+            "QUERY_COMPLEXITY_EXCEEDED",
+            "QUERY_LIST_LIMIT_REQUIRED",
+            "QUERY_LIST_LIMIT_EXCEEDED",
+            "QUERY_OPERATION_LIMIT_EXCEEDED",
+            "QUERY_OPERATION_NOT_ALLOWED",
+            "INTROSPECTION_DISABLED",
+            "REQUEST_BUDGET_EXCEEDED",
+            "AUTHENTICATION_FAILED",
+            "CURSOR_INVALID",
+            "CURSOR_EXPIRED",
+            "CACHE_UNAVAILABLE",
+            "INTERNAL_ERROR"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "retry_after": {
+          "$ref": "#/$defs/nullableDateTime"
+        },
+        "failed_input": true,
+        "details": {
+          "type": "object",
+          "maxProperties": 32,
+          "additionalProperties": true
+        }
+      },
+      "required": ["code", "message", "retryable", "retry_after", "details"],
+      "additionalProperties": false
+    },
+    "successBase": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "success"
+        },
+        "data": true,
+        "summary": {
+          "type": ["string", "null"],
+          "maxLength": 4096
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "warnings": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "maxLength": 1024
+          }
+        },
+        "raw": {
+          "type": ["object", "array", "null"]
+        }
+      },
+      "required": ["kind", "data", "summary", "provenance", "warnings"],
+      "additionalProperties": false
+    },
+    "errorResult": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "error"
+        },
+        "error": {
+          "$ref": "#/$defs/error"
+        },
+        "context": {
+          "$ref": "#/$defs/errorContext"
+        }
+      },
+      "required": ["kind", "error"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "error": {
+                "properties": {
+                  "code": {
+                    "const": "DATA_NOT_READY"
+                  }
+                },
+                "required": ["code"]
+              }
+            }
+          },
+          "then": {
+            "required": ["context"],
+            "properties": {
+              "context": {
+                "$ref": "#/$defs/matchAvailabilityContext"
+              }
+            }
+          },
+          "else": {
+            "not": {
+              "required": ["context"]
+            }
+          }
+        }
+      ]
+    },
+    "player": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "string",
+          "pattern": "^[0-9]{1,10}$"
+        },
+        "steam_id64": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{17,20}$"
+        },
+        "display_name": {
+          "type": ["string", "null"],
+          "maxLength": 256
+        },
+        "avatar_url": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "is_private": {
+          "type": "boolean"
+        },
+        "rank": {
+          "type": ["object", "null"],
+          "properties": {
+            "rank_tier": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            },
+            "leaderboard_rank": {
+              "type": ["integer", "null"],
+              "minimum": 1
+            }
+          },
+          "required": ["rank_tier", "leaderboard_rank"],
+          "additionalProperties": false
+        },
+        "match_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "win_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "last_match_at": {
+          "$ref": "#/$defs/nullableDateTime"
+        }
+      },
+      "required": [
+        "account_id",
+        "steam_id64",
+        "display_name",
+        "avatar_url",
+        "is_private",
+        "rank"
+      ],
+      "additionalProperties": false
+    },
+    "matchPlayer": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{1,10}$"
+        },
+        "hero_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "team": {
+          "type": "string",
+          "enum": ["radiant", "dire"]
+        },
+        "position": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "kills": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "deaths": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "assists": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "networth": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "level": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "won": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "account_id",
+        "hero_id",
+        "team",
+        "position",
+        "kills",
+        "deaths",
+        "assists",
+        "networth",
+        "level",
+        "won"
+      ],
+      "additionalProperties": false
+    },
+    "matchSummary": {
+      "type": "object",
+      "properties": {
+        "match_id": {
+          "$ref": "#/$defs/matchId"
+        },
+        "started_at": {
+          "$ref": "#/$defs/nullableDateTime"
+        },
+        "duration_seconds": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "radiant_win": {
+          "type": ["boolean", "null"]
+        },
+        "radiant_score": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "dire_score": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "game_mode_id": {
+          "type": ["integer", "null"]
+        },
+        "lobby_type_id": {
+          "type": ["integer", "null"]
+        },
+        "region_id": {
+          "type": ["integer", "null"]
+        },
+        "league_id": {
+          "type": ["string", "null"]
+        },
+        "patch_id": {
+          "type": ["string", "null"]
+        },
+        "parse_status": {
+          "type": "string",
+          "enum": ["parsed", "partial", "pending", "unavailable", "unknown"]
+        }
+      },
+      "required": [
+        "match_id",
+        "started_at",
+        "duration_seconds",
+        "radiant_win",
+        "radiant_score",
+        "dire_score",
+        "game_mode_id",
+        "lobby_type_id",
+        "region_id",
+        "league_id",
+        "patch_id",
+        "parse_status"
+      ],
+      "additionalProperties": false
+    },
+    "matchAvailabilityContext": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "match_availability"
+        },
+        "match": {
+          "$ref": "#/$defs/matchSummary"
+        },
+        "requested_detail_level": {
+          "$ref": "#/$defs/detailLevel"
+        }
+      },
+      "required": ["type", "match", "requested_detail_level"],
+      "additionalProperties": false
+    },
+    "errorContext": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/matchAvailabilityContext"
+        }
+      ]
+    },
+    "timelineEvent": {
+      "type": "object",
+      "properties": {
+        "time_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "type": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "team": {
+          "type": ["string", "null"],
+          "enum": ["radiant", "dire", null]
+        },
+        "account_id": {
+          "type": ["string", "null"]
+        },
+        "hero_id": {
+          "type": ["integer", "null"]
+        },
+        "value": {
+          "type": ["integer", "number", "string", "boolean", "null"]
+        }
+      },
+      "required": [
+        "time_seconds",
+        "type",
+        "team",
+        "account_id",
+        "hero_id",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "fight": {
+      "type": "object",
+      "properties": {
+        "start_time_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_time_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "radiant_kills": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dire_kills": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "radiant_networth_delta": {
+          "type": ["integer", "null"]
+        },
+        "participants": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "properties": {
+              "account_id": {
+                "type": ["string", "null"]
+              },
+              "hero_id": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "team": {
+                "type": "string",
+                "enum": ["radiant", "dire"]
+              },
+              "kills": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "deaths": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "account_id",
+              "hero_id",
+              "team",
+              "kills",
+              "deaths"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "start_time_seconds",
+        "end_time_seconds",
+        "radiant_kills",
+        "dire_kills",
+        "radiant_networth_delta",
+        "participants"
+      ],
+      "additionalProperties": false
+    },
+    "economyPoint": {
+      "type": "object",
+      "properties": {
+        "time_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "radiant_networth": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "dire_networth": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "radiant_experience": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "dire_experience": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "time_seconds",
+        "radiant_networth",
+        "dire_networth",
+        "radiant_experience",
+        "dire_experience"
+      ],
+      "additionalProperties": false
+    },
+    "match": {
+      "type": "object",
+      "properties": {
+        "match_id": {
+          "$ref": "#/$defs/matchId"
+        },
+        "started_at": {
+          "$ref": "#/$defs/nullableDateTime"
+        },
+        "duration_seconds": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "radiant_win": {
+          "type": ["boolean", "null"]
+        },
+        "radiant_score": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "dire_score": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "game_mode_id": {
+          "type": ["integer", "null"]
+        },
+        "lobby_type_id": {
+          "type": ["integer", "null"]
+        },
+        "region_id": {
+          "type": ["integer", "null"]
+        },
+        "league_id": {
+          "type": ["string", "null"]
+        },
+        "patch_id": {
+          "type": ["string", "null"]
+        },
+        "parse_status": {
+          "type": "string",
+          "enum": ["parsed", "partial", "pending", "unavailable", "unknown"]
+        },
+        "players": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/matchPlayer"
+          }
+        },
+        "objectives": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/timelineEvent"
+          }
+        },
+        "timeline": {
+          "type": "array",
+          "maxItems": 5000,
+          "items": {
+            "$ref": "#/$defs/timelineEvent"
+          }
+        },
+        "fights": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/fight"
+          }
+        },
+        "economy": {
+          "type": "array",
+          "maxItems": 5000,
+          "items": {
+            "$ref": "#/$defs/economyPoint"
+          }
+        }
+      },
+      "required": [
+        "match_id",
+        "started_at",
+        "duration_seconds",
+        "radiant_win",
+        "radiant_score",
+        "dire_score",
+        "game_mode_id",
+        "lobby_type_id",
+        "region_id",
+        "league_id",
+        "patch_id",
+        "parse_status",
+        "players"
+      ],
+      "additionalProperties": false
+    },
+    "hero": {
+      "type": "object",
+      "properties": {
+        "hero_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "localized_name": {
+          "type": ["string", "null"],
+          "maxLength": 128
+        },
+        "primary_attribute": {
+          "type": ["string", "null"],
+          "enum": ["strength", "agility", "intelligence", "universal", null]
+        },
+        "attack_type": {
+          "type": ["string", "null"],
+          "enum": ["melee", "ranged", null]
+        },
+        "roles": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          }
+        }
+      },
+      "required": [
+        "hero_id",
+        "name",
+        "slug",
+        "localized_name",
+        "primary_attribute",
+        "attack_type",
+        "roles"
+      ],
+      "additionalProperties": false
+    },
+    "heroBreakdown": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "sample_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pick_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "win_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": ["name", "sample_size", "pick_rate", "win_rate"],
+      "additionalProperties": false
+    },
+    "heroRelation": {
+      "type": "object",
+      "properties": {
+        "hero_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sample_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "win_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "advantage": {
+          "type": ["number", "null"],
+          "minimum": -1,
+          "maximum": 1
+        }
+      },
+      "required": ["hero_id", "sample_size", "win_rate", "advantage"],
+      "additionalProperties": false
+    },
+    "league": {
+      "type": "object",
+      "properties": {
+        "league_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "tier": {
+          "type": ["string", "null"],
+          "maxLength": 64
+        },
+        "status": {
+          "type": ["string", "null"],
+          "maxLength": 64
+        },
+        "region": {
+          "type": ["string", "null"],
+          "maxLength": 128
+        },
+        "starts_at": {
+          "$ref": "#/$defs/nullableDateTime"
+        },
+        "ends_at": {
+          "$ref": "#/$defs/nullableDateTime"
+        }
+      },
+      "required": [
+        "league_id",
+        "name",
+        "tier",
+        "status",
+        "region",
+        "starts_at",
+        "ends_at"
+      ],
+      "additionalProperties": false
+    },
+    "liveMatch": {
+      "type": "object",
+      "properties": {
+        "match_id": {
+          "$ref": "#/$defs/matchId"
+        },
+        "started_at": {
+          "$ref": "#/$defs/nullableDateTime"
+        },
+        "duration_seconds": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "game_mode_id": {
+          "type": ["integer", "null"]
+        },
+        "spectator_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "league": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/league"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "radiant_team_name": {
+          "type": ["string", "null"],
+          "maxLength": 256
+        },
+        "dire_team_name": {
+          "type": ["string", "null"],
+          "maxLength": 256
+        },
+        "players": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/matchPlayer"
+          }
+        }
+      },
+      "required": [
+        "match_id",
+        "started_at",
+        "duration_seconds",
+        "game_mode_id",
+        "spectator_count",
+        "league",
+        "radiant_team_name",
+        "dire_team_name",
+        "players"
+      ],
+      "additionalProperties": false
+    },
+    "constantRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "localized_name": {
+          "type": ["string", "null"],
+          "maxLength": 256
+        },
+        "metadata": {
+          "type": "object",
+          "maxProperties": 64,
+          "additionalProperties": {
+            "type": ["string", "number", "integer", "boolean", "null"]
+          }
+        }
+      },
+      "required": ["id", "name", "localized_name", "metadata"],
+      "additionalProperties": false
+    },
+    "pageInfo": {
+      "type": "object",
+      "properties": {
+        "next_cursor": {
+          "type": ["string", "null"],
+          "maxLength": 4096
+        },
+        "has_more": {
+          "type": "boolean"
+        }
+      },
+      "required": ["next_cursor", "has_more"],
+      "additionalProperties": false
+    }
+  },
+  "tools": {
+    "stratz_server_info": {
+      "description": "Return server, protocol, schema, cache, limit, and upstream connectivity information without secrets.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "server_version": {
+                        "type": "string"
+                      },
+                      "mcp_protocol_version": {
+                        "const": "2025-11-25"
+                      },
+                      "schema_version": {
+                        "type": "string"
+                      },
+                      "cache_status": {
+                        "type": "string",
+                        "enum": ["healthy", "disabled", "degraded"]
+                      },
+                      "upstream_status": {
+                        "type": "string",
+                        "enum": [
+                          "reachable",
+                          "authentication_failed",
+                          "waf_blocked",
+                          "unreachable",
+                          "unchecked"
+                        ]
+                      },
+                      "limits": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": ["integer", "string", "boolean"]
+                        }
+                      }
+                    },
+                    "required": [
+                      "server_version",
+                      "mcp_protocol_version",
+                      "schema_version",
+                      "cache_status",
+                      "upstream_status",
+                      "limits"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_get_player": {
+      "description": "Get a normalized STRATZ player profile by account ID, SteamID64, or STRATZ profile URL.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "player_id": {
+            "$ref": "#/$defs/playerIdentifier"
+          },
+          "detail_level": {
+            "$ref": "#/$defs/detailLevel"
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["player_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "$ref": "#/$defs/player"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_list_player_matches": {
+      "description": "List normalized matches for a player using bounded filters and an authenticated opaque cursor.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "player_id": {
+            "$ref": "#/$defs/playerIdentifier"
+          },
+          "from": {
+            "$ref": "#/$defs/dateTime"
+          },
+          "to": {
+            "$ref": "#/$defs/dateTime"
+          },
+          "hero": {
+            "$ref": "#/$defs/heroIdentifier"
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "game_mode_id": {
+            "type": "integer"
+          },
+          "lobby_type_id": {
+            "type": "integer"
+          },
+          "result": {
+            "type": "string",
+            "enum": ["win", "loss"]
+          },
+          "minimum_duration_seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 21600
+          },
+          "patch_id": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          },
+          "cursor": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "detail_level": {
+            "$ref": "#/$defs/detailLevel"
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["player_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "maxItems": 100,
+                        "items": {
+                          "$ref": "#/$defs/matchSummary"
+                        }
+                      },
+                      "page": {
+                        "$ref": "#/$defs/pageInfo"
+                      }
+                    },
+                    "required": ["items", "page"],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_batch_get_players": {
+      "description": "Get up to 25 players atomically; any item failure fails the entire batch.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "player_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 25,
+            "items": {
+              "$ref": "#/$defs/playerIdentifier"
+            }
+          },
+          "detail_level": {
+            "$ref": "#/$defs/detailLevel"
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["player_ids"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 25,
+                        "items": {
+                          "$ref": "#/$defs/player"
+                        }
+                      }
+                    },
+                    "required": ["items"],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_get_match": {
+      "description": "Get a normalized Dota match with detail-level controlled timelines and replay-derived events.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "match_id": {
+            "$ref": "#/$defs/matchId"
+          },
+          "detail_level": {
+            "$ref": "#/$defs/detailLevel"
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["match_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "$ref": "#/$defs/match"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_batch_get_matches": {
+      "description": "Get up to 25 matches atomically; any item failure fails the entire batch.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "match_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 25,
+            "items": {
+              "$ref": "#/$defs/matchId"
+            }
+          },
+          "detail_level": {
+            "$ref": "#/$defs/detailLevel"
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["match_ids"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 25,
+                        "items": {
+                          "$ref": "#/$defs/match"
+                        }
+                      }
+                    },
+                    "required": ["items"],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_get_hero": {
+      "description": "Get normalized hero reference data by numeric ID, exact localized name, or canonical slug.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "hero": {
+            "$ref": "#/$defs/heroIdentifier"
+          },
+          "detail_level": {
+            "$ref": "#/$defs/detailLevel"
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["hero"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "$ref": "#/$defs/hero"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_get_hero_stats": {
+      "description": "Get bounded aggregate hero statistics for a date, patch, rank, role, and lane window.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "hero": {
+            "$ref": "#/$defs/heroIdentifier"
+          },
+          "from": {
+            "$ref": "#/$defs/dateTime"
+          },
+          "to": {
+            "$ref": "#/$defs/dateTime"
+          },
+          "patch_id": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "rank_bracket": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "lane": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "include_matchups": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_synergies": {
+            "type": "boolean",
+            "default": false
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["hero"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "hero_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "sample_size": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "pick_rate": {
+                        "type": ["number", "null"],
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "win_rate": {
+                        "type": ["number", "null"],
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "ban_rate": {
+                        "type": ["number", "null"],
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "roles": {
+                        "type": "array",
+                        "maxItems": 32,
+                        "items": {
+                          "$ref": "#/$defs/heroBreakdown"
+                        }
+                      },
+                      "lanes": {
+                        "type": "array",
+                        "maxItems": 32,
+                        "items": {
+                          "$ref": "#/$defs/heroBreakdown"
+                        }
+                      },
+                      "matchups": {
+                        "type": "array",
+                        "maxItems": 50,
+                        "items": {
+                          "$ref": "#/$defs/heroRelation"
+                        }
+                      },
+                      "synergies": {
+                        "type": "array",
+                        "maxItems": 50,
+                        "items": {
+                          "$ref": "#/$defs/heroRelation"
+                        }
+                      }
+                    },
+                    "required": [
+                      "hero_id",
+                      "sample_size",
+                      "pick_rate",
+                      "win_rate",
+                      "ban_rate",
+                      "roles",
+                      "lanes",
+                      "matchups",
+                      "synergies"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_batch_get_heroes": {
+      "description": "Get up to 25 heroes atomically; any item failure or ambiguity fails the entire batch.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "heroes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 25,
+            "items": {
+              "$ref": "#/$defs/heroIdentifier"
+            }
+          },
+          "detail_level": {
+            "$ref": "#/$defs/detailLevel"
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["heroes"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 25,
+                        "items": {
+                          "$ref": "#/$defs/hero"
+                        }
+                      }
+                    },
+                    "required": ["items"],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_list_leagues": {
+      "description": "Search and list STRATZ leagues with bounded filters and an authenticated opaque cursor.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "tier": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "from": {
+            "$ref": "#/$defs/dateTime"
+          },
+          "to": {
+            "$ref": "#/$defs/dateTime"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          },
+          "cursor": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "maxItems": 100,
+                        "items": {
+                          "$ref": "#/$defs/league"
+                        }
+                      },
+                      "page": {
+                        "$ref": "#/$defs/pageInfo"
+                      }
+                    },
+                    "required": ["items", "page"],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_get_league": {
+      "description": "Get normalized league metadata by exact league ID.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "league_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "detail_level": {
+            "$ref": "#/$defs/detailLevel"
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["league_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "$ref": "#/$defs/league"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_list_league_matches": {
+      "description": "List matches for a league with bounded date/patch filters and an authenticated opaque cursor.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "league_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "from": {
+            "$ref": "#/$defs/dateTime"
+          },
+          "to": {
+            "$ref": "#/$defs/dateTime"
+          },
+          "patch_id": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          },
+          "cursor": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "detail_level": {
+            "$ref": "#/$defs/detailLevel"
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["league_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "maxItems": 100,
+                        "items": {
+                          "$ref": "#/$defs/matchSummary"
+                        }
+                      },
+                      "page": {
+                        "$ref": "#/$defs/pageInfo"
+                      }
+                    },
+                    "required": ["items", "page"],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_list_live_matches": {
+      "description": "List current live matches with bounded filters, sorting, and a short-lived authenticated cursor.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "player_id": {
+            "$ref": "#/$defs/playerIdentifier"
+          },
+          "team_id": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "league_id": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "hero": {
+            "$ref": "#/$defs/heroIdentifier"
+          },
+          "game_states": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "type": "string",
+              "enum": [
+                "CUSTOM_GAME_SETUP",
+                "DISCONNECT",
+                "GAME_IN_PROGRESS",
+                "HERO_SELECTION",
+                "INIT",
+                "LAST",
+                "PLAYER_DRAFT",
+                "POST_GAME",
+                "PRE_GAME",
+                "SCENARIO_SETUP",
+                "STRATEGY_TIME",
+                "TEAM_SHOWCASE",
+                "WAIT_FOR_MAP_TO_LOAD",
+                "WAIT_FOR_PLAYERS_TO_LOAD"
+              ]
+            }
+          },
+          "tiers": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "string",
+              "enum": [
+                "AMATEUR",
+                "DPC_LEAGUE",
+                "DPC_LEAGUE_FINALS",
+                "DPC_LEAGUE_QUALIFIER",
+                "DPC_QUALIFIER",
+                "INTERNATIONAL",
+                "MAJOR",
+                "MINOR",
+                "PROFESSIONAL",
+                "UNSET"
+              ]
+            }
+          },
+          "game_mode_id": {
+            "type": "integer"
+          },
+          "minimum_spectators": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sort": {
+            "type": "string",
+            "enum": ["newest", "highest_profile"],
+            "default": "highest_profile"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          },
+          "cursor": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "maxItems": 100,
+                        "items": {
+                          "$ref": "#/$defs/liveMatch"
+                        }
+                      },
+                      "page": {
+                        "$ref": "#/$defs/pageInfo"
+                      }
+                    },
+                    "required": ["items", "page"],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_get_constants": {
+      "description": "Get one explicit class of STRATZ/Dota reference constants, or all classes when requested.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "heroes",
+              "items",
+              "abilities",
+              "game_modes",
+              "regions",
+              "ranks",
+              "all"
+            ]
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_raw": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["type"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "heroes",
+                          "items",
+                          "abilities",
+                          "game_modes",
+                          "regions",
+                          "ranks",
+                          "all"
+                        ]
+                      },
+                      "items": {
+                        "type": "array",
+                        "maxItems": 20000,
+                        "items": {
+                          "$ref": "#/$defs/constantRecord"
+                        }
+                      }
+                    },
+                    "required": ["type", "items"],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    },
+    "stratz_execute_graphql": {
+      "description": "Execute one guarded GraphQL query against an approved STRATZ root field using JSON-compatible variables.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          },
+          "variables": {
+            "type": "object",
+            "maxProperties": 1000,
+            "additionalProperties": true
+          },
+          "operation_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "cache": {
+            "type": "boolean",
+            "default": false
+          },
+          "cache_ttl_seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3600
+          },
+          "fresh": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["query"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/successBase"
+              },
+              {
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "graphql": {
+                        "type": "object",
+                        "properties": {
+                          "data": {
+                            "type": ["object", "array", "null"]
+                          },
+                          "errors": {
+                            "type": "array",
+                            "maxItems": 100,
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": true
+                            }
+                          },
+                          "extensions": {
+                            "type": ["object", "null"],
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": ["data", "errors", "extensions"],
+                        "additionalProperties": false
+                      },
+                      "partial": {
+                        "type": "boolean"
+                      },
+                      "http_status": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": ["graphql", "partial", "http_status"],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/errorResult"
+          }
+        ]
+      }
+    }
+  }
+}
