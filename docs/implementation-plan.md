@@ -82,12 +82,12 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 - Implement fixed-endpoint POST requests, required headers, gzip streaming, redirect refusal, decompressed-size limits, cancellation, retries, WAF detection, rate-window parsing, and stable error mapping.
 - Enforce the five-round-trip budget per MCP call.
 
-- [ ] Define the request executor and injectable test transport.
-- [ ] Implement fixed endpoint, authentication, media types, user agent, and gzip.
-- [ ] Add bounded wire, decompressed, and error-body readers.
-- [ ] Implement WAF, HTTP, GraphQL, TLS, network, and timeout classification.
-- [ ] Parse sanitized multi-window rate-limit metadata.
-- [ ] Add bounded jittered retries and per-call request accounting.
+- [x] Define the request executor and injectable test transport.
+- [x] Implement fixed endpoint, authentication, media types, user agent, and gzip.
+- [x] Add bounded wire, decompressed, and error-body readers.
+- [x] Implement WAF, HTTP, GraphQL, TLS, network, and timeout classification.
+- [x] Parse sanitized multi-window rate-limit metadata.
+- [x] Add bounded jittered retries and per-call request accounting.
 
 **Verification:** Mock-server tests cover every HTTP/network mapping, gzip bombs, malformed JSON, redirects, partial results, WAF HTML, retry timing, cancellation, and request-budget exhaustion without leaking response bodies or sensitive headers.
 
