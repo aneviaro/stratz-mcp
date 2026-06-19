@@ -1,0 +1,42 @@
+fragment PlayerFields on PlayerType {
+  steamAccountId
+  steamAccount {
+    id
+    name
+    avatar
+  }
+  identity {
+    name
+  }
+  matchCount
+  winCount
+  lastMatchDate
+  ranks {
+    rank
+    leaderboardRank
+  }
+}
+
+query StratzGetPlayer($steamAccountId: Long!) {
+  player(steamAccountId: $steamAccountId) {
+    ...PlayerFields
+  }
+}
+
+query StratzGetPlayers($steamAccountIds: [Long!]!) {
+  players(steamAccountIds: $steamAccountIds) {
+    ...PlayerFields
+  }
+}
+
+query StratzListPlayerMatches(
+  $steamAccountId: Long!
+  $request: PlayerMatchesRequestType!
+) {
+  player(steamAccountId: $steamAccountId) {
+    steamAccountId
+    matches(request: $request) {
+      ...MatchSummaryFields
+    }
+  }
+}

@@ -165,12 +165,12 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 
 - Add player identifier normalization, singular/list/batch player operations, match detail levels, normalized mappings, bounded minimum-duration scanning, and required `DATA_NOT_READY` context.
 
-- [ ] Implement account ID, SteamID64, and STRATZ profile URL normalization.
-- [ ] Author and generate player singular, list, and batch operations.
-- [ ] Author and generate match singular and batch operations by detail level.
-- [ ] Implement normalized player, match, player-event, and provenance mappings.
-- [ ] Implement bounded player-match filtering and cursor continuation.
-- [ ] Implement private, missing, partial, and `DATA_NOT_READY` error paths.
+- [x] Implement account ID, SteamID64, and STRATZ profile URL normalization.
+- [x] Author and generate player singular, list, and batch operations.
+- [x] Author and generate match singular and batch operations by detail level.
+- [x] Implement normalized player, match, player-event, and provenance mappings.
+- [x] Implement bounded player-match filtering and cursor continuation.
+- [x] Implement private, missing, partial, and `DATA_NOT_READY` error paths.
 
 **Verification:** Contract fixtures cover account ID, SteamID64, URLs, private/missing players, list continuation, batch atomicity, parsed/unparsed matches, detail-level field inclusion, partial upstream failures, and raw bypass behavior.
 
