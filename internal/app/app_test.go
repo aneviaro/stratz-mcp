@@ -1,6 +1,15 @@
 package app
 
-import "testing"
+import (
+	"context"
+	"io"
+	"log/slog"
+	"testing"
+
+	"github.com/aneviaro/stratz-mcp/internal/auth"
+	"github.com/aneviaro/stratz-mcp/internal/config"
+	"github.com/aneviaro/stratz-mcp/internal/stratz"
+)
 
 func TestBuildInfoNormalized(t *testing.T) {
 	info := (BuildInfo{}).Normalized()
@@ -24,5 +33,39 @@ func TestBuildInfoString(t *testing.T) {
 	const want = "version=v1.2.3 revision=abc123 schema_version=sha256:fixture"
 	if got := info.String(); got != want {
 		t.Fatalf("String() = %q, want %q", got, want)
+	}
+}
+
+type runtimeExecutor struct{}
+
+func (runtimeExecutor) Execute(
+	context.Context,
+	*stratz.RequestBudget,
+	stratz.Request,
+) (*stratz.Response, error) {
+	return &stratz.Response{}, nil
+}
+
+func TestNewRuntimeComposesServerAndExecutor(t *testing.T) {
+	cfg := config.Defaults(t.TempDir())
+	executor := runtimeExecutor{}
+	runtime, err := NewRuntime(RuntimeOptions{
+		Build: BuildInfo{
+			Version:       "v1.2.3",
+			SchemaVersion: "sha256:fixture",
+		},
+		Config:     cfg,
+		Credential: auth.Credential{Token: "unused"},
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Executor:   executor,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if runtime.Server() == nil {
+		t.Fatal("runtime server is nil")
+	}
+	if runtime.Executor() == nil {
+		t.Fatal("runtime executor is nil")
 	}
 }

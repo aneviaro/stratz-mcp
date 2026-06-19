@@ -1,7 +1,9 @@
 package releasegate
 
 import (
+	"encoding/json"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -17,6 +19,27 @@ func TestRepositoryRecordBlocksPublishing(t *testing.T) {
 	}
 	if err := Check(record); err == nil {
 		t.Fatal("publishing was allowed without complete STRATZ clearance")
+	}
+}
+
+func TestEmbeddedRecordMatchesRepositoryRecord(t *testing.T) {
+	path := filepath.Join("..", "..", "docs", "release-clearance.json")
+	repositoryRecord, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	embeddedRecord, err := Current()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(repositoryRecord, embeddedRecord) {
+		repositoryJSON, _ := json.Marshal(repositoryRecord)
+		embeddedJSON, _ := json.Marshal(embeddedRecord)
+		t.Fatalf(
+			"embedded release clearance is stale\nrepository: %s\nembedded: %s",
+			repositoryJSON,
+			embeddedJSON,
+		)
 	}
 }
 

@@ -373,6 +373,13 @@ func buildSchema(toolName, direction string, source any, defs map[string]any) (m
 	}
 	schema["$schema"] = draft202012
 	schema["$id"] = fmt.Sprintf("urn:stratz-mcp:contract:%s:%s:%s", expectedContract, toolName, direction)
+	// MCP Tool inputSchema and outputSchema are required to describe JSON
+	// objects. Some contract outputs express this through oneOf branches; make
+	// the common root explicit for SDK interoperability without changing the
+	// accepted instances.
+	if _, present := schema["type"]; !present {
+		schema["type"] = "object"
+	}
 	if containsRef(schema) {
 		return nil, fmt.Errorf("%s %s schema still contains $ref after dereferencing", toolName, direction)
 	}

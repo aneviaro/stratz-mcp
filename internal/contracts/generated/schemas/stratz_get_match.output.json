@@ -1008,5 +1008,6 @@
       ],
       "type": "object"
     }
-  ]
+  ],
+  "type": "object"
 }

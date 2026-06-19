@@ -2,16 +2,22 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/app"
 	"github.com/aneviaro/stratz-mcp/internal/auth"
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/doctor"
 	"github.com/aneviaro/stratz-mcp/internal/observability"
+	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
 const usage = `Usage: stratz-mcp <command>
@@ -35,13 +41,25 @@ Global options:
 type Dependencies struct {
 	Environ      []string
 	UserCacheDir func() (string, error)
+	Context      context.Context
+	Stdin        io.Reader
+	Executor     stratz.Executor
+	Now          func() time.Time
 }
 
 // Run executes the command and returns a process exit code.
 func Run(args []string, stdout, stderr io.Writer, info app.BuildInfo) int {
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	defer stop()
 	return RunWithDependencies(args, stdout, stderr, info, Dependencies{
 		Environ:      os.Environ(),
 		UserCacheDir: os.UserCacheDir,
+		Context:      ctx,
+		Stdin:        os.Stdin,
 	})
 }
 
@@ -52,6 +70,12 @@ func RunWithDependencies(
 	info app.BuildInfo,
 	dependencies Dependencies,
 ) int {
+	if dependencies.Context == nil {
+		dependencies.Context = context.Background()
+	}
+	if dependencies.Stdin == nil {
+		dependencies.Stdin = strings.NewReader("")
+	}
 	options, commandArgs, err := config.ParseCLI(args)
 	if err != nil {
 		fmt.Fprintf(stderr, "stratz-mcp: %v\n", err)
@@ -75,7 +99,7 @@ func RunWithDependencies(
 			fmt.Fprintln(stderr, "stratz-mcp: doctor does not accept positional arguments")
 			return 2
 		}
-		return runDoctor(options, dependencies, stdout, stderr)
+		return runDoctor(options, dependencies, stdout, stderr, info)
 	case "serve":
 		if len(commandArgs) != 1 {
 			fmt.Fprintln(stderr, "stratz-mcp: serve does not accept positional arguments")
@@ -94,8 +118,24 @@ func RunWithDependencies(
 			fmt.Fprintf(stderr, "stratz-mcp: configure logging: %v\n", err)
 			return 2
 		}
-		logger.Error("serve command is not implemented yet")
-		return 2
+		runtime, err := app.NewRuntime(app.RuntimeOptions{
+			Build:      info,
+			Config:     loaded.Config,
+			Credential: credential,
+			Logger:     logger,
+			Executor:   dependencies.Executor,
+			Now:        dependencies.Now,
+		})
+		if err != nil {
+			logger.Error("runtime initialization failed", "error", err)
+			return 2
+		}
+		err = runtime.Serve(dependencies.Context, dependencies.Stdin, stdout)
+		if err == nil || errors.Is(err, context.Canceled) {
+			return 0
+		}
+		logger.Error("MCP server stopped", "error", err)
+		return 1
 	case "schema", "cache":
 		fmt.Fprintf(stderr, "stratz-mcp: command %q is not implemented yet\n", strings.Join(commandArgs, " "))
 		return 2
@@ -113,22 +153,48 @@ func runDoctor(
 	options config.CLIOptions,
 	dependencies Dependencies,
 	stdout, stderr io.Writer,
+	info app.BuildInfo,
 ) int {
 	loaded, credential, ok := loadRuntime(options, dependencies, stderr)
 	if !ok {
 		return 2
 	}
+	logger, err := observability.Logger(
+		stderr,
+		loaded.Config.Logging,
+		credential.Token,
+	)
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: configure logging: %v\n", err)
+		return 2
+	}
+	runtime, err := app.NewRuntime(app.RuntimeOptions{
+		Build:      info,
+		Config:     loaded.Config,
+		Credential: credential,
+		Logger:     logger,
+		Executor:   dependencies.Executor,
+		Now:        dependencies.Now,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: runtime initialization error: %v\n", err)
+		return 2
+	}
 
 	fmt.Fprintln(stdout, "configuration: valid")
 	fmt.Fprintf(stdout, "credentials: valid (%s source)\n", credential.Source)
-	findings := doctor.CheckPermissions(doctor.Paths{
-		TokenFile:      loaded.TokenFile,
-		EnvFile:        loaded.EnvFile,
-		ConfigFile:     loaded.ConfigFile,
-		CacheDirectory: loaded.Config.Cache.Directory,
+	report := doctor.Diagnose(dependencies.Context, doctor.Options{
+		Paths: doctor.Paths{
+			TokenFile:      loaded.TokenFile,
+			EnvFile:        loaded.EnvFile,
+			ConfigFile:     loaded.ConfigFile,
+			CacheDirectory: loaded.Config.Cache.Directory,
+		},
+		Config:        loaded.Config,
+		Executor:      runtime.Executor(),
+		SchemaVersion: info.Normalized().SchemaVersion,
 	})
-	hasError := false
-	for _, finding := range findings {
+	for _, finding := range report.Findings {
 		fmt.Fprintf(
 			stdout,
 			"%s: %s: %s\n",
@@ -136,13 +202,8 @@ func runDoctor(
 			finding.Subject,
 			finding.Message,
 		)
-		hasError = hasError || finding.Severity == doctor.SeverityError
 	}
-	if len(findings) == 0 {
-		fmt.Fprintln(stdout, "permissions: valid")
-	}
-	fmt.Fprintln(stdout, "network, schema, and cache-health checks: pending server integration")
-	if hasError {
+	if report.HasErrors() {
 		return 2
 	}
 	return 0

@@ -719,5 +719,6 @@
       ],
       "type": "object"
     }
-  ]
+  ],
+  "type": "object"
 }
