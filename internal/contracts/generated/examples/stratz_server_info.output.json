@@ -1,0 +1,26 @@
+{
+  "data": {
+    "cache_status": "healthy",
+    "limits": {},
+    "mcp_protocol_version": "2025-11-25",
+    "schema_version": "x",
+    "server_version": "x",
+    "upstream_status": "reachable"
+  },
+  "kind": "success",
+  "provenance": {
+    "cache": {
+      "age_seconds": null,
+      "status": "hit"
+    },
+    "date_range": null,
+    "detail_level": "summary",
+    "operation": "x",
+    "patch": null,
+    "rate_limits": [],
+    "retrieved_at": "2026-01-01T00:00:00Z",
+    "schema_version": "x"
+  },
+  "summary": null,
+  "warnings": []
+}

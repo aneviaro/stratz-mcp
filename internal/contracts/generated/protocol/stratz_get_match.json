@@ -1,0 +1,58 @@
+{
+  "request": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "match_id": "1"
+      },
+      "name": "stratz_get_match"
+    }
+  },
+  "response": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"data\":{\"dire_score\":null,\"duration_seconds\":null,\"game_mode_id\":null,\"league_id\":null,\"lobby_type_id\":null,\"match_id\":\"1\",\"parse_status\":\"parsed\",\"patch_id\":null,\"players\":[],\"radiant_score\":null,\"radiant_win\":null,\"region_id\":null,\"started_at\":null},\"kind\":\"success\",\"provenance\":{\"cache\":{\"age_seconds\":null,\"status\":\"hit\"},\"date_range\":null,\"detail_level\":\"summary\",\"operation\":\"x\",\"patch\":null,\"rate_limits\":[],\"retrieved_at\":\"2026-01-01T00:00:00Z\",\"schema_version\":\"x\"},\"summary\":null,\"warnings\":[]}",
+          "type": "text"
+        }
+      ],
+      "structuredContent": {
+        "data": {
+          "dire_score": null,
+          "duration_seconds": null,
+          "game_mode_id": null,
+          "league_id": null,
+          "lobby_type_id": null,
+          "match_id": "1",
+          "parse_status": "parsed",
+          "patch_id": null,
+          "players": [],
+          "radiant_score": null,
+          "radiant_win": null,
+          "region_id": null,
+          "started_at": null
+        },
+        "kind": "success",
+        "provenance": {
+          "cache": {
+            "age_seconds": null,
+            "status": "hit"
+          },
+          "date_range": null,
+          "detail_level": "summary",
+          "operation": "x",
+          "patch": null,
+          "rate_limits": [],
+          "retrieved_at": "2026-01-01T00:00:00Z",
+          "schema_version": "x"
+        },
+        "summary": null,
+        "warnings": []
+      }
+    }
+  }
+}

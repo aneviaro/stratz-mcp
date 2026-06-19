@@ -1,0 +1,31 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_get_constants:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "fresh": {
+      "default": false,
+      "type": "boolean"
+    },
+    "include_raw": {
+      "default": false,
+      "type": "boolean"
+    },
+    "type": {
+      "enum": [
+        "heroes",
+        "items",
+        "abilities",
+        "game_modes",
+        "regions",
+        "ranks",
+        "all"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "type"
+  ],
+  "type": "object"
+}

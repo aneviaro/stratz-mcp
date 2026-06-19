@@ -1,0 +1,26 @@
+{
+  "data": {
+    "account_id": "1",
+    "avatar_url": null,
+    "display_name": null,
+    "is_private": false,
+    "rank": null,
+    "steam_id64": null
+  },
+  "kind": "success",
+  "provenance": {
+    "cache": {
+      "age_seconds": null,
+      "status": "hit"
+    },
+    "date_range": null,
+    "detail_level": "summary",
+    "operation": "x",
+    "patch": null,
+    "rate_limits": [],
+    "retrieved_at": "2026-01-01T00:00:00Z",
+    "schema_version": "x"
+  },
+  "summary": null,
+  "warnings": []
+}

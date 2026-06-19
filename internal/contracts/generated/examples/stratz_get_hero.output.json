@@ -1,0 +1,27 @@
+{
+  "data": {
+    "attack_type": "melee",
+    "hero_id": 1,
+    "localized_name": null,
+    "name": "x",
+    "primary_attribute": "strength",
+    "roles": [],
+    "slug": "x"
+  },
+  "kind": "success",
+  "provenance": {
+    "cache": {
+      "age_seconds": null,
+      "status": "hit"
+    },
+    "date_range": null,
+    "detail_level": "summary",
+    "operation": "x",
+    "patch": null,
+    "rate_limits": [],
+    "retrieved_at": "2026-01-01T00:00:00Z",
+    "schema_version": "x"
+  },
+  "summary": null,
+  "warnings": []
+}

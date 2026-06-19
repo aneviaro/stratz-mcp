@@ -1,0 +1,37 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_batch_get_matches:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "detail_level": {
+      "default": "standard",
+      "enum": [
+        "summary",
+        "standard",
+        "full"
+      ],
+      "type": "string"
+    },
+    "fresh": {
+      "default": false,
+      "type": "boolean"
+    },
+    "include_raw": {
+      "default": false,
+      "type": "boolean"
+    },
+    "match_ids": {
+      "items": {
+        "pattern": "^[0-9]{1,20}$",
+        "type": "string"
+      },
+      "maxItems": 25,
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "match_ids"
+  ],
+  "type": "object"
+}

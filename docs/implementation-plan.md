@@ -55,11 +55,11 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 - Build a deterministic generator that validates and dereferences `tool-contracts.json`, then emits Go contract types, embedded schemas, validators, protocol fixtures, and reference documentation.
 - Reject unsupported schema constructs instead of weakening validation.
 
-- [ ] Parse and validate the contract registry and contract version.
-- [ ] Dereference shared definitions for every tool schema.
-- [ ] Generate Go request, response, and error types.
-- [ ] Generate embedded schemas, validators, examples, and protocol fixtures.
-- [ ] Add deterministic generation and stale-artifact CI checks.
+- [x] Parse and validate the contract registry and contract version.
+- [x] Dereference shared definitions for every tool schema.
+- [x] Generate Go request, response, and error types.
+- [x] Generate embedded schemas, validators, examples, and protocol fixtures.
+- [x] Add deterministic generation and stale-artifact CI checks.
 
 **Verification:** All 15 tools have Draft 2020-12 input/output schemas. Generated examples validate. `go generate ./...` produces no diff on a clean tree.
 

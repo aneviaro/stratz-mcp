@@ -1,0 +1,651 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_get_league:output",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "allOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "data": true,
+            "kind": {
+              "const": "success"
+            },
+            "provenance": {
+              "additionalProperties": false,
+              "properties": {
+                "cache": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "age_seconds": {
+                      "minimum": 0,
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "status": {
+                      "enum": [
+                        "hit",
+                        "miss",
+                        "stale",
+                        "bypass",
+                        "disabled"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "age_seconds"
+                  ],
+                  "type": "object"
+                },
+                "date_range": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "from": {
+                      "format": "date-time",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "to": {
+                      "format": "date-time",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "to"
+                  ],
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "detail_level": {
+                  "oneOf": [
+                    {
+                      "default": "standard",
+                      "enum": [
+                        "summary",
+                        "standard",
+                        "full"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "operation": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "patch": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "rate_limits": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "limit": {
+                        "minimum": 0,
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "remaining": {
+                        "minimum": 0,
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "reset_at": {
+                        "format": "date-time",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "source": {
+                        "maxLength": 128,
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "window": {
+                        "enum": [
+                          "second",
+                          "minute",
+                          "hour",
+                          "day",
+                          "unknown"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "window",
+                      "limit",
+                      "remaining",
+                      "reset_at",
+                      "source"
+                    ],
+                    "type": "object"
+                  },
+                  "maxItems": 8,
+                  "type": "array"
+                },
+                "retrieved_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "schema_version": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "retrieved_at",
+                "operation",
+                "schema_version",
+                "detail_level",
+                "cache",
+                "patch",
+                "date_range",
+                "rate_limits"
+              ],
+              "type": "object"
+            },
+            "raw": {
+              "type": [
+                "object",
+                "array",
+                "null"
+              ]
+            },
+            "summary": {
+              "maxLength": 4096,
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "warnings": {
+              "items": {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              "maxItems": 32,
+              "type": "array"
+            }
+          },
+          "required": [
+            "kind",
+            "data",
+            "summary",
+            "provenance",
+            "warnings"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "data": {
+              "additionalProperties": false,
+              "properties": {
+                "ends_at": {
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "league_id": {
+                  "maxLength": 32,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "name": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "region": {
+                  "maxLength": 128,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "starts_at": {
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "maxLength": 64,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tier": {
+                  "maxLength": 64,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "league_id",
+                "name",
+                "tier",
+                "status",
+                "region",
+                "starts_at",
+                "ends_at"
+              ],
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "else": {
+            "not": {
+              "required": [
+                "context"
+              ]
+            }
+          },
+          "if": {
+            "properties": {
+              "error": {
+                "properties": {
+                  "code": {
+                    "const": "DATA_NOT_READY"
+                  }
+                },
+                "required": [
+                  "code"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "context": {
+                "additionalProperties": false,
+                "properties": {
+                  "match": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "dire_score": {
+                        "minimum": 0,
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "duration_seconds": {
+                        "minimum": 0,
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "game_mode_id": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "league_id": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "lobby_type_id": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "match_id": {
+                        "pattern": "^[0-9]{1,20}$",
+                        "type": "string"
+                      },
+                      "parse_status": {
+                        "enum": [
+                          "parsed",
+                          "partial",
+                          "pending",
+                          "unavailable",
+                          "unknown"
+                        ],
+                        "type": "string"
+                      },
+                      "patch_id": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "radiant_score": {
+                        "minimum": 0,
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "radiant_win": {
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      },
+                      "region_id": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "started_at": {
+                        "format": "date-time",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "match_id",
+                      "started_at",
+                      "duration_seconds",
+                      "radiant_win",
+                      "radiant_score",
+                      "dire_score",
+                      "game_mode_id",
+                      "lobby_type_id",
+                      "region_id",
+                      "league_id",
+                      "patch_id",
+                      "parse_status"
+                    ],
+                    "type": "object"
+                  },
+                  "requested_detail_level": {
+                    "default": "standard",
+                    "enum": [
+                      "summary",
+                      "standard",
+                      "full"
+                    ],
+                    "type": "string"
+                  },
+                  "type": {
+                    "const": "match_availability"
+                  }
+                },
+                "required": [
+                  "type",
+                  "match",
+                  "requested_detail_level"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "context"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "context": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "match": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "dire_score": {
+                      "minimum": 0,
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "duration_seconds": {
+                      "minimum": 0,
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "game_mode_id": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "league_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lobby_type_id": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "match_id": {
+                      "pattern": "^[0-9]{1,20}$",
+                      "type": "string"
+                    },
+                    "parse_status": {
+                      "enum": [
+                        "parsed",
+                        "partial",
+                        "pending",
+                        "unavailable",
+                        "unknown"
+                      ],
+                      "type": "string"
+                    },
+                    "patch_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "radiant_score": {
+                      "minimum": 0,
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "radiant_win": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "region_id": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "started_at": {
+                      "format": "date-time",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "match_id",
+                    "started_at",
+                    "duration_seconds",
+                    "radiant_win",
+                    "radiant_score",
+                    "dire_score",
+                    "game_mode_id",
+                    "lobby_type_id",
+                    "region_id",
+                    "league_id",
+                    "patch_id",
+                    "parse_status"
+                  ],
+                  "type": "object"
+                },
+                "requested_detail_level": {
+                  "default": "standard",
+                  "enum": [
+                    "summary",
+                    "standard",
+                    "full"
+                  ],
+                  "type": "string"
+                },
+                "type": {
+                  "const": "match_availability"
+                }
+              },
+              "required": [
+                "type",
+                "match",
+                "requested_detail_level"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "error": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "enum": [
+                "INVALID_ARGUMENT",
+                "NOT_FOUND",
+                "PRIVATE",
+                "DATA_NOT_READY",
+                "RATE_LIMITED",
+                "UPSTREAM_TIMEOUT",
+                "UPSTREAM_NETWORK_ERROR",
+                "UPSTREAM_TLS_ERROR",
+                "UPSTREAM_WAF_BLOCKED",
+                "UPSTREAM_PROTOCOL_ERROR",
+                "UPSTREAM_PARTIAL_ERROR",
+                "UPSTREAM_ERROR",
+                "RESPONSE_TOO_LARGE",
+                "QUERY_DOCUMENT_TOO_LARGE",
+                "QUERY_VARIABLES_TOO_LARGE",
+                "QUERY_DEPTH_EXCEEDED",
+                "QUERY_ALIAS_LIMIT_EXCEEDED",
+                "QUERY_FIELD_LIMIT_EXCEEDED",
+                "QUERY_COMPLEXITY_EXCEEDED",
+                "QUERY_LIST_LIMIT_REQUIRED",
+                "QUERY_LIST_LIMIT_EXCEEDED",
+                "QUERY_OPERATION_LIMIT_EXCEEDED",
+                "QUERY_OPERATION_NOT_ALLOWED",
+                "INTROSPECTION_DISABLED",
+                "REQUEST_BUDGET_EXCEEDED",
+                "AUTHENTICATION_FAILED",
+                "CURSOR_INVALID",
+                "CURSOR_EXPIRED",
+                "CACHE_UNAVAILABLE",
+                "INTERNAL_ERROR"
+              ],
+              "type": "string"
+            },
+            "details": {
+              "additionalProperties": true,
+              "maxProperties": 32,
+              "type": "object"
+            },
+            "failed_input": true,
+            "message": {
+              "maxLength": 2048,
+              "minLength": 1,
+              "type": "string"
+            },
+            "retry_after": {
+              "format": "date-time",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "retryable": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "retryable",
+            "retry_after",
+            "details"
+          ],
+          "type": "object"
+        },
+        "kind": {
+          "const": "error"
+        }
+      },
+      "required": [
+        "kind",
+        "error"
+      ],
+      "type": "object"
+    }
+  ]
+}

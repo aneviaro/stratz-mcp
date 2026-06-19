@@ -8,13 +8,16 @@ LDFLAGS := -X $(COMMAND_PACKAGE).version=$(VERSION) \
 	-X $(COMMAND_PACKAGE).revision=$(REVISION) \
 	-X $(COMMAND_PACKAGE).schemaVersion=$(SCHEMA_VERSION)
 
-.PHONY: build check cross-build dev generate test tools vet verify verify-build-info
+.PHONY: build check check-generated cross-build dev generate test tools vet verify verify-build-info
 
 build:
 	mkdir -p dist
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o dist/stratz-mcp ./cmd/stratz-mcp
 
 check: verify vet test verify-build-info
+
+check-generated:
+	./scripts/check-generated.sh
 
 cross-build:
 	VERSION="$(VERSION)" REVISION="$(REVISION)" SCHEMA_VERSION="$(SCHEMA_VERSION)" \

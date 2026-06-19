@@ -1,0 +1,6 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_server_info:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "type": "object"
+}

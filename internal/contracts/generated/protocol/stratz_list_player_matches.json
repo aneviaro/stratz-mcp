@@ -1,0 +1,50 @@
+{
+  "request": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "player_id": "x"
+      },
+      "name": "stratz_list_player_matches"
+    }
+  },
+  "response": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"data\":{\"items\":[],\"page\":{\"has_more\":false,\"next_cursor\":null}},\"kind\":\"success\",\"provenance\":{\"cache\":{\"age_seconds\":null,\"status\":\"hit\"},\"date_range\":null,\"detail_level\":\"summary\",\"operation\":\"x\",\"patch\":null,\"rate_limits\":[],\"retrieved_at\":\"2026-01-01T00:00:00Z\",\"schema_version\":\"x\"},\"summary\":null,\"warnings\":[]}",
+          "type": "text"
+        }
+      ],
+      "structuredContent": {
+        "data": {
+          "items": [],
+          "page": {
+            "has_more": false,
+            "next_cursor": null
+          }
+        },
+        "kind": "success",
+        "provenance": {
+          "cache": {
+            "age_seconds": null,
+            "status": "hit"
+          },
+          "date_range": null,
+          "detail_level": "summary",
+          "operation": "x",
+          "patch": null,
+          "rate_limits": [],
+          "retrieved_at": "2026-01-01T00:00:00Z",
+          "schema_version": "x"
+        },
+        "summary": null,
+        "warnings": []
+      }
+    }
+  }
+}
