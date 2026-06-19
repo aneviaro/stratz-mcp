@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -21,6 +22,18 @@ func (cliExecutor) Execute(
 	stratz.Request,
 ) (*stratz.Response, error) {
 	return &stratz.Response{}, nil
+}
+
+type schemaCLIExecutor struct {
+	data json.RawMessage
+}
+
+func (executor schemaCLIExecutor) Execute(
+	context.Context,
+	*stratz.RequestBudget,
+	stratz.Request,
+) (*stratz.Response, error) {
+	return &stratz.Response{HTTPStatus: 200, Data: executor.data}, nil
 }
 
 func TestRunDisplaysHelpWithoutSubcommand(t *testing.T) {
@@ -174,5 +187,56 @@ func TestServeRunsUntilStdinClosesWithoutLeakingCredential(t *testing.T) {
 	}
 	if stdout.Len() != 0 {
 		t.Fatalf("stdout = %q, want no protocol output without input", stdout.String())
+	}
+}
+
+func TestSchemaPullGeneratesRestrictedLocalBundle(t *testing.T) {
+	directory := t.TempDir()
+	data, err := os.ReadFile("../schema/testdata/introspection-data.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := RunWithDependencies(
+		[]string{"schema", "pull"},
+		&stdout,
+		&stderr,
+		app.BuildInfo{},
+		Dependencies{
+			Environ:      []string{"STRATZ_API_TOKEN=fixture-token"},
+			UserCacheDir: func() (string, error) { return directory, nil },
+			Executor:     schemaCLIExecutor{data: data},
+		},
+	)
+	if code != 0 {
+		t.Fatalf("exit code = %d, stdout = %q, stderr = %q", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "restricted local data; do not publish") {
+		t.Fatalf("stdout = %q", stdout.String())
+	}
+	for _, relative := range []string{
+		"schema/manifest.json",
+		"schema/.stratz-restricted",
+		"schema/schema/full.graphql",
+	} {
+		if _, err := os.Stat(filepath.Join(directory, "stratz-mcp", relative)); err != nil {
+			t.Errorf("missing %s: %v", relative, err)
+		}
+	}
+}
+
+func TestSchemaPullRejectsInvalidSubcommand(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := RunWithDependencies(
+		[]string{"schema", "unknown"},
+		&stdout,
+		&stderr,
+		app.BuildInfo{},
+		Dependencies{},
+	)
+	if code != 2 || !strings.Contains(stderr.String(), "usage: stratz-mcp schema pull") {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
 	}
 }

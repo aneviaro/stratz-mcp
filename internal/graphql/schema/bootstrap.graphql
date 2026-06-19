@@ -1,0 +1,9 @@
+# This is a project-authored bootstrap schema, not a fetched STRATZ snapshot.
+# Local schema pull artifacts remain under the configured cache directory.
+schema {
+  query: DotaQuery
+}
+
+type DotaQuery {
+  health: String
+}

@@ -1,0 +1,9 @@
+{
+  "operations": [
+    {
+      "operationName": "StratzSchemaProbe",
+      "query": "\nquery StratzSchemaProbe {\n\t__typename\n}\n",
+      "sourceLocation": "internal/graphql/operations/schema.graphql"
+    }
+  ]
+}

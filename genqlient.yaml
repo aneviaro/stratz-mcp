@@ -1,0 +1,7 @@
+schema: internal/graphql/schema/bootstrap.graphql
+operations:
+  - internal/graphql/operations/*.graphql
+generated: internal/graphql/generated/operations.go
+package: generated
+export_operations: internal/graphql/generated/operations.json
+optional: pointer

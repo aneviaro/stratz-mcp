@@ -1,2 +1,2 @@
-// Package resources registers MCP schema and constants resources.
+// Package resources registers bounded local MCP schema and constants resources.
 package resources

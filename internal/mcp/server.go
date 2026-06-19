@@ -12,6 +12,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
 	rawgraphql "github.com/aneviaro/stratz-mcp/internal/graphql"
 	graphqlpolicy "github.com/aneviaro/stratz-mcp/internal/graphql/policy"
+	"github.com/aneviaro/stratz-mcp/internal/resources"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 	sdk "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -24,13 +25,14 @@ type ToolHandler func(context.Context, any) (any, error)
 
 // Options configures one static MCP server.
 type Options struct {
-	Version       string
-	SchemaVersion string
-	Config        config.Config
-	Executor      stratz.Executor
-	Logger        *slog.Logger
-	Now           func() time.Time
-	Handlers      map[string]ToolHandler
+	Version         string
+	SchemaVersion   string
+	SchemaDirectory string
+	Config          config.Config
+	Executor        stratz.Executor
+	Logger          *slog.Logger
+	Now             func() time.Time
+	Handlers        map[string]ToolHandler
 }
 
 // Server owns the official SDK server and its immutable runtime dependencies.
@@ -116,6 +118,7 @@ func New(options Options) (*Server, error) {
 			toolAdapter(definition.Name, handlers[definition.Name]),
 		)
 	}
+	resources.New(options.SchemaDirectory).Register(server)
 	return &Server{sdk: server}, nil
 }
 

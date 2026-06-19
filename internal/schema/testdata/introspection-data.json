@@ -1,0 +1,151 @@
+{
+  "__schema": {
+    "queryType": {"name": "DotaQuery"},
+    "mutationType": null,
+    "subscriptionType": null,
+    "types": [
+      {
+        "kind": "OBJECT",
+        "name": "PlayerType",
+        "fields": [
+          {
+            "name": "name",
+            "args": [],
+            "type": {"kind": "SCALAR", "name": "String"},
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "SCALAR",
+        "name": "String"
+      },
+      {
+        "kind": "OBJECT",
+        "name": "DotaQuery",
+        "fields": [
+          {
+            "name": "player",
+            "args": [
+              {
+                "name": "id",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {"kind": "SCALAR", "name": "ID"}
+                },
+                "isDeprecated": false
+              }
+            ],
+            "type": {"kind": "OBJECT", "name": "PlayerType"},
+            "isDeprecated": false
+          },
+          {
+            "name": "live",
+            "args": [],
+            "type": {"kind": "OBJECT", "name": "LiveType"},
+            "isDeprecated": false
+          },
+          {
+            "name": "constants",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {"kind": "OBJECT", "name": "ConstantQuery"}
+            },
+            "isDeprecated": false
+          },
+          {
+            "name": "match",
+            "args": [],
+            "type": {"kind": "OBJECT", "name": "MatchType"},
+            "isDeprecated": false
+          },
+          {
+            "name": "heroStats",
+            "args": [],
+            "type": {"kind": "OBJECT", "name": "HeroStatsQuery"},
+            "isDeprecated": false
+          },
+          {
+            "name": "league",
+            "args": [],
+            "type": {"kind": "OBJECT", "name": "LeagueType"},
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "LeagueType",
+        "fields": [
+          {
+            "name": "name",
+            "args": [],
+            "type": {"kind": "SCALAR", "name": "String"},
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ConstantQuery",
+        "fields": [
+          {
+            "name": "version",
+            "args": [],
+            "type": {"kind": "SCALAR", "name": "String"},
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "SCALAR",
+        "name": "ID"
+      },
+      {
+        "kind": "OBJECT",
+        "name": "MatchType",
+        "fields": [
+          {
+            "name": "id",
+            "args": [],
+            "type": {"kind": "SCALAR", "name": "ID"},
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "HeroStatsQuery",
+        "fields": [
+          {
+            "name": "sampleSize",
+            "args": [],
+            "type": {"kind": "SCALAR", "name": "Int"},
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "SCALAR",
+        "name": "Int"
+      },
+      {
+        "kind": "OBJECT",
+        "name": "LiveType",
+        "fields": [
+          {
+            "name": "matches",
+            "args": [],
+            "type": {
+              "kind": "LIST",
+              "ofType": {"kind": "OBJECT", "name": "MatchType"}
+            },
+            "isDeprecated": false
+          }
+        ]
+      }
+    ],
+    "directives": []
+  }
+}

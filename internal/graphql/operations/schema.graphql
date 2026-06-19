@@ -1,0 +1,3 @@
+query StratzSchemaProbe {
+  __typename
+}
