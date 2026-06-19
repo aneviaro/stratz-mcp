@@ -1,0 +1,64 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_get_hero_stats:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "fresh": {
+      "default": false,
+      "type": "boolean"
+    },
+    "from": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "hero": {
+      "oneOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        }
+      ]
+    },
+    "include_matchups": {
+      "default": false,
+      "type": "boolean"
+    },
+    "include_raw": {
+      "default": false,
+      "type": "boolean"
+    },
+    "include_synergies": {
+      "default": false,
+      "type": "boolean"
+    },
+    "lane": {
+      "maxLength": 64,
+      "type": "string"
+    },
+    "patch_id": {
+      "maxLength": 64,
+      "type": "string"
+    },
+    "rank_bracket": {
+      "maxLength": 64,
+      "type": "string"
+    },
+    "role": {
+      "maxLength": 64,
+      "type": "string"
+    },
+    "to": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "required": [
+    "hero"
+  ],
+  "type": "object"
+}

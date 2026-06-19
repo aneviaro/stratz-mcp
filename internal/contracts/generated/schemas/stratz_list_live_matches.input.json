@@ -1,0 +1,110 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_list_live_matches:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "cursor": {
+      "maxLength": 4096,
+      "type": "string"
+    },
+    "fresh": {
+      "default": false,
+      "type": "boolean"
+    },
+    "game_mode_id": {
+      "type": "integer"
+    },
+    "game_states": {
+      "items": {
+        "enum": [
+          "CUSTOM_GAME_SETUP",
+          "DISCONNECT",
+          "GAME_IN_PROGRESS",
+          "HERO_SELECTION",
+          "INIT",
+          "LAST",
+          "PLAYER_DRAFT",
+          "POST_GAME",
+          "PRE_GAME",
+          "SCENARIO_SETUP",
+          "STRATEGY_TIME",
+          "TEAM_SHOWCASE",
+          "WAIT_FOR_MAP_TO_LOAD",
+          "WAIT_FOR_PLAYERS_TO_LOAD"
+        ],
+        "type": "string"
+      },
+      "maxItems": 16,
+      "type": "array"
+    },
+    "hero": {
+      "oneOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        }
+      ]
+    },
+    "include_raw": {
+      "default": false,
+      "type": "boolean"
+    },
+    "league_id": {
+      "maxLength": 32,
+      "type": "string"
+    },
+    "limit": {
+      "default": 20,
+      "maximum": 100,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "minimum_spectators": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "player_id": {
+      "description": "Steam account ID, SteamID64, or an https://stratz.com/players/... profile URL.",
+      "maxLength": 2048,
+      "minLength": 1,
+      "type": "string"
+    },
+    "sort": {
+      "default": "highest_profile",
+      "enum": [
+        "newest",
+        "highest_profile"
+      ],
+      "type": "string"
+    },
+    "team_id": {
+      "maxLength": 32,
+      "type": "string"
+    },
+    "tiers": {
+      "items": {
+        "enum": [
+          "AMATEUR",
+          "DPC_LEAGUE",
+          "DPC_LEAGUE_FINALS",
+          "DPC_LEAGUE_QUALIFIER",
+          "DPC_QUALIFIER",
+          "INTERNATIONAL",
+          "MAJOR",
+          "MINOR",
+          "PROFESSIONAL",
+          "UNSET"
+        ],
+        "type": "string"
+      },
+      "maxItems": 10,
+      "type": "array"
+    }
+  },
+  "type": "object"
+}

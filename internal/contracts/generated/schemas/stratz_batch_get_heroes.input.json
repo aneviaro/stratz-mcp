@@ -1,0 +1,46 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_batch_get_heroes:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "detail_level": {
+      "default": "standard",
+      "enum": [
+        "summary",
+        "standard",
+        "full"
+      ],
+      "type": "string"
+    },
+    "fresh": {
+      "default": false,
+      "type": "boolean"
+    },
+    "heroes": {
+      "items": {
+        "oneOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          }
+        ]
+      },
+      "maxItems": 25,
+      "minItems": 1,
+      "type": "array"
+    },
+    "include_raw": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "heroes"
+  ],
+  "type": "object"
+}

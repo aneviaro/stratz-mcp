@@ -1,0 +1,91 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_list_player_matches:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "cursor": {
+      "maxLength": 4096,
+      "type": "string"
+    },
+    "detail_level": {
+      "default": "standard",
+      "enum": [
+        "summary",
+        "standard",
+        "full"
+      ],
+      "type": "string"
+    },
+    "fresh": {
+      "default": false,
+      "type": "boolean"
+    },
+    "from": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "game_mode_id": {
+      "type": "integer"
+    },
+    "hero": {
+      "oneOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        }
+      ]
+    },
+    "include_raw": {
+      "default": false,
+      "type": "boolean"
+    },
+    "limit": {
+      "default": 20,
+      "maximum": 100,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "lobby_type_id": {
+      "type": "integer"
+    },
+    "minimum_duration_seconds": {
+      "maximum": 21600,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "patch_id": {
+      "maxLength": 64,
+      "type": "string"
+    },
+    "player_id": {
+      "description": "Steam account ID, SteamID64, or an https://stratz.com/players/... profile URL.",
+      "maxLength": 2048,
+      "minLength": 1,
+      "type": "string"
+    },
+    "result": {
+      "enum": [
+        "win",
+        "loss"
+      ],
+      "type": "string"
+    },
+    "role": {
+      "maxLength": 64,
+      "type": "string"
+    },
+    "to": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "required": [
+    "player_id"
+  ],
+  "type": "object"
+}

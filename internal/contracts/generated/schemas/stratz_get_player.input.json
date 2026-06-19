@@ -1,0 +1,34 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_get_player:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "detail_level": {
+      "default": "standard",
+      "enum": [
+        "summary",
+        "standard",
+        "full"
+      ],
+      "type": "string"
+    },
+    "fresh": {
+      "default": false,
+      "type": "boolean"
+    },
+    "include_raw": {
+      "default": false,
+      "type": "boolean"
+    },
+    "player_id": {
+      "description": "Steam account ID, SteamID64, or an https://stratz.com/players/... profile URL.",
+      "maxLength": 2048,
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "player_id"
+  ],
+  "type": "object"
+}

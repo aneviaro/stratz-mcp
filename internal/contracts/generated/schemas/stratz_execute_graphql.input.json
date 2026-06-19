@@ -1,0 +1,39 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_execute_graphql:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "cache": {
+      "default": false,
+      "type": "boolean"
+    },
+    "cache_ttl_seconds": {
+      "maximum": 3600,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "fresh": {
+      "default": false,
+      "type": "boolean"
+    },
+    "operation_name": {
+      "maxLength": 256,
+      "minLength": 1,
+      "type": "string"
+    },
+    "query": {
+      "maxLength": 65536,
+      "minLength": 1,
+      "type": "string"
+    },
+    "variables": {
+      "additionalProperties": true,
+      "maxProperties": 1000,
+      "type": "object"
+    }
+  },
+  "required": [
+    "query"
+  ],
+  "type": "object"
+}

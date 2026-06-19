@@ -1,0 +1,128 @@
+{
+  "contract_version": "1.0.0-draft.2",
+  "mcp_protocol_version": "2025-11-25",
+  "schema_draft": "https://json-schema.org/draft/2020-12/schema",
+  "tool_count": 15,
+  "tools": [
+    {
+      "input_example": "generated/examples/stratz_batch_get_heroes.input.json",
+      "input_schema": "generated/schemas/stratz_batch_get_heroes.input.json",
+      "name": "stratz_batch_get_heroes",
+      "output_example": "generated/examples/stratz_batch_get_heroes.output.json",
+      "output_schema": "generated/schemas/stratz_batch_get_heroes.output.json",
+      "protocol": "generated/protocol/stratz_batch_get_heroes.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_batch_get_matches.input.json",
+      "input_schema": "generated/schemas/stratz_batch_get_matches.input.json",
+      "name": "stratz_batch_get_matches",
+      "output_example": "generated/examples/stratz_batch_get_matches.output.json",
+      "output_schema": "generated/schemas/stratz_batch_get_matches.output.json",
+      "protocol": "generated/protocol/stratz_batch_get_matches.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_batch_get_players.input.json",
+      "input_schema": "generated/schemas/stratz_batch_get_players.input.json",
+      "name": "stratz_batch_get_players",
+      "output_example": "generated/examples/stratz_batch_get_players.output.json",
+      "output_schema": "generated/schemas/stratz_batch_get_players.output.json",
+      "protocol": "generated/protocol/stratz_batch_get_players.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_execute_graphql.input.json",
+      "input_schema": "generated/schemas/stratz_execute_graphql.input.json",
+      "name": "stratz_execute_graphql",
+      "output_example": "generated/examples/stratz_execute_graphql.output.json",
+      "output_schema": "generated/schemas/stratz_execute_graphql.output.json",
+      "protocol": "generated/protocol/stratz_execute_graphql.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_get_constants.input.json",
+      "input_schema": "generated/schemas/stratz_get_constants.input.json",
+      "name": "stratz_get_constants",
+      "output_example": "generated/examples/stratz_get_constants.output.json",
+      "output_schema": "generated/schemas/stratz_get_constants.output.json",
+      "protocol": "generated/protocol/stratz_get_constants.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_get_hero.input.json",
+      "input_schema": "generated/schemas/stratz_get_hero.input.json",
+      "name": "stratz_get_hero",
+      "output_example": "generated/examples/stratz_get_hero.output.json",
+      "output_schema": "generated/schemas/stratz_get_hero.output.json",
+      "protocol": "generated/protocol/stratz_get_hero.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_get_hero_stats.input.json",
+      "input_schema": "generated/schemas/stratz_get_hero_stats.input.json",
+      "name": "stratz_get_hero_stats",
+      "output_example": "generated/examples/stratz_get_hero_stats.output.json",
+      "output_schema": "generated/schemas/stratz_get_hero_stats.output.json",
+      "protocol": "generated/protocol/stratz_get_hero_stats.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_get_league.input.json",
+      "input_schema": "generated/schemas/stratz_get_league.input.json",
+      "name": "stratz_get_league",
+      "output_example": "generated/examples/stratz_get_league.output.json",
+      "output_schema": "generated/schemas/stratz_get_league.output.json",
+      "protocol": "generated/protocol/stratz_get_league.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_get_match.input.json",
+      "input_schema": "generated/schemas/stratz_get_match.input.json",
+      "name": "stratz_get_match",
+      "output_example": "generated/examples/stratz_get_match.output.json",
+      "output_schema": "generated/schemas/stratz_get_match.output.json",
+      "protocol": "generated/protocol/stratz_get_match.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_get_player.input.json",
+      "input_schema": "generated/schemas/stratz_get_player.input.json",
+      "name": "stratz_get_player",
+      "output_example": "generated/examples/stratz_get_player.output.json",
+      "output_schema": "generated/schemas/stratz_get_player.output.json",
+      "protocol": "generated/protocol/stratz_get_player.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_list_league_matches.input.json",
+      "input_schema": "generated/schemas/stratz_list_league_matches.input.json",
+      "name": "stratz_list_league_matches",
+      "output_example": "generated/examples/stratz_list_league_matches.output.json",
+      "output_schema": "generated/schemas/stratz_list_league_matches.output.json",
+      "protocol": "generated/protocol/stratz_list_league_matches.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_list_leagues.input.json",
+      "input_schema": "generated/schemas/stratz_list_leagues.input.json",
+      "name": "stratz_list_leagues",
+      "output_example": "generated/examples/stratz_list_leagues.output.json",
+      "output_schema": "generated/schemas/stratz_list_leagues.output.json",
+      "protocol": "generated/protocol/stratz_list_leagues.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_list_live_matches.input.json",
+      "input_schema": "generated/schemas/stratz_list_live_matches.input.json",
+      "name": "stratz_list_live_matches",
+      "output_example": "generated/examples/stratz_list_live_matches.output.json",
+      "output_schema": "generated/schemas/stratz_list_live_matches.output.json",
+      "protocol": "generated/protocol/stratz_list_live_matches.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_list_player_matches.input.json",
+      "input_schema": "generated/schemas/stratz_list_player_matches.input.json",
+      "name": "stratz_list_player_matches",
+      "output_example": "generated/examples/stratz_list_player_matches.output.json",
+      "output_schema": "generated/schemas/stratz_list_player_matches.output.json",
+      "protocol": "generated/protocol/stratz_list_player_matches.json"
+    },
+    {
+      "input_example": "generated/examples/stratz_server_info.input.json",
+      "input_schema": "generated/schemas/stratz_server_info.input.json",
+      "name": "stratz_server_info",
+      "output_example": "generated/examples/stratz_server_info.output.json",
+      "output_schema": "generated/schemas/stratz_server_info.output.json",
+      "protocol": "generated/protocol/stratz_server_info.json"
+    }
+  ]
+}

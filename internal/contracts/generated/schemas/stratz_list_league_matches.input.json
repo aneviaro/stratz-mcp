@@ -1,0 +1,55 @@
+{
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_list_league_matches:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "cursor": {
+      "maxLength": 4096,
+      "type": "string"
+    },
+    "detail_level": {
+      "default": "standard",
+      "enum": [
+        "summary",
+        "standard",
+        "full"
+      ],
+      "type": "string"
+    },
+    "fresh": {
+      "default": false,
+      "type": "boolean"
+    },
+    "from": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "include_raw": {
+      "default": false,
+      "type": "boolean"
+    },
+    "league_id": {
+      "maxLength": 32,
+      "minLength": 1,
+      "type": "string"
+    },
+    "limit": {
+      "default": 20,
+      "maximum": 100,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "patch_id": {
+      "maxLength": 64,
+      "type": "string"
+    },
+    "to": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "required": [
+    "league_id"
+  ],
+  "type": "object"
+}

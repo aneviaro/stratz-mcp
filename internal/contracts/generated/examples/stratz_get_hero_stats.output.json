@@ -1,0 +1,29 @@
+{
+  "data": {
+    "ban_rate": null,
+    "hero_id": 1,
+    "lanes": [],
+    "matchups": [],
+    "pick_rate": null,
+    "roles": [],
+    "sample_size": 0,
+    "synergies": [],
+    "win_rate": null
+  },
+  "kind": "success",
+  "provenance": {
+    "cache": {
+      "age_seconds": null,
+      "status": "hit"
+    },
+    "date_range": null,
+    "detail_level": "summary",
+    "operation": "x",
+    "patch": null,
+    "rate_limits": [],
+    "retrieved_at": "2026-01-01T00:00:00Z",
+    "schema_version": "x"
+  },
+  "summary": null,
+  "warnings": []
+}
