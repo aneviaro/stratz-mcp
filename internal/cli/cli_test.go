@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/aneviaro/stratz-mcp/internal/app"
+	"github.com/aneviaro/stratz-mcp/internal/cache"
+	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
@@ -239,4 +241,91 @@ func TestSchemaPullRejectsInvalidSubcommand(t *testing.T) {
 	if code != 2 || !strings.Contains(stderr.String(), "usage: stratz-mcp schema pull") {
 		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
 	}
+}
+
+func TestCacheStatsAndClearCurrentToken(t *testing.T) {
+	directory := t.TempDir()
+	cfg := config.Defaults(directory)
+	store, err := cache.Open(cache.Options{
+		Config:   cfg.Cache,
+		Features: cfg.Features,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	key, class, err := cacheEntryForTest(cfg, "fixture-token", "heroes")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Put(context.Background(), cache.Entry{
+		Key:            key,
+		Classification: class,
+		Payload:        []byte(`{"hero_id":1}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := RunWithDependencies(
+		[]string{"cache", "stats"},
+		&stdout,
+		&stderr,
+		app.BuildInfo{},
+		Dependencies{
+			Environ:      []string{},
+			UserCacheDir: func() (string, error) { return directory, nil },
+		},
+	)
+	if code != 0 {
+		t.Fatalf("stats code = %d, stdout = %q, stderr = %q", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "status: healthy") || !strings.Contains(stdout.String(), "entries: 1") {
+		t.Fatalf("stats stdout = %q", stdout.String())
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	code = RunWithDependencies(
+		[]string{"cache", "clear", "--current-token"},
+		&stdout,
+		&stderr,
+		app.BuildInfo{},
+		Dependencies{
+			Environ:      []string{"STRATZ_API_TOKEN=fixture-token"},
+			UserCacheDir: func() (string, error) { return directory, nil },
+		},
+	)
+	if code != 0 {
+		t.Fatalf("clear code = %d, stdout = %q, stderr = %q", code, stdout.String(), stderr.String())
+	}
+	if stdout.String() != "deleted: 1\n" {
+		t.Fatalf("clear stdout = %q", stdout.String())
+	}
+	if strings.Contains(stdout.String(), cache.NamespaceForToken("fixture-token")) {
+		t.Fatalf("clear output leaked namespace: %q", stdout.String())
+	}
+}
+
+func cacheEntryForTest(
+	cfg config.Config,
+	token, domain string,
+) (cache.Key, cache.Classification, error) {
+	classification := cache.ResolveClassification(
+		cfg.Cache,
+		cfg.Features,
+		domain,
+		cache.ClassPublicReference,
+		false,
+	)
+	key, err := cache.CanonicalKey(cache.KeyInput{
+		Namespace:     cache.NamespaceForToken(token),
+		Domain:        domain,
+		Class:         cache.ClassPublicReference,
+		Operation:     "test",
+		Arguments:     map[string]any{"id": 1},
+		SchemaVersion: "sha256:test",
+	})
+	return key, classification, err
 }

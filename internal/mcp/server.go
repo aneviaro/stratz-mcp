@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
 	rawgraphql "github.com/aneviaro/stratz-mcp/internal/graphql"
@@ -28,6 +29,7 @@ type Options struct {
 	Version         string
 	SchemaVersion   string
 	SchemaDirectory string
+	CacheStatus     cache.Status
 	Config          config.Config
 	Executor        stratz.Executor
 	Logger          *slog.Logger

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/releasegate"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
@@ -17,6 +18,7 @@ const (
 // Options contains the already-loaded runtime state used by doctor.
 type Options struct {
 	Paths         Paths
+	Cache         *cache.Store
 	Config        config.Config
 	Executor      stratz.Executor
 	SchemaVersion string
@@ -54,14 +56,22 @@ func Diagnose(ctx context.Context, options Options) Report {
 		})
 	}
 
-	if options.Config.Cache.Enabled {
+	switch cacheStatus(options.Cache, options.Config) {
+	case cache.StatusHealthy:
+		report.Findings = append(report.Findings, Finding{
+			Severity: SeverityInfo,
+			Code:     "cache_healthy",
+			Subject:  "cache",
+			Message:  "cache backend is healthy",
+		})
+	case cache.StatusDegraded:
 		report.Findings = append(report.Findings, Finding{
 			Severity: SeverityWarning,
-			Code:     "cache_backend_pending",
+			Code:     "cache_degraded",
 			Subject:  "cache",
-			Message:  "cache is configured but the SQLite backend is not available in this milestone",
+			Message:  "cache backend is degraded for this process",
 		})
-	} else {
+	default:
 		report.Findings = append(report.Findings, Finding{
 			Severity: SeverityInfo,
 			Code:     "cache_disabled",
@@ -95,6 +105,16 @@ func Diagnose(ctx context.Context, options Options) Report {
 		})
 	}
 	return report
+}
+
+func cacheStatus(store *cache.Store, cfg config.Config) cache.Status {
+	if !cfg.Cache.Enabled {
+		return cache.StatusDisabled
+	}
+	if store == nil {
+		return cache.StatusDegraded
+	}
+	return store.Status()
 }
 
 // HasErrors reports whether doctor found a startup-blocking condition.

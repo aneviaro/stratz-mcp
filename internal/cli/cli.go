@@ -15,6 +15,7 @@ import (
 
 	"github.com/aneviaro/stratz-mcp/internal/app"
 	"github.com/aneviaro/stratz-mcp/internal/auth"
+	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/doctor"
 	"github.com/aneviaro/stratz-mcp/internal/observability"
@@ -145,8 +146,7 @@ func RunWithDependencies(
 		}
 		return runSchemaPull(options, dependencies, stdout, stderr, info)
 	case "cache":
-		fmt.Fprintf(stderr, "stratz-mcp: command %q is not implemented yet\n", strings.Join(commandArgs, " "))
-		return 2
+		return runCache(commandArgs[1:], options, dependencies, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "stratz-mcp: unknown command %q\n\n%s", commandArgs[0], usage)
 		return 2
@@ -248,6 +248,7 @@ func runDoctor(
 			ConfigFile:     loaded.ConfigFile,
 			CacheDirectory: loaded.Config.Cache.Directory,
 		},
+		Cache:         runtime.Cache(),
 		Config:        loaded.Config,
 		Executor:      runtime.Executor(),
 		SchemaVersion: info.Normalized().SchemaVersion,
@@ -290,4 +291,167 @@ func loadRuntime(
 		return config.Loaded{}, auth.Credential{}, false
 	}
 	return loaded, credential, true
+}
+
+func runCache(
+	args []string,
+	options config.CLIOptions,
+	dependencies Dependencies,
+	stdout, stderr io.Writer,
+) int {
+	if len(args) == 0 {
+		fmt.Fprintln(stderr, "stratz-mcp: usage: stratz-mcp cache <stats|clear>")
+		return 2
+	}
+	switch args[0] {
+	case "stats":
+		if len(args) != 1 {
+			fmt.Fprintln(stderr, "stratz-mcp: usage: stratz-mcp cache stats")
+			return 2
+		}
+		return runCacheStats(options, dependencies, stdout, stderr)
+	case "clear":
+		return runCacheClear(args[1:], options, dependencies, stdout, stderr)
+	default:
+		fmt.Fprintf(stderr, "stratz-mcp: unknown cache command %q\n", args[0])
+		return 2
+	}
+}
+
+func runCacheStats(
+	options config.CLIOptions,
+	dependencies Dependencies,
+	stdout, stderr io.Writer,
+) int {
+	loaded, ok := loadConfig(options, dependencies, stderr)
+	if !ok {
+		return 2
+	}
+	cacheStore, err := openAdministrativeCache(loaded.Config)
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: cache stats failed: %v\n", err)
+		return 1
+	}
+	defer cacheStore.Close()
+
+	stats, err := cacheStore.Stats(dependencies.Context)
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: cache stats failed: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "status: %s\n", stats.Status)
+	if stats.Reason != "" {
+		fmt.Fprintf(stdout, "reason: %s\n", stats.Reason)
+	}
+	fmt.Fprintf(stdout, "format_version: %d\n", stats.FormatVersion)
+	fmt.Fprintf(stdout, "entries: %d\n", stats.Entries)
+	fmt.Fprintf(stdout, "namespaces: %d\n", stats.Namespaces)
+	fmt.Fprintf(stdout, "logical_bytes: %d\n", stats.LogicalBytes)
+	fmt.Fprintf(stdout, "stored_bytes: %d\n", stats.StoredBytes)
+	for _, domain := range stats.Domains {
+		fmt.Fprintf(
+			stdout,
+			"domain %s: entries=%d logical_bytes=%d stored_bytes=%d\n",
+			domain.Domain,
+			domain.Entries,
+			domain.LogicalBytes,
+			domain.StoredBytes,
+		)
+	}
+	return 0
+}
+
+func runCacheClear(
+	args []string,
+	options config.CLIOptions,
+	dependencies Dependencies,
+	stdout, stderr io.Writer,
+) int {
+	clearOptions, err := parseCacheClear(args)
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: %v\n", err)
+		return 2
+	}
+	loaded, ok := loadConfig(options, dependencies, stderr)
+	if !ok {
+		return 2
+	}
+	if clearOptions.CurrentToken {
+		credential, err := auth.Load(auth.LoadOptions{
+			Environment: loaded.Environment,
+			TokenFile:   loaded.TokenFile,
+		})
+		if err != nil {
+			fmt.Fprintf(stderr, "stratz-mcp: %v\n", err)
+			return 2
+		}
+		clearOptions.Scope.Namespace = cache.NamespaceForToken(credential.Token)
+	}
+	cacheStore, err := openAdministrativeCache(loaded.Config)
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: cache clear failed: %v\n", err)
+		return 1
+	}
+	defer cacheStore.Close()
+
+	result, err := cacheStore.Clear(dependencies.Context, clearOptions.Scope)
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: cache clear failed: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "deleted: %d\n", result.Deleted)
+	return 0
+}
+
+type cacheClearOptions struct {
+	CurrentToken bool
+	Scope        cache.ClearOptions
+}
+
+func parseCacheClear(args []string) (cacheClearOptions, error) {
+	var options cacheClearOptions
+	for index := 0; index < len(args); index++ {
+		switch args[index] {
+		case "--current-token":
+			options.CurrentToken = true
+		case "--domain":
+			index++
+			if index >= len(args) || strings.TrimSpace(args[index]) == "" {
+				return cacheClearOptions{}, errors.New("cache clear --domain requires a non-empty value")
+			}
+			options.Scope.Domain = args[index]
+		default:
+			return cacheClearOptions{}, fmt.Errorf("unknown cache clear argument %q", args[index])
+		}
+	}
+	return options, nil
+}
+
+func loadConfig(
+	options config.CLIOptions,
+	dependencies Dependencies,
+	stderr io.Writer,
+) (config.Loaded, bool) {
+	loaded, err := config.Load(config.LoadOptions{
+		CLI:          options,
+		Environ:      dependencies.Environ,
+		UserCacheDir: dependencies.UserCacheDir,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: %v\n", err)
+		return config.Loaded{}, false
+	}
+	return loaded, true
+}
+
+func openAdministrativeCache(cfg config.Config) (*cache.Store, error) {
+	cacheConfig := cfg.Cache
+	cacheConfig.Enabled = true
+	if strings.TrimSpace(cacheConfig.Directory) == "" {
+		return nil, errors.New("cache directory is not configured")
+	}
+	return cache.Open(cache.Options{
+		Config:   cacheConfig,
+		Features: cfg.Features,
+	})
 }

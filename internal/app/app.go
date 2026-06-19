@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/auth"
+	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	mcpserver "github.com/aneviaro/stratz-mcp/internal/mcp"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
@@ -44,6 +45,7 @@ type RuntimeOptions struct {
 // Runtime owns the application services needed by CLI commands.
 type Runtime struct {
 	server   *mcpserver.Server
+	cache    *cache.Store
 	executor stratz.Executor
 }
 
@@ -58,10 +60,23 @@ func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 		}
 		executor = client
 	}
+	cacheStore, err := cache.Open(cache.Options{
+		Config:   options.Config.Cache,
+		Features: options.Config.Features,
+		Logger:   options.Logger,
+		Now:      options.Now,
+	})
+	if err != nil {
+		if options.Logger != nil {
+			options.Logger.Warn("cache initialization failed; continuing without cache", "error", err)
+		}
+		cacheStore = cache.Degraded(options.Logger, err.Error())
+	}
 	server, err := mcpserver.New(mcpserver.Options{
 		Version:         build.Version,
 		SchemaVersion:   build.SchemaVersion,
 		SchemaDirectory: schemaDirectory(options.Config.Cache.Directory),
+		CacheStatus:     cacheStore.Status(),
 		Config:          options.Config,
 		Executor:        executor,
 		Logger:          options.Logger,
@@ -69,10 +84,14 @@ func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 		Handlers:        options.Handlers,
 	})
 	if err != nil {
+		if cacheStore != nil {
+			_ = cacheStore.Close()
+		}
 		return nil, fmt.Errorf("construct MCP server: %w", err)
 	}
 	return &Runtime{
 		server:   server,
+		cache:    cacheStore,
 		executor: executor,
 	}, nil
 }
@@ -87,6 +106,11 @@ func schemaDirectory(cacheDirectory string) string {
 // Executor returns the bounded upstream dependency used by runtime commands.
 func (runtime *Runtime) Executor() stratz.Executor {
 	return runtime.executor
+}
+
+// Cache returns the process cache backend state.
+func (runtime *Runtime) Cache() *cache.Store {
+	return runtime.cache
 }
 
 // Server returns the configured MCP adapter.

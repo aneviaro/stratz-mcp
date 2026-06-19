@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
@@ -27,6 +28,7 @@ func TestDiagnoseReportsReachabilitySchemaCacheAndClearance(t *testing.T) {
 	cfg.Cache.Enabled = false
 	report := Diagnose(context.Background(), Options{
 		Config:        cfg,
+		Cache:         nil,
 		Executor:      diagnosticExecutor{response: &stratz.Response{}},
 		SchemaVersion: "sha256:fixture",
 	})
@@ -54,6 +56,7 @@ func TestDiagnoseDistinguishesAuthenticationAndWAF(t *testing.T) {
 			cfg.Cache.Enabled = false
 			report := Diagnose(context.Background(), Options{
 				Config: cfg,
+				Cache:  nil,
 				Executor: diagnosticExecutor{err: &stratz.Error{
 					Code:    test.code,
 					Message: "safe",
@@ -66,6 +69,35 @@ func TestDiagnoseDistinguishesAuthenticationAndWAF(t *testing.T) {
 			assertFinding(t, report, test.want, SeverityError)
 		})
 	}
+}
+
+func TestDiagnoseReportsHealthyAndDegradedCacheStates(t *testing.T) {
+	cfg := config.Defaults(t.TempDir())
+	cfg.Cache.Enabled = true
+
+	healthyCache, err := cache.Open(cache.Options{
+		Config:   cfg.Cache,
+		Features: cfg.Features,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer healthyCache.Close()
+	healthy := Diagnose(context.Background(), Options{
+		Config:        cfg,
+		Cache:         healthyCache,
+		Executor:      diagnosticExecutor{response: &stratz.Response{}},
+		SchemaVersion: "sha256:fixture",
+	})
+	assertFinding(t, healthy, "cache_healthy", SeverityInfo)
+
+	degraded := Diagnose(context.Background(), Options{
+		Config:        cfg,
+		Cache:         cache.Degraded(nil, "fixture"),
+		Executor:      diagnosticExecutor{response: &stratz.Response{}},
+		SchemaVersion: "sha256:fixture",
+	})
+	assertFinding(t, degraded, "cache_degraded", SeverityWarning)
 }
 
 func assertFinding(t *testing.T, report Report, code string, severity Severity) {
