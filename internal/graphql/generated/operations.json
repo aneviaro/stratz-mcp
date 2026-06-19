@@ -1,6 +1,26 @@
 {
   "operations": [
     {
+      "operationName": "StratzGetConstants",
+      "query": "\nquery StratzGetConstants {\n\tconstants {\n\t\theroes {\n\t\t\tid\n\t\t\tname\n\t\t\tlocalizedName\n\t\t\tprimaryAttribute\n\t\t\tattackType\n\t\t\troles\n\t\t}\n\t\titems {\n\t\t\t... ConstantFields\n\t\t}\n\t\tabilities {\n\t\t\t... ConstantFields\n\t\t}\n\t\tgameModes {\n\t\t\t... ConstantFields\n\t\t}\n\t\tregions {\n\t\t\t... ConstantFields\n\t\t}\n\t\tranks {\n\t\t\t... ConstantFields\n\t\t}\n\t}\n}\nfragment ConstantFields on ConstantType {\n\tid\n\tname\n\tlocalizedName\n\tmetadata {\n\t\tkey\n\t\tvalue\n\t}\n}\n",
+      "sourceLocation": "internal/graphql/operations/hero_constants.graphql"
+    },
+    {
+      "operationName": "StratzGetHeroStatsDay",
+      "query": "\nquery StratzGetHeroStatsDay ($request: HeroStatsRequestType!) {\n\theroStats(request: $request) {\n\t\t... HeroStatsFields\n\t}\n}\nfragment HeroStatsFields on HeroStatsType {\n\theroId\n\tmatchCount\n\tpickCount\n\twinCount\n\tbanCount\n\tpopulationMatchCount\n\trankDataAvailable\n\troles {\n\t\tname\n\t\tmatchCount\n\t\tpickCount\n\t\twinCount\n\t\tpopulationMatchCount\n\t}\n\tlanes {\n\t\tname\n\t\tmatchCount\n\t\tpickCount\n\t\twinCount\n\t\tpopulationMatchCount\n\t}\n\tmatchups {\n\t\theroId\n\t\tmatchCount\n\t\twinCount\n\t\texpectedWinRate\n\t}\n\tsynergies {\n\t\theroId\n\t\tmatchCount\n\t\twinCount\n\t\texpectedWinRate\n\t}\n}\n",
+      "sourceLocation": "internal/graphql/operations/hero_constants.graphql"
+    },
+    {
+      "operationName": "StratzGetHeroStatsMonth",
+      "query": "\nquery StratzGetHeroStatsMonth ($request: HeroStatsRequestType!) {\n\theroStats(request: $request) {\n\t\t... HeroStatsFields\n\t}\n}\nfragment HeroStatsFields on HeroStatsType {\n\theroId\n\tmatchCount\n\tpickCount\n\twinCount\n\tbanCount\n\tpopulationMatchCount\n\trankDataAvailable\n\troles {\n\t\tname\n\t\tmatchCount\n\t\tpickCount\n\t\twinCount\n\t\tpopulationMatchCount\n\t}\n\tlanes {\n\t\tname\n\t\tmatchCount\n\t\tpickCount\n\t\twinCount\n\t\tpopulationMatchCount\n\t}\n\tmatchups {\n\t\theroId\n\t\tmatchCount\n\t\twinCount\n\t\texpectedWinRate\n\t}\n\tsynergies {\n\t\theroId\n\t\tmatchCount\n\t\twinCount\n\t\texpectedWinRate\n\t}\n}\n",
+      "sourceLocation": "internal/graphql/operations/hero_constants.graphql"
+    },
+    {
+      "operationName": "StratzGetHeroStatsWeek",
+      "query": "\nquery StratzGetHeroStatsWeek ($request: HeroStatsRequestType!) {\n\theroStats(request: $request) {\n\t\t... HeroStatsFields\n\t}\n}\nfragment HeroStatsFields on HeroStatsType {\n\theroId\n\tmatchCount\n\tpickCount\n\twinCount\n\tbanCount\n\tpopulationMatchCount\n\trankDataAvailable\n\troles {\n\t\tname\n\t\tmatchCount\n\t\tpickCount\n\t\twinCount\n\t\tpopulationMatchCount\n\t}\n\tlanes {\n\t\tname\n\t\tmatchCount\n\t\tpickCount\n\t\twinCount\n\t\tpopulationMatchCount\n\t}\n\tmatchups {\n\t\theroId\n\t\tmatchCount\n\t\twinCount\n\t\texpectedWinRate\n\t}\n\tsynergies {\n\t\theroId\n\t\tmatchCount\n\t\twinCount\n\t\texpectedWinRate\n\t}\n}\n",
+      "sourceLocation": "internal/graphql/operations/hero_constants.graphql"
+    },
+    {
       "operationName": "StratzGetMatchFull",
       "query": "\nquery StratzGetMatchFull ($id: Long!) {\n\tmatch(id: $id) {\n\t\t... MatchFullFields\n\t}\n}\nfragment MatchFullFields on MatchType {\n\t... MatchStandardFields\n\tfights {\n\t\tstartTime\n\t\tendTime\n\t\tradiantKills\n\t\tdireKills\n\t\tradiantNetworthDelta\n\t\tparticipants {\n\t\t\tsteamAccountId\n\t\t\theroId\n\t\t\tisRadiant\n\t\t\tkills\n\t\t\tdeaths\n\t\t}\n\t}\n\teconomy {\n\t\ttime\n\t\tradiantNetworth\n\t\tdireNetworth\n\t\tradiantExperience\n\t\tdireExperience\n\t}\n}\nfragment MatchStandardFields on MatchType {\n\t... MatchSummaryFields\n\tplayers {\n\t\t... MatchPlayerFields\n\t}\n\tobjectives {\n\t\ttime\n\t\ttype\n\t\tisRadiant\n\t\tsteamAccountId\n\t\theroId\n\t\tvalue\n\t}\n\ttimeline {\n\t\ttime\n\t\ttype\n\t\tisRadiant\n\t\tsteamAccountId\n\t\theroId\n\t\tvalue\n\t}\n}\nfragment MatchSummaryFields on MatchType {\n\tid\n\tstartDateTime\n\tdurationSeconds\n\tdidRadiantWin\n\tradiantKills\n\tdireKills\n\tgameModeId\n\tlobbyTypeId\n\tregionId\n\tleagueId\n\tgameVersionId\n\tparsedDateTime\n\tstatsDateTime\n}\nfragment MatchPlayerFields on MatchPlayerType {\n\tsteamAccountId\n\theroId\n\tisRadiant\n\tplayerSlot\n\tkills\n\tdeaths\n\tassists\n\tnetworth\n\tlevel\n}\n",
       "sourceLocation": "internal/graphql/operations/match.graphql"

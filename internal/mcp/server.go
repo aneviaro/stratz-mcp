@@ -11,6 +11,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
+	"github.com/aneviaro/stratz-mcp/internal/domain/heroconstants"
 	"github.com/aneviaro/stratz-mcp/internal/domain/playermatch"
 	rawgraphql "github.com/aneviaro/stratz-mcp/internal/graphql"
 	graphqlpolicy "github.com/aneviaro/stratz-mcp/internal/graphql/policy"
@@ -96,6 +97,15 @@ func New(options Options) (*Server, error) {
 		}
 		registerPlayerMatchHandlers(handlers, options, playerMatchService)
 	}
+	heroConstantsService, err := heroconstants.New(heroconstants.Options{
+		Executor:            options.Executor,
+		MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
+		Now:                 options.Now,
+	})
+	if err != nil {
+		return nil, err
+	}
+	registerHeroConstantsHandlers(handlers, options, heroConstantsService)
 	handlers["stratz_server_info"] = serverInfoHandler(options)
 
 	server := sdk.NewServer(

@@ -178,12 +178,12 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 
 - Add cached hero lookup indexes, ambiguity handling, hero batches, constants retrieval, statistics bucket translation, denominator calculation, matchup/synergy mapping, and unsupported filter handling.
 
-- [ ] Author and generate constants and hero-statistics operations.
-- [ ] Build deterministic hero ID, localized-name, and slug indexes.
-- [ ] Implement singular and batch hero resolution with ambiguity errors.
-- [ ] Implement each constants type and explicit combined retrieval.
-- [ ] Translate requested ranges into bounded statistics buckets.
-- [ ] Normalize rates, breakdowns, matchups, synergies, warnings, and provenance.
+- [x] Author and generate constants and hero-statistics operations.
+- [x] Build deterministic hero ID, localized-name, and slug indexes.
+- [x] Implement singular and batch hero resolution with ambiguity errors.
+- [x] Implement each constants type and explicit combined retrieval.
+- [x] Translate requested ranges into bounded statistics buckets.
+- [x] Normalize rates, breakdowns, matchups, synergies, warnings, and provenance.
 
 **Verification:** Tests cover ID/name/slug lookup, ambiguous suggestions, duplicate batches, each constants type, explicit `all`, effective date ranges, patch incompatibilities, rate calculations, and absent rank redistribution data.
 

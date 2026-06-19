@@ -9,6 +9,231 @@ import (
 	"github.com/Khan/genqlient/graphql"
 )
 
+// ConstantFields includes the GraphQL fields of ConstantType requested by the fragment ConstantFields.
+type ConstantFields struct {
+	Id            string                                       `json:"id"`
+	Name          string                                       `json:"name"`
+	LocalizedName *string                                      `json:"localizedName"`
+	Metadata      []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
+}
+
+// GetId returns ConstantFields.Id, and is useful for accessing the field via an interface.
+func (v *ConstantFields) GetId() string { return v.Id }
+
+// GetName returns ConstantFields.Name, and is useful for accessing the field via an interface.
+func (v *ConstantFields) GetName() string { return v.Name }
+
+// GetLocalizedName returns ConstantFields.LocalizedName, and is useful for accessing the field via an interface.
+func (v *ConstantFields) GetLocalizedName() *string { return v.LocalizedName }
+
+// GetMetadata returns ConstantFields.Metadata, and is useful for accessing the field via an interface.
+func (v *ConstantFields) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
+	return v.Metadata
+}
+
+// ConstantFieldsMetadataConstantMetadataType includes the requested fields of the GraphQL type ConstantMetadataType.
+type ConstantFieldsMetadataConstantMetadataType struct {
+	Key   string  `json:"key"`
+	Value *string `json:"value"`
+}
+
+// GetKey returns ConstantFieldsMetadataConstantMetadataType.Key, and is useful for accessing the field via an interface.
+func (v *ConstantFieldsMetadataConstantMetadataType) GetKey() string { return v.Key }
+
+// GetValue returns ConstantFieldsMetadataConstantMetadataType.Value, and is useful for accessing the field via an interface.
+func (v *ConstantFieldsMetadataConstantMetadataType) GetValue() *string { return v.Value }
+
+// HeroStatsFields includes the GraphQL fields of HeroStatsType requested by the fragment HeroStatsFields.
+type HeroStatsFields struct {
+	HeroId               int                                             `json:"heroId"`
+	MatchCount           int                                             `json:"matchCount"`
+	PickCount            int                                             `json:"pickCount"`
+	WinCount             int                                             `json:"winCount"`
+	BanCount             int                                             `json:"banCount"`
+	PopulationMatchCount int                                             `json:"populationMatchCount"`
+	RankDataAvailable    *bool                                           `json:"rankDataAvailable"`
+	Roles                []HeroStatsFieldsRolesHeroStatsBreakdownType    `json:"roles"`
+	Lanes                []HeroStatsFieldsLanesHeroStatsBreakdownType    `json:"lanes"`
+	Matchups             []HeroStatsFieldsMatchupsHeroStatsRelationType  `json:"matchups"`
+	Synergies            []HeroStatsFieldsSynergiesHeroStatsRelationType `json:"synergies"`
+}
+
+// GetHeroId returns HeroStatsFields.HeroId, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetHeroId() int { return v.HeroId }
+
+// GetMatchCount returns HeroStatsFields.MatchCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetMatchCount() int { return v.MatchCount }
+
+// GetPickCount returns HeroStatsFields.PickCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetPickCount() int { return v.PickCount }
+
+// GetWinCount returns HeroStatsFields.WinCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetWinCount() int { return v.WinCount }
+
+// GetBanCount returns HeroStatsFields.BanCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetBanCount() int { return v.BanCount }
+
+// GetPopulationMatchCount returns HeroStatsFields.PopulationMatchCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetPopulationMatchCount() int { return v.PopulationMatchCount }
+
+// GetRankDataAvailable returns HeroStatsFields.RankDataAvailable, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetRankDataAvailable() *bool { return v.RankDataAvailable }
+
+// GetRoles returns HeroStatsFields.Roles, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetRoles() []HeroStatsFieldsRolesHeroStatsBreakdownType { return v.Roles }
+
+// GetLanes returns HeroStatsFields.Lanes, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetLanes() []HeroStatsFieldsLanesHeroStatsBreakdownType { return v.Lanes }
+
+// GetMatchups returns HeroStatsFields.Matchups, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetMatchups() []HeroStatsFieldsMatchupsHeroStatsRelationType {
+	return v.Matchups
+}
+
+// GetSynergies returns HeroStatsFields.Synergies, and is useful for accessing the field via an interface.
+func (v *HeroStatsFields) GetSynergies() []HeroStatsFieldsSynergiesHeroStatsRelationType {
+	return v.Synergies
+}
+
+// HeroStatsFieldsLanesHeroStatsBreakdownType includes the requested fields of the GraphQL type HeroStatsBreakdownType.
+type HeroStatsFieldsLanesHeroStatsBreakdownType struct {
+	Name                 string `json:"name"`
+	MatchCount           int    `json:"matchCount"`
+	PickCount            int    `json:"pickCount"`
+	WinCount             int    `json:"winCount"`
+	PopulationMatchCount int    `json:"populationMatchCount"`
+}
+
+// GetName returns HeroStatsFieldsLanesHeroStatsBreakdownType.Name, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsLanesHeroStatsBreakdownType) GetName() string { return v.Name }
+
+// GetMatchCount returns HeroStatsFieldsLanesHeroStatsBreakdownType.MatchCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsLanesHeroStatsBreakdownType) GetMatchCount() int { return v.MatchCount }
+
+// GetPickCount returns HeroStatsFieldsLanesHeroStatsBreakdownType.PickCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsLanesHeroStatsBreakdownType) GetPickCount() int { return v.PickCount }
+
+// GetWinCount returns HeroStatsFieldsLanesHeroStatsBreakdownType.WinCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsLanesHeroStatsBreakdownType) GetWinCount() int { return v.WinCount }
+
+// GetPopulationMatchCount returns HeroStatsFieldsLanesHeroStatsBreakdownType.PopulationMatchCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsLanesHeroStatsBreakdownType) GetPopulationMatchCount() int {
+	return v.PopulationMatchCount
+}
+
+// HeroStatsFieldsMatchupsHeroStatsRelationType includes the requested fields of the GraphQL type HeroStatsRelationType.
+type HeroStatsFieldsMatchupsHeroStatsRelationType struct {
+	HeroId          int      `json:"heroId"`
+	MatchCount      int      `json:"matchCount"`
+	WinCount        int      `json:"winCount"`
+	ExpectedWinRate *float64 `json:"expectedWinRate"`
+}
+
+// GetHeroId returns HeroStatsFieldsMatchupsHeroStatsRelationType.HeroId, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsMatchupsHeroStatsRelationType) GetHeroId() int { return v.HeroId }
+
+// GetMatchCount returns HeroStatsFieldsMatchupsHeroStatsRelationType.MatchCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsMatchupsHeroStatsRelationType) GetMatchCount() int { return v.MatchCount }
+
+// GetWinCount returns HeroStatsFieldsMatchupsHeroStatsRelationType.WinCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsMatchupsHeroStatsRelationType) GetWinCount() int { return v.WinCount }
+
+// GetExpectedWinRate returns HeroStatsFieldsMatchupsHeroStatsRelationType.ExpectedWinRate, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsMatchupsHeroStatsRelationType) GetExpectedWinRate() *float64 {
+	return v.ExpectedWinRate
+}
+
+// HeroStatsFieldsRolesHeroStatsBreakdownType includes the requested fields of the GraphQL type HeroStatsBreakdownType.
+type HeroStatsFieldsRolesHeroStatsBreakdownType struct {
+	Name                 string `json:"name"`
+	MatchCount           int    `json:"matchCount"`
+	PickCount            int    `json:"pickCount"`
+	WinCount             int    `json:"winCount"`
+	PopulationMatchCount int    `json:"populationMatchCount"`
+}
+
+// GetName returns HeroStatsFieldsRolesHeroStatsBreakdownType.Name, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsRolesHeroStatsBreakdownType) GetName() string { return v.Name }
+
+// GetMatchCount returns HeroStatsFieldsRolesHeroStatsBreakdownType.MatchCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsRolesHeroStatsBreakdownType) GetMatchCount() int { return v.MatchCount }
+
+// GetPickCount returns HeroStatsFieldsRolesHeroStatsBreakdownType.PickCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsRolesHeroStatsBreakdownType) GetPickCount() int { return v.PickCount }
+
+// GetWinCount returns HeroStatsFieldsRolesHeroStatsBreakdownType.WinCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsRolesHeroStatsBreakdownType) GetWinCount() int { return v.WinCount }
+
+// GetPopulationMatchCount returns HeroStatsFieldsRolesHeroStatsBreakdownType.PopulationMatchCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsRolesHeroStatsBreakdownType) GetPopulationMatchCount() int {
+	return v.PopulationMatchCount
+}
+
+// HeroStatsFieldsSynergiesHeroStatsRelationType includes the requested fields of the GraphQL type HeroStatsRelationType.
+type HeroStatsFieldsSynergiesHeroStatsRelationType struct {
+	HeroId          int      `json:"heroId"`
+	MatchCount      int      `json:"matchCount"`
+	WinCount        int      `json:"winCount"`
+	ExpectedWinRate *float64 `json:"expectedWinRate"`
+}
+
+// GetHeroId returns HeroStatsFieldsSynergiesHeroStatsRelationType.HeroId, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsSynergiesHeroStatsRelationType) GetHeroId() int { return v.HeroId }
+
+// GetMatchCount returns HeroStatsFieldsSynergiesHeroStatsRelationType.MatchCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsSynergiesHeroStatsRelationType) GetMatchCount() int { return v.MatchCount }
+
+// GetWinCount returns HeroStatsFieldsSynergiesHeroStatsRelationType.WinCount, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsSynergiesHeroStatsRelationType) GetWinCount() int { return v.WinCount }
+
+// GetExpectedWinRate returns HeroStatsFieldsSynergiesHeroStatsRelationType.ExpectedWinRate, and is useful for accessing the field via an interface.
+func (v *HeroStatsFieldsSynergiesHeroStatsRelationType) GetExpectedWinRate() *float64 {
+	return v.ExpectedWinRate
+}
+
+type HeroStatsRequestType struct {
+	HeroId           int     `json:"heroId"`
+	Bucket           string  `json:"bucket"`
+	StartDateTime    int64   `json:"startDateTime"`
+	EndDateTime      int64   `json:"endDateTime"`
+	GameVersionId    *string `json:"gameVersionId"`
+	RankBracket      *string `json:"rankBracket"`
+	Role             *string `json:"role"`
+	Lane             *string `json:"lane"`
+	IncludeMatchups  bool    `json:"includeMatchups"`
+	IncludeSynergies bool    `json:"includeSynergies"`
+}
+
+// GetHeroId returns HeroStatsRequestType.HeroId, and is useful for accessing the field via an interface.
+func (v *HeroStatsRequestType) GetHeroId() int { return v.HeroId }
+
+// GetBucket returns HeroStatsRequestType.Bucket, and is useful for accessing the field via an interface.
+func (v *HeroStatsRequestType) GetBucket() string { return v.Bucket }
+
+// GetStartDateTime returns HeroStatsRequestType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *HeroStatsRequestType) GetStartDateTime() int64 { return v.StartDateTime }
+
+// GetEndDateTime returns HeroStatsRequestType.EndDateTime, and is useful for accessing the field via an interface.
+func (v *HeroStatsRequestType) GetEndDateTime() int64 { return v.EndDateTime }
+
+// GetGameVersionId returns HeroStatsRequestType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *HeroStatsRequestType) GetGameVersionId() *string { return v.GameVersionId }
+
+// GetRankBracket returns HeroStatsRequestType.RankBracket, and is useful for accessing the field via an interface.
+func (v *HeroStatsRequestType) GetRankBracket() *string { return v.RankBracket }
+
+// GetRole returns HeroStatsRequestType.Role, and is useful for accessing the field via an interface.
+func (v *HeroStatsRequestType) GetRole() *string { return v.Role }
+
+// GetLane returns HeroStatsRequestType.Lane, and is useful for accessing the field via an interface.
+func (v *HeroStatsRequestType) GetLane() *string { return v.Lane }
+
+// GetIncludeMatchups returns HeroStatsRequestType.IncludeMatchups, and is useful for accessing the field via an interface.
+func (v *HeroStatsRequestType) GetIncludeMatchups() bool { return v.IncludeMatchups }
+
+// GetIncludeSynergies returns HeroStatsRequestType.IncludeSynergies, and is useful for accessing the field via an interface.
+func (v *HeroStatsRequestType) GetIncludeSynergies() bool { return v.IncludeSynergies }
+
 // MatchFullFields includes the GraphQL fields of MatchType requested by the fragment MatchFullFields.
 type MatchFullFields struct {
 	MatchStandardFields `json:"-"`
@@ -820,6 +1045,916 @@ func (v *PlayerMatchesRequestType) GetTake() int { return v.Take }
 
 // GetSkip returns PlayerMatchesRequestType.Skip, and is useful for accessing the field via an interface.
 func (v *PlayerMatchesRequestType) GetSkip() int { return v.Skip }
+
+// StratzGetConstantsConstantsConstantsType includes the requested fields of the GraphQL type ConstantsType.
+type StratzGetConstantsConstantsConstantsType struct {
+	Heroes    []StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType `json:"heroes"`
+	Items     []StratzGetConstantsConstantsConstantsTypeItemsConstantType      `json:"items"`
+	Abilities []StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType  `json:"abilities"`
+	GameModes []StratzGetConstantsConstantsConstantsTypeGameModesConstantType  `json:"gameModes"`
+	Regions   []StratzGetConstantsConstantsConstantsTypeRegionsConstantType    `json:"regions"`
+	Ranks     []StratzGetConstantsConstantsConstantsTypeRanksConstantType      `json:"ranks"`
+}
+
+// GetHeroes returns StratzGetConstantsConstantsConstantsType.Heroes, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsType) GetHeroes() []StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType {
+	return v.Heroes
+}
+
+// GetItems returns StratzGetConstantsConstantsConstantsType.Items, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsType) GetItems() []StratzGetConstantsConstantsConstantsTypeItemsConstantType {
+	return v.Items
+}
+
+// GetAbilities returns StratzGetConstantsConstantsConstantsType.Abilities, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsType) GetAbilities() []StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType {
+	return v.Abilities
+}
+
+// GetGameModes returns StratzGetConstantsConstantsConstantsType.GameModes, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsType) GetGameModes() []StratzGetConstantsConstantsConstantsTypeGameModesConstantType {
+	return v.GameModes
+}
+
+// GetRegions returns StratzGetConstantsConstantsConstantsType.Regions, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsType) GetRegions() []StratzGetConstantsConstantsConstantsTypeRegionsConstantType {
+	return v.Regions
+}
+
+// GetRanks returns StratzGetConstantsConstantsConstantsType.Ranks, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsType) GetRanks() []StratzGetConstantsConstantsConstantsTypeRanksConstantType {
+	return v.Ranks
+}
+
+// StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType includes the requested fields of the GraphQL type ConstantType.
+type StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType struct {
+	ConstantFields `json:"-"`
+}
+
+// GetId returns StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) GetId() string {
+	return v.ConstantFields.Id
+}
+
+// GetName returns StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) GetName() string {
+	return v.ConstantFields.Name
+}
+
+// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType.LocalizedName, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) GetLocalizedName() *string {
+	return v.ConstantFields.LocalizedName
+}
+
+// GetMetadata returns StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType.Metadata, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
+	return v.ConstantFields.Metadata
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.ConstantFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetConstantsConstantsConstantsTypeAbilitiesConstantType struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	LocalizedName *string `json:"localizedName"`
+
+	Metadata []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) __premarshalJSON() (*__premarshalStratzGetConstantsConstantsConstantsTypeAbilitiesConstantType, error) {
+	var retval __premarshalStratzGetConstantsConstantsConstantsTypeAbilitiesConstantType
+
+	retval.Id = v.ConstantFields.Id
+	retval.Name = v.ConstantFields.Name
+	retval.LocalizedName = v.ConstantFields.LocalizedName
+	retval.Metadata = v.ConstantFields.Metadata
+	return &retval, nil
+}
+
+// StratzGetConstantsConstantsConstantsTypeGameModesConstantType includes the requested fields of the GraphQL type ConstantType.
+type StratzGetConstantsConstantsConstantsTypeGameModesConstantType struct {
+	ConstantFields `json:"-"`
+}
+
+// GetId returns StratzGetConstantsConstantsConstantsTypeGameModesConstantType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) GetId() string {
+	return v.ConstantFields.Id
+}
+
+// GetName returns StratzGetConstantsConstantsConstantsTypeGameModesConstantType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) GetName() string {
+	return v.ConstantFields.Name
+}
+
+// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeGameModesConstantType.LocalizedName, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) GetLocalizedName() *string {
+	return v.ConstantFields.LocalizedName
+}
+
+// GetMetadata returns StratzGetConstantsConstantsConstantsTypeGameModesConstantType.Metadata, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
+	return v.ConstantFields.Metadata
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetConstantsConstantsConstantsTypeGameModesConstantType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetConstantsConstantsConstantsTypeGameModesConstantType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.ConstantFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetConstantsConstantsConstantsTypeGameModesConstantType struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	LocalizedName *string `json:"localizedName"`
+
+	Metadata []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) __premarshalJSON() (*__premarshalStratzGetConstantsConstantsConstantsTypeGameModesConstantType, error) {
+	var retval __premarshalStratzGetConstantsConstantsConstantsTypeGameModesConstantType
+
+	retval.Id = v.ConstantFields.Id
+	retval.Name = v.ConstantFields.Name
+	retval.LocalizedName = v.ConstantFields.LocalizedName
+	retval.Metadata = v.ConstantFields.Metadata
+	return &retval, nil
+}
+
+// StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType includes the requested fields of the GraphQL type HeroConstantType.
+type StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType struct {
+	Id               int      `json:"id"`
+	Name             string   `json:"name"`
+	LocalizedName    *string  `json:"localizedName"`
+	PrimaryAttribute *string  `json:"primaryAttribute"`
+	AttackType       *string  `json:"attackType"`
+	Roles            []string `json:"roles"`
+}
+
+// GetId returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetId() int { return v.Id }
+
+// GetName returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetName() string {
+	return v.Name
+}
+
+// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.LocalizedName, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetLocalizedName() *string {
+	return v.LocalizedName
+}
+
+// GetPrimaryAttribute returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.PrimaryAttribute, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetPrimaryAttribute() *string {
+	return v.PrimaryAttribute
+}
+
+// GetAttackType returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.AttackType, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetAttackType() *string {
+	return v.AttackType
+}
+
+// GetRoles returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.Roles, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetRoles() []string {
+	return v.Roles
+}
+
+// StratzGetConstantsConstantsConstantsTypeItemsConstantType includes the requested fields of the GraphQL type ConstantType.
+type StratzGetConstantsConstantsConstantsTypeItemsConstantType struct {
+	ConstantFields `json:"-"`
+}
+
+// GetId returns StratzGetConstantsConstantsConstantsTypeItemsConstantType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) GetId() string {
+	return v.ConstantFields.Id
+}
+
+// GetName returns StratzGetConstantsConstantsConstantsTypeItemsConstantType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) GetName() string {
+	return v.ConstantFields.Name
+}
+
+// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeItemsConstantType.LocalizedName, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) GetLocalizedName() *string {
+	return v.ConstantFields.LocalizedName
+}
+
+// GetMetadata returns StratzGetConstantsConstantsConstantsTypeItemsConstantType.Metadata, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
+	return v.ConstantFields.Metadata
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetConstantsConstantsConstantsTypeItemsConstantType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetConstantsConstantsConstantsTypeItemsConstantType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.ConstantFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetConstantsConstantsConstantsTypeItemsConstantType struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	LocalizedName *string `json:"localizedName"`
+
+	Metadata []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) __premarshalJSON() (*__premarshalStratzGetConstantsConstantsConstantsTypeItemsConstantType, error) {
+	var retval __premarshalStratzGetConstantsConstantsConstantsTypeItemsConstantType
+
+	retval.Id = v.ConstantFields.Id
+	retval.Name = v.ConstantFields.Name
+	retval.LocalizedName = v.ConstantFields.LocalizedName
+	retval.Metadata = v.ConstantFields.Metadata
+	return &retval, nil
+}
+
+// StratzGetConstantsConstantsConstantsTypeRanksConstantType includes the requested fields of the GraphQL type ConstantType.
+type StratzGetConstantsConstantsConstantsTypeRanksConstantType struct {
+	ConstantFields `json:"-"`
+}
+
+// GetId returns StratzGetConstantsConstantsConstantsTypeRanksConstantType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) GetId() string {
+	return v.ConstantFields.Id
+}
+
+// GetName returns StratzGetConstantsConstantsConstantsTypeRanksConstantType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) GetName() string {
+	return v.ConstantFields.Name
+}
+
+// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeRanksConstantType.LocalizedName, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) GetLocalizedName() *string {
+	return v.ConstantFields.LocalizedName
+}
+
+// GetMetadata returns StratzGetConstantsConstantsConstantsTypeRanksConstantType.Metadata, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
+	return v.ConstantFields.Metadata
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetConstantsConstantsConstantsTypeRanksConstantType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetConstantsConstantsConstantsTypeRanksConstantType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.ConstantFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetConstantsConstantsConstantsTypeRanksConstantType struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	LocalizedName *string `json:"localizedName"`
+
+	Metadata []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) __premarshalJSON() (*__premarshalStratzGetConstantsConstantsConstantsTypeRanksConstantType, error) {
+	var retval __premarshalStratzGetConstantsConstantsConstantsTypeRanksConstantType
+
+	retval.Id = v.ConstantFields.Id
+	retval.Name = v.ConstantFields.Name
+	retval.LocalizedName = v.ConstantFields.LocalizedName
+	retval.Metadata = v.ConstantFields.Metadata
+	return &retval, nil
+}
+
+// StratzGetConstantsConstantsConstantsTypeRegionsConstantType includes the requested fields of the GraphQL type ConstantType.
+type StratzGetConstantsConstantsConstantsTypeRegionsConstantType struct {
+	ConstantFields `json:"-"`
+}
+
+// GetId returns StratzGetConstantsConstantsConstantsTypeRegionsConstantType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) GetId() string {
+	return v.ConstantFields.Id
+}
+
+// GetName returns StratzGetConstantsConstantsConstantsTypeRegionsConstantType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) GetName() string {
+	return v.ConstantFields.Name
+}
+
+// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeRegionsConstantType.LocalizedName, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) GetLocalizedName() *string {
+	return v.ConstantFields.LocalizedName
+}
+
+// GetMetadata returns StratzGetConstantsConstantsConstantsTypeRegionsConstantType.Metadata, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
+	return v.ConstantFields.Metadata
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetConstantsConstantsConstantsTypeRegionsConstantType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetConstantsConstantsConstantsTypeRegionsConstantType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.ConstantFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetConstantsConstantsConstantsTypeRegionsConstantType struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	LocalizedName *string `json:"localizedName"`
+
+	Metadata []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) __premarshalJSON() (*__premarshalStratzGetConstantsConstantsConstantsTypeRegionsConstantType, error) {
+	var retval __premarshalStratzGetConstantsConstantsConstantsTypeRegionsConstantType
+
+	retval.Id = v.ConstantFields.Id
+	retval.Name = v.ConstantFields.Name
+	retval.LocalizedName = v.ConstantFields.LocalizedName
+	retval.Metadata = v.ConstantFields.Metadata
+	return &retval, nil
+}
+
+// StratzGetConstantsResponse is returned by StratzGetConstants on success.
+type StratzGetConstantsResponse struct {
+	Constants StratzGetConstantsConstantsConstantsType `json:"constants"`
+}
+
+// GetConstants returns StratzGetConstantsResponse.Constants, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsResponse) GetConstants() StratzGetConstantsConstantsConstantsType {
+	return v.Constants
+}
+
+// StratzGetHeroStatsDayHeroStatsHeroStatsType includes the requested fields of the GraphQL type HeroStatsType.
+type StratzGetHeroStatsDayHeroStatsHeroStatsType struct {
+	HeroStatsFields `json:"-"`
+}
+
+// GetHeroId returns StratzGetHeroStatsDayHeroStatsHeroStatsType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetHeroId() int {
+	return v.HeroStatsFields.HeroId
+}
+
+// GetMatchCount returns StratzGetHeroStatsDayHeroStatsHeroStatsType.MatchCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetMatchCount() int {
+	return v.HeroStatsFields.MatchCount
+}
+
+// GetPickCount returns StratzGetHeroStatsDayHeroStatsHeroStatsType.PickCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetPickCount() int {
+	return v.HeroStatsFields.PickCount
+}
+
+// GetWinCount returns StratzGetHeroStatsDayHeroStatsHeroStatsType.WinCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetWinCount() int {
+	return v.HeroStatsFields.WinCount
+}
+
+// GetBanCount returns StratzGetHeroStatsDayHeroStatsHeroStatsType.BanCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetBanCount() int {
+	return v.HeroStatsFields.BanCount
+}
+
+// GetPopulationMatchCount returns StratzGetHeroStatsDayHeroStatsHeroStatsType.PopulationMatchCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetPopulationMatchCount() int {
+	return v.HeroStatsFields.PopulationMatchCount
+}
+
+// GetRankDataAvailable returns StratzGetHeroStatsDayHeroStatsHeroStatsType.RankDataAvailable, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetRankDataAvailable() *bool {
+	return v.HeroStatsFields.RankDataAvailable
+}
+
+// GetRoles returns StratzGetHeroStatsDayHeroStatsHeroStatsType.Roles, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetRoles() []HeroStatsFieldsRolesHeroStatsBreakdownType {
+	return v.HeroStatsFields.Roles
+}
+
+// GetLanes returns StratzGetHeroStatsDayHeroStatsHeroStatsType.Lanes, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetLanes() []HeroStatsFieldsLanesHeroStatsBreakdownType {
+	return v.HeroStatsFields.Lanes
+}
+
+// GetMatchups returns StratzGetHeroStatsDayHeroStatsHeroStatsType.Matchups, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetMatchups() []HeroStatsFieldsMatchupsHeroStatsRelationType {
+	return v.HeroStatsFields.Matchups
+}
+
+// GetSynergies returns StratzGetHeroStatsDayHeroStatsHeroStatsType.Synergies, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetSynergies() []HeroStatsFieldsSynergiesHeroStatsRelationType {
+	return v.HeroStatsFields.Synergies
+}
+
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetHeroStatsDayHeroStatsHeroStatsType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetHeroStatsDayHeroStatsHeroStatsType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.HeroStatsFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetHeroStatsDayHeroStatsHeroStatsType struct {
+	HeroId int `json:"heroId"`
+
+	MatchCount int `json:"matchCount"`
+
+	PickCount int `json:"pickCount"`
+
+	WinCount int `json:"winCount"`
+
+	BanCount int `json:"banCount"`
+
+	PopulationMatchCount int `json:"populationMatchCount"`
+
+	RankDataAvailable *bool `json:"rankDataAvailable"`
+
+	Roles []HeroStatsFieldsRolesHeroStatsBreakdownType `json:"roles"`
+
+	Lanes []HeroStatsFieldsLanesHeroStatsBreakdownType `json:"lanes"`
+
+	Matchups []HeroStatsFieldsMatchupsHeroStatsRelationType `json:"matchups"`
+
+	Synergies []HeroStatsFieldsSynergiesHeroStatsRelationType `json:"synergies"`
+}
+
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) __premarshalJSON() (*__premarshalStratzGetHeroStatsDayHeroStatsHeroStatsType, error) {
+	var retval __premarshalStratzGetHeroStatsDayHeroStatsHeroStatsType
+
+	retval.HeroId = v.HeroStatsFields.HeroId
+	retval.MatchCount = v.HeroStatsFields.MatchCount
+	retval.PickCount = v.HeroStatsFields.PickCount
+	retval.WinCount = v.HeroStatsFields.WinCount
+	retval.BanCount = v.HeroStatsFields.BanCount
+	retval.PopulationMatchCount = v.HeroStatsFields.PopulationMatchCount
+	retval.RankDataAvailable = v.HeroStatsFields.RankDataAvailable
+	retval.Roles = v.HeroStatsFields.Roles
+	retval.Lanes = v.HeroStatsFields.Lanes
+	retval.Matchups = v.HeroStatsFields.Matchups
+	retval.Synergies = v.HeroStatsFields.Synergies
+	return &retval, nil
+}
+
+// StratzGetHeroStatsDayResponse is returned by StratzGetHeroStatsDay on success.
+type StratzGetHeroStatsDayResponse struct {
+	HeroStats *StratzGetHeroStatsDayHeroStatsHeroStatsType `json:"heroStats"`
+}
+
+// GetHeroStats returns StratzGetHeroStatsDayResponse.HeroStats, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayResponse) GetHeroStats() *StratzGetHeroStatsDayHeroStatsHeroStatsType {
+	return v.HeroStats
+}
+
+// StratzGetHeroStatsMonthHeroStatsHeroStatsType includes the requested fields of the GraphQL type HeroStatsType.
+type StratzGetHeroStatsMonthHeroStatsHeroStatsType struct {
+	HeroStatsFields `json:"-"`
+}
+
+// GetHeroId returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetHeroId() int {
+	return v.HeroStatsFields.HeroId
+}
+
+// GetMatchCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.MatchCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetMatchCount() int {
+	return v.HeroStatsFields.MatchCount
+}
+
+// GetPickCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.PickCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetPickCount() int {
+	return v.HeroStatsFields.PickCount
+}
+
+// GetWinCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.WinCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetWinCount() int {
+	return v.HeroStatsFields.WinCount
+}
+
+// GetBanCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.BanCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetBanCount() int {
+	return v.HeroStatsFields.BanCount
+}
+
+// GetPopulationMatchCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.PopulationMatchCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetPopulationMatchCount() int {
+	return v.HeroStatsFields.PopulationMatchCount
+}
+
+// GetRankDataAvailable returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.RankDataAvailable, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetRankDataAvailable() *bool {
+	return v.HeroStatsFields.RankDataAvailable
+}
+
+// GetRoles returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.Roles, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetRoles() []HeroStatsFieldsRolesHeroStatsBreakdownType {
+	return v.HeroStatsFields.Roles
+}
+
+// GetLanes returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.Lanes, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetLanes() []HeroStatsFieldsLanesHeroStatsBreakdownType {
+	return v.HeroStatsFields.Lanes
+}
+
+// GetMatchups returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.Matchups, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetMatchups() []HeroStatsFieldsMatchupsHeroStatsRelationType {
+	return v.HeroStatsFields.Matchups
+}
+
+// GetSynergies returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.Synergies, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetSynergies() []HeroStatsFieldsSynergiesHeroStatsRelationType {
+	return v.HeroStatsFields.Synergies
+}
+
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetHeroStatsMonthHeroStatsHeroStatsType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetHeroStatsMonthHeroStatsHeroStatsType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.HeroStatsFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetHeroStatsMonthHeroStatsHeroStatsType struct {
+	HeroId int `json:"heroId"`
+
+	MatchCount int `json:"matchCount"`
+
+	PickCount int `json:"pickCount"`
+
+	WinCount int `json:"winCount"`
+
+	BanCount int `json:"banCount"`
+
+	PopulationMatchCount int `json:"populationMatchCount"`
+
+	RankDataAvailable *bool `json:"rankDataAvailable"`
+
+	Roles []HeroStatsFieldsRolesHeroStatsBreakdownType `json:"roles"`
+
+	Lanes []HeroStatsFieldsLanesHeroStatsBreakdownType `json:"lanes"`
+
+	Matchups []HeroStatsFieldsMatchupsHeroStatsRelationType `json:"matchups"`
+
+	Synergies []HeroStatsFieldsSynergiesHeroStatsRelationType `json:"synergies"`
+}
+
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) __premarshalJSON() (*__premarshalStratzGetHeroStatsMonthHeroStatsHeroStatsType, error) {
+	var retval __premarshalStratzGetHeroStatsMonthHeroStatsHeroStatsType
+
+	retval.HeroId = v.HeroStatsFields.HeroId
+	retval.MatchCount = v.HeroStatsFields.MatchCount
+	retval.PickCount = v.HeroStatsFields.PickCount
+	retval.WinCount = v.HeroStatsFields.WinCount
+	retval.BanCount = v.HeroStatsFields.BanCount
+	retval.PopulationMatchCount = v.HeroStatsFields.PopulationMatchCount
+	retval.RankDataAvailable = v.HeroStatsFields.RankDataAvailable
+	retval.Roles = v.HeroStatsFields.Roles
+	retval.Lanes = v.HeroStatsFields.Lanes
+	retval.Matchups = v.HeroStatsFields.Matchups
+	retval.Synergies = v.HeroStatsFields.Synergies
+	return &retval, nil
+}
+
+// StratzGetHeroStatsMonthResponse is returned by StratzGetHeroStatsMonth on success.
+type StratzGetHeroStatsMonthResponse struct {
+	HeroStats *StratzGetHeroStatsMonthHeroStatsHeroStatsType `json:"heroStats"`
+}
+
+// GetHeroStats returns StratzGetHeroStatsMonthResponse.HeroStats, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthResponse) GetHeroStats() *StratzGetHeroStatsMonthHeroStatsHeroStatsType {
+	return v.HeroStats
+}
+
+// StratzGetHeroStatsWeekHeroStatsHeroStatsType includes the requested fields of the GraphQL type HeroStatsType.
+type StratzGetHeroStatsWeekHeroStatsHeroStatsType struct {
+	HeroStatsFields `json:"-"`
+}
+
+// GetHeroId returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetHeroId() int {
+	return v.HeroStatsFields.HeroId
+}
+
+// GetMatchCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.MatchCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetMatchCount() int {
+	return v.HeroStatsFields.MatchCount
+}
+
+// GetPickCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.PickCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetPickCount() int {
+	return v.HeroStatsFields.PickCount
+}
+
+// GetWinCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.WinCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetWinCount() int {
+	return v.HeroStatsFields.WinCount
+}
+
+// GetBanCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.BanCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetBanCount() int {
+	return v.HeroStatsFields.BanCount
+}
+
+// GetPopulationMatchCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.PopulationMatchCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetPopulationMatchCount() int {
+	return v.HeroStatsFields.PopulationMatchCount
+}
+
+// GetRankDataAvailable returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.RankDataAvailable, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetRankDataAvailable() *bool {
+	return v.HeroStatsFields.RankDataAvailable
+}
+
+// GetRoles returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.Roles, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetRoles() []HeroStatsFieldsRolesHeroStatsBreakdownType {
+	return v.HeroStatsFields.Roles
+}
+
+// GetLanes returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.Lanes, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetLanes() []HeroStatsFieldsLanesHeroStatsBreakdownType {
+	return v.HeroStatsFields.Lanes
+}
+
+// GetMatchups returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.Matchups, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetMatchups() []HeroStatsFieldsMatchupsHeroStatsRelationType {
+	return v.HeroStatsFields.Matchups
+}
+
+// GetSynergies returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.Synergies, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetSynergies() []HeroStatsFieldsSynergiesHeroStatsRelationType {
+	return v.HeroStatsFields.Synergies
+}
+
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetHeroStatsWeekHeroStatsHeroStatsType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetHeroStatsWeekHeroStatsHeroStatsType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.HeroStatsFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetHeroStatsWeekHeroStatsHeroStatsType struct {
+	HeroId int `json:"heroId"`
+
+	MatchCount int `json:"matchCount"`
+
+	PickCount int `json:"pickCount"`
+
+	WinCount int `json:"winCount"`
+
+	BanCount int `json:"banCount"`
+
+	PopulationMatchCount int `json:"populationMatchCount"`
+
+	RankDataAvailable *bool `json:"rankDataAvailable"`
+
+	Roles []HeroStatsFieldsRolesHeroStatsBreakdownType `json:"roles"`
+
+	Lanes []HeroStatsFieldsLanesHeroStatsBreakdownType `json:"lanes"`
+
+	Matchups []HeroStatsFieldsMatchupsHeroStatsRelationType `json:"matchups"`
+
+	Synergies []HeroStatsFieldsSynergiesHeroStatsRelationType `json:"synergies"`
+}
+
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) __premarshalJSON() (*__premarshalStratzGetHeroStatsWeekHeroStatsHeroStatsType, error) {
+	var retval __premarshalStratzGetHeroStatsWeekHeroStatsHeroStatsType
+
+	retval.HeroId = v.HeroStatsFields.HeroId
+	retval.MatchCount = v.HeroStatsFields.MatchCount
+	retval.PickCount = v.HeroStatsFields.PickCount
+	retval.WinCount = v.HeroStatsFields.WinCount
+	retval.BanCount = v.HeroStatsFields.BanCount
+	retval.PopulationMatchCount = v.HeroStatsFields.PopulationMatchCount
+	retval.RankDataAvailable = v.HeroStatsFields.RankDataAvailable
+	retval.Roles = v.HeroStatsFields.Roles
+	retval.Lanes = v.HeroStatsFields.Lanes
+	retval.Matchups = v.HeroStatsFields.Matchups
+	retval.Synergies = v.HeroStatsFields.Synergies
+	return &retval, nil
+}
+
+// StratzGetHeroStatsWeekResponse is returned by StratzGetHeroStatsWeek on success.
+type StratzGetHeroStatsWeekResponse struct {
+	HeroStats *StratzGetHeroStatsWeekHeroStatsHeroStatsType `json:"heroStats"`
+}
+
+// GetHeroStats returns StratzGetHeroStatsWeekResponse.HeroStats, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekResponse) GetHeroStats() *StratzGetHeroStatsWeekHeroStatsHeroStatsType {
+	return v.HeroStats
+}
 
 // StratzGetMatchFullMatchMatchType includes the requested fields of the GraphQL type MatchType.
 type StratzGetMatchFullMatchMatchType struct {
@@ -2551,6 +3686,30 @@ type StratzSchemaProbeResponse struct {
 // GetTypename returns StratzSchemaProbeResponse.Typename, and is useful for accessing the field via an interface.
 func (v *StratzSchemaProbeResponse) GetTypename() *string { return v.Typename }
 
+// __StratzGetHeroStatsDayInput is used internally by genqlient
+type __StratzGetHeroStatsDayInput struct {
+	Request HeroStatsRequestType `json:"request"`
+}
+
+// GetRequest returns __StratzGetHeroStatsDayInput.Request, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsDayInput) GetRequest() HeroStatsRequestType { return v.Request }
+
+// __StratzGetHeroStatsMonthInput is used internally by genqlient
+type __StratzGetHeroStatsMonthInput struct {
+	Request HeroStatsRequestType `json:"request"`
+}
+
+// GetRequest returns __StratzGetHeroStatsMonthInput.Request, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsMonthInput) GetRequest() HeroStatsRequestType { return v.Request }
+
+// __StratzGetHeroStatsWeekInput is used internally by genqlient
+type __StratzGetHeroStatsWeekInput struct {
+	Request HeroStatsRequestType `json:"request"`
+}
+
+// GetRequest returns __StratzGetHeroStatsWeekInput.Request, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsWeekInput) GetRequest() HeroStatsRequestType { return v.Request }
+
 // __StratzGetMatchFullInput is used internally by genqlient
 type __StratzGetMatchFullInput struct {
 	Id int64 `json:"id"`
@@ -2626,6 +3785,274 @@ func (v *__StratzListPlayerMatchesInput) GetSteamAccountId() int64 { return v.St
 
 // GetRequest returns __StratzListPlayerMatchesInput.Request, and is useful for accessing the field via an interface.
 func (v *__StratzListPlayerMatchesInput) GetRequest() PlayerMatchesRequestType { return v.Request }
+
+// The query executed by StratzGetConstants.
+const StratzGetConstants_Operation = `
+query StratzGetConstants {
+	constants {
+		heroes {
+			id
+			name
+			localizedName
+			primaryAttribute
+			attackType
+			roles
+		}
+		items {
+			... ConstantFields
+		}
+		abilities {
+			... ConstantFields
+		}
+		gameModes {
+			... ConstantFields
+		}
+		regions {
+			... ConstantFields
+		}
+		ranks {
+			... ConstantFields
+		}
+	}
+}
+fragment ConstantFields on ConstantType {
+	id
+	name
+	localizedName
+	metadata {
+		key
+		value
+	}
+}
+`
+
+func StratzGetConstants(
+	ctx_ context.Context,
+	client_ graphql.Client,
+) (data_ *StratzGetConstantsResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzGetConstants",
+		Query:  StratzGetConstants_Operation,
+	}
+
+	data_ = &StratzGetConstantsResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzGetHeroStatsDay.
+const StratzGetHeroStatsDay_Operation = `
+query StratzGetHeroStatsDay ($request: HeroStatsRequestType!) {
+	heroStats(request: $request) {
+		... HeroStatsFields
+	}
+}
+fragment HeroStatsFields on HeroStatsType {
+	heroId
+	matchCount
+	pickCount
+	winCount
+	banCount
+	populationMatchCount
+	rankDataAvailable
+	roles {
+		name
+		matchCount
+		pickCount
+		winCount
+		populationMatchCount
+	}
+	lanes {
+		name
+		matchCount
+		pickCount
+		winCount
+		populationMatchCount
+	}
+	matchups {
+		heroId
+		matchCount
+		winCount
+		expectedWinRate
+	}
+	synergies {
+		heroId
+		matchCount
+		winCount
+		expectedWinRate
+	}
+}
+`
+
+func StratzGetHeroStatsDay(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	request HeroStatsRequestType,
+) (data_ *StratzGetHeroStatsDayResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzGetHeroStatsDay",
+		Query:  StratzGetHeroStatsDay_Operation,
+		Variables: &__StratzGetHeroStatsDayInput{
+			Request: request,
+		},
+	}
+
+	data_ = &StratzGetHeroStatsDayResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzGetHeroStatsMonth.
+const StratzGetHeroStatsMonth_Operation = `
+query StratzGetHeroStatsMonth ($request: HeroStatsRequestType!) {
+	heroStats(request: $request) {
+		... HeroStatsFields
+	}
+}
+fragment HeroStatsFields on HeroStatsType {
+	heroId
+	matchCount
+	pickCount
+	winCount
+	banCount
+	populationMatchCount
+	rankDataAvailable
+	roles {
+		name
+		matchCount
+		pickCount
+		winCount
+		populationMatchCount
+	}
+	lanes {
+		name
+		matchCount
+		pickCount
+		winCount
+		populationMatchCount
+	}
+	matchups {
+		heroId
+		matchCount
+		winCount
+		expectedWinRate
+	}
+	synergies {
+		heroId
+		matchCount
+		winCount
+		expectedWinRate
+	}
+}
+`
+
+func StratzGetHeroStatsMonth(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	request HeroStatsRequestType,
+) (data_ *StratzGetHeroStatsMonthResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzGetHeroStatsMonth",
+		Query:  StratzGetHeroStatsMonth_Operation,
+		Variables: &__StratzGetHeroStatsMonthInput{
+			Request: request,
+		},
+	}
+
+	data_ = &StratzGetHeroStatsMonthResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzGetHeroStatsWeek.
+const StratzGetHeroStatsWeek_Operation = `
+query StratzGetHeroStatsWeek ($request: HeroStatsRequestType!) {
+	heroStats(request: $request) {
+		... HeroStatsFields
+	}
+}
+fragment HeroStatsFields on HeroStatsType {
+	heroId
+	matchCount
+	pickCount
+	winCount
+	banCount
+	populationMatchCount
+	rankDataAvailable
+	roles {
+		name
+		matchCount
+		pickCount
+		winCount
+		populationMatchCount
+	}
+	lanes {
+		name
+		matchCount
+		pickCount
+		winCount
+		populationMatchCount
+	}
+	matchups {
+		heroId
+		matchCount
+		winCount
+		expectedWinRate
+	}
+	synergies {
+		heroId
+		matchCount
+		winCount
+		expectedWinRate
+	}
+}
+`
+
+func StratzGetHeroStatsWeek(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	request HeroStatsRequestType,
+) (data_ *StratzGetHeroStatsWeekResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzGetHeroStatsWeek",
+		Query:  StratzGetHeroStatsWeek_Operation,
+		Variables: &__StratzGetHeroStatsWeekInput{
+			Request: request,
+		},
+	}
+
+	data_ = &StratzGetHeroStatsWeekResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
 
 // The query executed by StratzGetMatchFull.
 const StratzGetMatchFull_Operation = `
