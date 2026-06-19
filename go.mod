@@ -9,6 +9,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/vektah/gqlparser/v2 v2.5.34
 	go.yaml.in/yaml/v3 v3.0.4
+	golang.org/x/sys v0.42.0
 	modernc.org/sqlite v1.52.0
 )
 
