@@ -137,12 +137,12 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 
 - Add canonical filter hashing, HKDF/HMAC cursor signing, token/tool/version binding, expiry classes, bounded scan continuation, deduplication, ordering reconstruction, cancellation, and atomic batch errors.
 
-- [ ] Define and canonically encode the versioned cursor payload.
-- [ ] Derive cursor signing keys and implement authenticated encoding.
-- [ ] Validate expiry, tool, filters, token namespace, schema, and operation versions.
-- [ ] Implement reusable bounded client-side scan continuation.
-- [ ] Implement batch validation, deduplication, cancellation, and reconstruction.
-- [ ] Track and enforce the shared upstream request budget.
+- [x] Define and canonically encode the versioned cursor payload.
+- [x] Derive cursor signing keys and implement authenticated encoding.
+- [x] Validate expiry, tool, filters, token namespace, schema, and operation versions.
+- [x] Implement reusable bounded client-side scan continuation.
+- [x] Implement batch validation, deduplication, cancellation, and reconstruction.
+- [x] Track and enforce the shared upstream request budget.
 
 **Verification:** Tests cover tampering, wrong filters/tools/tokens, rotation, expiry, restart stability, duplicate inputs, first-failure cancellation, exact ordering, and the five-request ceiling for 25-item batches.
 
