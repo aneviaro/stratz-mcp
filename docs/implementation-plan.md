@@ -124,12 +124,12 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 
 - Add authenticated deterministic `schema pull`, schema hashing, domain subset generation, local-only generated artifacts before redistribution clearance, and all required schema/constants resource handlers.
 
-- [ ] Implement authenticated introspection through the production HTTP contract.
-- [ ] Normalize and serialize schema snapshots deterministically.
-- [ ] Generate schema hashes, domain subsets, and validation metadata.
-- [ ] Configure and generate curated operations with `genqlient`.
-- [ ] Register all required schema and constants resource URIs.
-- [ ] Add safeguards against publishing restricted generated data.
+- [x] Implement authenticated introspection through the production HTTP contract.
+- [x] Normalize and serialize schema snapshots deterministically.
+- [x] Generate schema hashes, domain subsets, and validation metadata.
+- [x] Configure and generate curated operations with `genqlient`.
+- [x] Register all required schema and constants resource URIs.
+- [x] Add safeguards against publishing restricted generated data.
 
 **Verification:** Fixture-based schema pulls are deterministic. Generated operations compile. Resource lists and reads match expected URIs. CI detects schema drift and accidentally committed restricted upstream artifacts.
 

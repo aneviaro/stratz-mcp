@@ -8,12 +8,15 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
+	resourcecatalog "github.com/aneviaro/stratz-mcp/internal/resources"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 	sdk "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -45,12 +48,27 @@ func testServer(t *testing.T, logger *slog.Logger) *Server {
 	t.Helper()
 	cfg := config.Defaults(t.TempDir())
 	cfg.Cache.Enabled = false
+	schemaDirectory := t.TempDir()
+	for _, definition := range resourcecatalog.Definitions() {
+		path := filepath.Join(schemaDirectory, filepath.FromSlash(definition.Path))
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		content := []byte("{}\n")
+		if definition.MIMEType == "application/graphql" {
+			content = []byte("type Query { fixture: Boolean }\n")
+		}
+		if err := os.WriteFile(path, content, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	server, err := New(Options{
-		Version:       "v1.2.3",
-		SchemaVersion: "sha256:fixture",
-		Config:        cfg,
-		Executor:      serverExecutor{},
-		Logger:        logger,
+		Version:         "v1.2.3",
+		SchemaVersion:   "sha256:fixture",
+		SchemaDirectory: schemaDirectory,
+		Config:          cfg,
+		Executor:        serverExecutor{},
+		Logger:          logger,
 		Now: func() time.Time {
 			return time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
 		},
@@ -105,12 +123,35 @@ func TestSDKConformance(t *testing.T) {
 		assertToolSchema(t, tool.Name, contracts.OutputSchema, tool.OutputSchema)
 	}
 
-	resources, err := clientSession.ListResources(ctx, nil)
+	listedResources, err := clientSession.ListResources(ctx, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(resources.Resources) != 0 {
-		t.Fatalf("resources = %#v, want empty static list", resources.Resources)
+	if len(listedResources.Resources) != len(resourcecatalog.Definitions()) {
+		t.Fatalf(
+			"resource count = %d, want %d",
+			len(listedResources.Resources),
+			len(resourcecatalog.Definitions()),
+		)
+	}
+	uris := make(map[string]struct{}, len(listedResources.Resources))
+	for _, resource := range listedResources.Resources {
+		uris[resource.URI] = struct{}{}
+	}
+	for _, definition := range resourcecatalog.Definitions() {
+		if _, ok := uris[definition.URI]; !ok {
+			t.Errorf("resource URI %q is not registered", definition.URI)
+		}
+	}
+	readResource, err := clientSession.ReadResource(ctx, &sdk.ReadResourceParams{
+		URI: "stratz://schema/full",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(readResource.Contents) != 1 ||
+		readResource.Contents[0].Text != "type Query { fixture: Boolean }\n" {
+		t.Fatalf("read resource = %#v", readResource)
 	}
 	prompts, err := clientSession.ListPrompts(ctx, nil)
 	if err != nil {

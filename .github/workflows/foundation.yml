@@ -35,6 +35,8 @@ jobs:
         run: go test ./...
       - name: Verify generated contracts
         run: make check-generated
+      - name: Reject restricted upstream artifacts
+        run: make check-restricted
       - name: Verify build metadata
         run: ./scripts/verify-build-info.sh
 

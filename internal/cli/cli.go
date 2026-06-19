@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/doctor"
 	"github.com/aneviaro/stratz-mcp/internal/observability"
+	schemalifecycle "github.com/aneviaro/stratz-mcp/internal/schema"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
@@ -136,13 +138,69 @@ func RunWithDependencies(
 		}
 		logger.Error("MCP server stopped", "error", err)
 		return 1
-	case "schema", "cache":
+	case "schema":
+		if len(commandArgs) != 2 || commandArgs[1] != "pull" {
+			fmt.Fprintln(stderr, "stratz-mcp: usage: stratz-mcp schema pull")
+			return 2
+		}
+		return runSchemaPull(options, dependencies, stdout, stderr, info)
+	case "cache":
 		fmt.Fprintf(stderr, "stratz-mcp: command %q is not implemented yet\n", strings.Join(commandArgs, " "))
 		return 2
 	default:
 		fmt.Fprintf(stderr, "stratz-mcp: unknown command %q\n\n%s", commandArgs[0], usage)
 		return 2
 	}
+}
+
+func runSchemaPull(
+	options config.CLIOptions,
+	dependencies Dependencies,
+	stdout, stderr io.Writer,
+	info app.BuildInfo,
+) int {
+	loaded, credential, ok := loadRuntime(options, dependencies, stderr)
+	if !ok {
+		return 2
+	}
+	if strings.TrimSpace(loaded.Config.Cache.Directory) == "" {
+		fmt.Fprintln(stderr, "stratz-mcp: schema pull requires a configured cache directory")
+		return 2
+	}
+	logger, err := observability.Logger(stderr, loaded.Config.Logging, credential.Token)
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: configure logging: %v\n", err)
+		return 2
+	}
+	runtime, err := app.NewRuntime(app.RuntimeOptions{
+		Build:      info,
+		Config:     loaded.Config,
+		Credential: credential,
+		Logger:     logger,
+		Executor:   dependencies.Executor,
+		Now:        dependencies.Now,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: runtime initialization error: %v\n", err)
+		return 2
+	}
+	directory := filepath.Join(loaded.Config.Cache.Directory, "schema")
+	manifest, err := schemalifecycle.Pull(
+		dependencies.Context,
+		runtime.Executor(),
+		directory,
+	)
+	if err != nil {
+		fmt.Fprintf(stderr, "stratz-mcp: schema pull failed: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(
+		stdout,
+		"schema: generated %s in %s (restricted local data; do not publish)\n",
+		manifest.SchemaHash,
+		directory,
+	)
+	return 0
 }
 
 func isHelp(argument string) bool {

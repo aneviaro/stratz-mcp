@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -58,13 +59,14 @@ func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 		executor = client
 	}
 	server, err := mcpserver.New(mcpserver.Options{
-		Version:       build.Version,
-		SchemaVersion: build.SchemaVersion,
-		Config:        options.Config,
-		Executor:      executor,
-		Logger:        options.Logger,
-		Now:           options.Now,
-		Handlers:      options.Handlers,
+		Version:         build.Version,
+		SchemaVersion:   build.SchemaVersion,
+		SchemaDirectory: schemaDirectory(options.Config.Cache.Directory),
+		Config:          options.Config,
+		Executor:        executor,
+		Logger:          options.Logger,
+		Now:             options.Now,
+		Handlers:        options.Handlers,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("construct MCP server: %w", err)
@@ -73,6 +75,13 @@ func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 		server:   server,
 		executor: executor,
 	}, nil
+}
+
+func schemaDirectory(cacheDirectory string) string {
+	if strings.TrimSpace(cacheDirectory) == "" {
+		return ""
+	}
+	return filepath.Join(cacheDirectory, "schema")
 }
 
 // Executor returns the bounded upstream dependency used by runtime commands.
