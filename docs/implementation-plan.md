@@ -22,105 +22,210 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
   - `log/slog`, strict YAML v3 decoding, and Zstandard compression.
 - Keep the production endpoint fixed; permit endpoint injection only through internal test constructors.
 
-## Implementation steps
+## Implementation tasks
 
-### 1. Close discovery and release-gate evidence
+### Task 1: Close discovery and release-gate evidence
 
 - Complete conservative fixtures or safe live probes for private profiles, partial GraphQL results, timeout, oversized response, and invalid credentials.
 - Record STRATZ permission decisions for API wrapping, caching, schema/constants redistribution, attribution, and branding.
 
+- [x] Run or fixture every remaining safe discovery probe.
+- [x] Record dated, redacted evidence and resulting error mappings.
+- [x] Document STRATZ permission decisions and source references.
+- [x] Add a machine-checkable release-clearance record.
+- [x] Add a test that blocks publishing while required clearance is missing.
+
 **Verification:** Every discovery-matrix row has dated evidence or an explicitly documented mock-based policy. A release-gate test fails unless all required clearance fields are approved.
 
-### 2. Establish project structure and dependency baseline
+### Task 2: Establish project structure and dependency baseline
 
 - Add the production command, recommended internal packages, pinned dependencies, generation entrypoints, and build-version injection.
 - Retain existing discovery commands as development utilities.
 
+- [ ] Create `cmd/stratz-mcp` and the approved internal package skeleton.
+- [ ] Pin the MCP, GraphQL, configuration, SQLite, and compression dependencies.
+- [ ] Add build-time version, revision, and schema-version injection.
+- [ ] Add generation commands and developer entrypoints.
+- [ ] Add the Go 1.25/1.26 test matrix and native cross-build matrix.
+
 **Verification:** `go mod verify`, `go vet ./...`, and `go test ./...` pass on Go 1.25 and 1.26. A minimal cross-compile succeeds for every native target.
 
-### 3. Generate the public contract
+### Task 3: Generate the public contract
 
 - Build a deterministic generator that validates and dereferences `tool-contracts.json`, then emits Go contract types, embedded schemas, validators, protocol fixtures, and reference documentation.
 - Reject unsupported schema constructs instead of weakening validation.
 
+- [ ] Parse and validate the contract registry and contract version.
+- [ ] Dereference shared definitions for every tool schema.
+- [ ] Generate Go request, response, and error types.
+- [ ] Generate embedded schemas, validators, examples, and protocol fixtures.
+- [ ] Add deterministic generation and stale-artifact CI checks.
+
 **Verification:** All 15 tools have Draft 2020-12 input/output schemas. Generated examples validate. `go generate ./...` produces no diff on a clean tree.
 
-### 4. Implement configuration, credentials, and safe logging
+### Task 4: Implement configuration, credentials, and safe logging
 
 - Add strict CLI/environment/YAML precedence, explicit dotenv loading, mutually exclusive secret sources, bounded token-file parsing, permission diagnostics, and centralized redaction.
 - Implement `version` and command help behavior.
 
+- [ ] Define strict configuration types, defaults, and validation.
+- [ ] Implement CLI, environment, explicit YAML, and explicit dotenv loading.
+- [ ] Implement mutually exclusive environment and file token sources.
+- [ ] Add token/config/cache permission checks for `doctor`.
+- [ ] Implement stderr logging with centralized secret and header redaction.
+- [ ] Implement root help and `version`.
+
 **Verification:** Table-driven tests cover precedence, unknown YAML keys, conflicting sources, symlinks, multiline/NUL/oversized tokens, absent credentials, and redaction of every sensitive header.
 
-### 5. Build the bounded STRATZ HTTP client
+### Task 5: Build the bounded STRATZ HTTP client
 
 - Implement fixed-endpoint POST requests, required headers, gzip streaming, redirect refusal, decompressed-size limits, cancellation, retries, WAF detection, rate-window parsing, and stable error mapping.
 - Enforce the five-round-trip budget per MCP call.
 
+- [ ] Define the request executor and injectable test transport.
+- [ ] Implement fixed endpoint, authentication, media types, user agent, and gzip.
+- [ ] Add bounded wire, decompressed, and error-body readers.
+- [ ] Implement WAF, HTTP, GraphQL, TLS, network, and timeout classification.
+- [ ] Parse sanitized multi-window rate-limit metadata.
+- [ ] Add bounded jittered retries and per-call request accounting.
+
 **Verification:** Mock-server tests cover every HTTP/network mapping, gzip bombs, malformed JSON, redirects, partial results, WAF HTML, retry timing, cancellation, and request-budget exhaustion without leaking response bodies or sensitive headers.
 
-### 6. Implement MCP lifecycle and wire behavior
+### Task 6: Implement MCP lifecycle and wire behavior
 
 - Register static tools, resources, and prompts over stdio using the official SDK.
 - Create one result encoder that emits authoritative `structuredContent`, its exact compact JSON text mirror, correct `outputSchema`, and execution-error `isError`.
 - Add `doctor` and `stratz_server_info`.
 
+- [ ] Create the application composition root and stdio server.
+- [ ] Register static capabilities and generated tool schemas.
+- [ ] Implement shared success and execution-error result encoding.
+- [ ] Implement protocol-safe stderr diagnostics and shutdown.
+- [ ] Implement `doctor` and `stratz_server_info`.
+- [ ] Add an SDK conformance and raw stdio protocol harness.
+
 **Verification:** Protocol tests negotiate `2025-11-25`, reject pre-initialization calls, keep stdout JSON-RPC-only, distinguish protocol and tool errors, and byte-compare the text mirror against compact `structuredContent`.
 
-### 7. Implement raw GraphQL policy and execution
+### Task 7: Implement raw GraphQL policy and execution
 
 - Parse and validate one query operation; expand fragments; enforce default-deny roots, introspection policy, variable limits, depth, aliases, field counts, list bounds, nested lists, complexity, request budget, and response size.
 - Preserve bounded upstream `data`, `errors`, and `extensions`; mark partial raw responses.
 
+- [ ] Parse documents and select exactly one named or unambiguous operation.
+- [ ] Expand fragments with cycle detection and worst-case directive charging.
+- [ ] Enforce operation, root-field, alias, introspection, and schema policies.
+- [ ] Enforce document, variable, list, depth, field, and complexity limits.
+- [ ] Implement canonical raw execution and bounded response preservation.
+- [ ] Add cacheability and sensitive-field policy hooks with caching disabled by default.
+
 **Verification:** Adversarial tests cover aliases, fragments, cycles, directives, denied/unknown roots, mutations, subscriptions, introspection, unbounded lists, variable-supplied limits, and every raw-query error code.
 
-### 8. Implement schema lifecycle and resources
+### Task 8: Implement schema lifecycle and resources
 
 - Add authenticated deterministic `schema pull`, schema hashing, domain subset generation, local-only generated artifacts before redistribution clearance, and all required schema/constants resource handlers.
 
+- [ ] Implement authenticated introspection through the production HTTP contract.
+- [ ] Normalize and serialize schema snapshots deterministically.
+- [ ] Generate schema hashes, domain subsets, and validation metadata.
+- [ ] Configure and generate curated operations with `genqlient`.
+- [ ] Register all required schema and constants resource URIs.
+- [ ] Add safeguards against publishing restricted generated data.
+
 **Verification:** Fixture-based schema pulls are deterministic. Generated operations compile. Resource lists and reads match expected URIs. CI detects schema drift and accidentally committed restricted upstream artifacts.
 
-### 9. Implement pagination and batch primitives
+### Task 9: Implement pagination and batch primitives
 
 - Add canonical filter hashing, HKDF/HMAC cursor signing, token/tool/version binding, expiry classes, bounded scan continuation, deduplication, ordering reconstruction, cancellation, and atomic batch errors.
 
+- [ ] Define and canonically encode the versioned cursor payload.
+- [ ] Derive cursor signing keys and implement authenticated encoding.
+- [ ] Validate expiry, tool, filters, token namespace, schema, and operation versions.
+- [ ] Implement reusable bounded client-side scan continuation.
+- [ ] Implement batch validation, deduplication, cancellation, and reconstruction.
+- [ ] Track and enforce the shared upstream request budget.
+
 **Verification:** Tests cover tampering, wrong filters/tools/tokens, rotation, expiry, restart stability, duplicate inputs, first-failure cancellation, exact ordering, and the five-request ceiling for 25-item batches.
 
-### 10. Implement SQLite caching
+### Task 10: Implement SQLite caching
 
 - Add migrations, WAL mode, busy timeout, token namespaces, cache classes, TTL/stale rules, asynchronous writes, Zstandard compression, LRU eviction, permissions, corruption fallback, and cache CLI commands.
 - Disable raw caching until field classifications are approved.
 
+- [ ] Define the cache schema, migrations, indexes, and format version.
+- [ ] Implement secure database creation, WAL mode, and busy timeout.
+- [ ] Implement canonical keys, token namespaces, and cache classifications.
+- [ ] Implement reads, fresh bypass, TTL, stale fallback, and asynchronous writes.
+- [ ] Add compression, access tracking, size accounting, and LRU eviction.
+- [ ] Implement `cache stats` and transactional `cache clear` variants.
+- [ ] Add process-level fallback when cache initialization or operation fails.
+
 **Verification:** Tests cover hit/miss/stale/fresh behavior, exclusions, namespace isolation, compression threshold, eviction, concurrent processes, lock/corruption fallback, permissions, symlink handling, statistics, and transactional clearing.
 
-### 11. Implement player and match domains
+### Task 11: Implement player and match domains
 
 - Add player identifier normalization, singular/list/batch player operations, match detail levels, normalized mappings, bounded minimum-duration scanning, and required `DATA_NOT_READY` context.
 
+- [ ] Implement account ID, SteamID64, and STRATZ profile URL normalization.
+- [ ] Author and generate player singular, list, and batch operations.
+- [ ] Author and generate match singular and batch operations by detail level.
+- [ ] Implement normalized player, match, player-event, and provenance mappings.
+- [ ] Implement bounded player-match filtering and cursor continuation.
+- [ ] Implement private, missing, partial, and `DATA_NOT_READY` error paths.
+
 **Verification:** Contract fixtures cover account ID, SteamID64, URLs, private/missing players, list continuation, batch atomicity, parsed/unparsed matches, detail-level field inclusion, partial upstream failures, and raw bypass behavior.
 
-### 12. Implement hero and constants domains
+### Task 12: Implement hero and constants domains
 
 - Add cached hero lookup indexes, ambiguity handling, hero batches, constants retrieval, statistics bucket translation, denominator calculation, matchup/synergy mapping, and unsupported filter handling.
 
+- [ ] Author and generate constants and hero-statistics operations.
+- [ ] Build deterministic hero ID, localized-name, and slug indexes.
+- [ ] Implement singular and batch hero resolution with ambiguity errors.
+- [ ] Implement each constants type and explicit combined retrieval.
+- [ ] Translate requested ranges into bounded statistics buckets.
+- [ ] Normalize rates, breakdowns, matchups, synergies, warnings, and provenance.
+
 **Verification:** Tests cover ID/name/slug lookup, ambiguous suggestions, duplicate batches, each constants type, explicit `all`, effective date ranges, patch incompatibilities, rate calculations, and absent rank redistribution data.
 
-### 13. Implement league and live-match domains
+### Task 13: Implement league and live-match domains
 
 - Add league retrieval/listing/matches, derived status, bounded text scans, live native filters, bounded client-side filters, and truthful incomplete-scan cursors.
 
+- [ ] Author and generate league singular, listing, and match operations.
+- [ ] Implement league normalization and deterministic status derivation.
+- [ ] Implement bounded league-name search and continuation.
+- [ ] Author and generate live-match operations with native filters and ordering.
+- [ ] Implement bounded team, player, mode, and spectator filtering.
+- [ ] Normalize incomplete scans without claiming snapshot completeness.
+
 **Verification:** Tests cover native and client-side filters, five-page exhaustion, continuation, derived statuses, changing live data, sort modes, and confirmation that unsupported region filtering is absent.
 
-### 14. Generate workflows, prompts, and portable skills
+### Task 14: Generate workflows, prompts, and portable skills
 
 - Define one canonical workflow source and generate the five MCP prompts plus five `SKILL.md` packages with Codex and Claude adapters.
 - Encode attribution, provenance, fact-versus-interpretation rules, and untrusted-content defenses.
 
+- [ ] Define the canonical workflow schema and five workflow definitions.
+- [ ] Generate and register MCP prompt templates and arguments.
+- [ ] Generate the five portable skill directories and `SKILL.md` files.
+- [ ] Add Codex and Claude installation guidance or adapters.
+- [ ] Add attribution, evidence, freshness, and insufficient-data rules.
+- [ ] Add untrusted-content and prompt-injection fixtures.
+
 **Verification:** Generation is reproducible. Skill validation passes. Injection fixtures cannot cause link following, secret disclosure, configuration changes, or unrelated tool calls.
 
-### 15. Complete packaging, CI, documentation, and release gates
+### Task 15: Complete packaging, CI, documentation, and release gates
 
 - Add Docker and native packaging, non-root/read-only runtime behavior, cache volume, pinned images/actions, security policy, dependency updates, license notices, scans, SBOMs, signatures, provenance, and complete user/developer documentation.
+
+- [ ] Add native release builds, archives, checksums, and version metadata.
+- [ ] Add the pinned multi-stage, multi-architecture, non-root Docker image.
+- [ ] Add format, vet, test, generation, vulnerability, license, and secret checks.
+- [ ] Generate notices, SPDX/CycloneDX SBOMs, signatures, and provenance.
+- [ ] Add `SECURITY.md`, dependency-update policy, and release procedures.
+- [ ] Complete installation, configuration, tool, resource, prompt, skill, cache, and troubleshooting documentation.
+- [ ] Execute and record native/Docker interoperability checks in Codex and Claude.
+- [ ] Require the STRATZ clearance gate before public publishing jobs run.
 
 **Verification:** Native and Docker stdio smoke tests pass in Codex and Claude. All target binaries and multi-architecture images build. Secret, vulnerability, and license scans pass. Artifacts include verifiable checksums, SBOMs, signatures, and attestations. Publishing remains disabled until the STRATZ clearance gate passes.
 

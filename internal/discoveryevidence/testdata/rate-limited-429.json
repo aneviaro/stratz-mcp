@@ -1,0 +1,11 @@
+{
+  "id": "rate_limited_429",
+  "kind": "http_response",
+  "http_status": 429,
+  "expected": {
+    "curated": "RATE_LIMITED",
+    "raw": "RATE_LIMITED",
+    "retryable": true
+  },
+  "notes": "Mock policy based on documented Kong Retry-After behavior; live quota exhaustion is prohibited."
+}

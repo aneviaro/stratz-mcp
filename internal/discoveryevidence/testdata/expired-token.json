@@ -1,0 +1,11 @@
+{
+  "id": "expired_token",
+  "kind": "credential_state",
+  "credential_state": "expired",
+  "expected": {
+    "curated": "AUTHENTICATION_FAILED",
+    "raw": "AUTHENTICATION_FAILED",
+    "retryable": false
+  },
+  "notes": "No correctly signed expired STRATZ credential is available; all invalid credential states fail closed."
+}

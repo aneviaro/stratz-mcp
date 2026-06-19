@@ -1,0 +1,11 @@
+{
+  "id": "client_timeout",
+  "kind": "transport_error",
+  "transport_error": "context_deadline_exceeded",
+  "expected": {
+    "curated": "UPSTREAM_TIMEOUT",
+    "raw": "UPSTREAM_TIMEOUT",
+    "retryable": true
+  },
+  "notes": "Deterministic cancellation policy fixture; no intentionally expensive live query is sent."
+}

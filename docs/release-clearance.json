@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-06-19",
+  "public_release": {
+    "allowed": false,
+    "reason": "Current STRATZ permission for API wrapping, caching, redistribution, attribution, and branding has not been obtained in sufficiently explicit terms."
+  },
+  "decisions": [
+    {
+      "id": "api_wrapping",
+      "required": true,
+      "status": "pending",
+      "reviewed_at": "2026-06-19",
+      "decision": "Local implementation and private testing may continue, but a downloadable general-purpose STRATZ MCP wrapper must not be publicly released until STRATZ confirms this use.",
+      "source_refs": [
+        "https://stratz.com/api",
+        "https://github.com/STRATZ-Esports/knowledge-base/issues/7"
+      ]
+    },
+    {
+      "id": "local_caching",
+      "required": true,
+      "status": "pending",
+      "reviewed_at": "2026-06-19",
+      "decision": "Persistent caching and stale serving may be implemented behind local-development safeguards, but public release remains blocked until retention and cache-use permission is explicit.",
+      "source_refs": [
+        "https://stratz.com/api",
+        "docs/stratz-integration-discovery.md#10-api-use-attribution-caching-and-redistribution"
+      ]
+    },
+    {
+      "id": "schema_redistribution",
+      "required": true,
+      "status": "pending",
+      "reviewed_at": "2026-06-19",
+      "decision": "Fetched GraphQL schema snapshots must remain local and must not be committed, packaged, or published.",
+      "source_refs": [
+        "https://stratz.com/api",
+        "https://github.com/STRATZ-Esports/knowledge-base/issues/7"
+      ]
+    },
+    {
+      "id": "constants_redistribution",
+      "required": true,
+      "status": "pending",
+      "reviewed_at": "2026-06-19",
+      "decision": "Fetched constants, badges, and other STRATZ-provided static data must remain local and must not be committed, packaged, or published.",
+      "source_refs": [
+        "https://github.com/STRATZ-Esports/knowledge-base/issues/31",
+        "docs/stratz-integration-discovery.md#10-api-use-attribution-caching-and-redistribution"
+      ]
+    },
+    {
+      "id": "attribution",
+      "required": true,
+      "status": "pending",
+      "reviewed_at": "2026-06-19",
+      "decision": "Apply the conservative interim attribution 'Data provided by STRATZ' linked to https://stratz.com, while treating exact current placement and referral requirements as unresolved.",
+      "source_refs": [
+        "https://github.com/STRATZ-Esports/knowledge-base/issues/31",
+        "https://github.com/STRATZ-Esports/knowledge-base/issues/37"
+      ]
+    },
+    {
+      "id": "branding",
+      "required": true,
+      "status": "pending",
+      "reviewed_at": "2026-06-19",
+      "decision": "Use no STRATZ logos or endorsement claims; identify the project as unofficial. Public naming and trademark usage require explicit confirmation before release.",
+      "source_refs": [
+        "https://stratz.com/api",
+        "docs/stratz-integration-discovery.md#10-api-use-attribution-caching-and-redistribution"
+      ]
+    }
+  ]
+}

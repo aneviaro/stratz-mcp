@@ -734,7 +734,7 @@ The YAML file may configure:
 
 The production endpoint is fixed at `https://api.stratz.com/graphql` and is not user-configurable. Tests may inject a mock endpoint through internal test-only wiring.
 
-Authentication headers, successful media types, rate-limit fields, compression, WAF behavior, and HTTP/error mappings are governed by [stratz-integration-discovery.md](./stratz-integration-discovery.md). The core authenticated HTTP contract was verified on June 18, 2026. Private-profile, runtime-partial, oversized-response, and deliberate-timeout edge probes remain open.
+Authentication headers, successful media types, rate-limit fields, compression, WAF behavior, and HTTP/error mappings are governed by [stratz-integration-discovery.md](./stratz-integration-discovery.md). The core authenticated HTTP contract was verified on June 18, 2026. Private-profile, runtime-partial, oversized-response, timeout, expired-token, and rate-limit edge behavior was closed with deterministic mock-policy fixtures on June 19, 2026; public release remains blocked on current STRATZ permission.
 
 ## 13. CLI
 
@@ -1308,7 +1308,7 @@ CI rejects stale generated outputs.
 ### Milestone 0 — Upstream, feasibility, and permission deliverables
 
 - Maintain the verified authenticated STRATZ request, media type, rate-limit, compression, error, and WAF contract.
-- Complete remaining private-profile, runtime-partial, oversized-response, timeout, and JWT-shaped invalid-token edge probes.
+- Maintain the June 18–19, 2026 live evidence and deterministic policy fixtures for private-profile, runtime-partial, oversized-response, timeout, rate-limit, and invalid-token edge behavior.
 - Obtain current STRATZ API-use, caching, redistribution, attribution, and branding clearance.
 - Validate [tool-contracts.json](./tool-contracts.json) against the discovered schema and revise infeasible fields explicitly.
 - Select an MCP Go SDK version proven to support MCP `2025-11-25`, `outputSchema`, `structuredContent`, and execution-error mapping.
@@ -1386,7 +1386,7 @@ The v1 system is ready for full implementation planning because these architectu
 9. Skills and prompts treat retrieved content as untrusted data and share canonical workflow definitions.
 10. Docker/native distribution and supply-chain controls are specified.
 
-Open upstream feasibility details, edge probes, and permission clearance are planned deliverables with acceptance tests. They do not prevent planning the milestones that implement or resolve them.
+Open upstream feasibility details and permission clearance are planned deliverables with acceptance tests. Edge-probe policy coverage is complete as of June 19, 2026. Remaining external clearance does not prevent planning or local implementation of downstream milestones.
 
 ### 25.2 Implementation verification criteria
 

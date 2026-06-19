@@ -1,0 +1,12 @@
+{
+  "id": "oversized_response",
+  "kind": "decoded_size_limit",
+  "http_status": 200,
+  "decoded_bytes": 5242881,
+  "expected": {
+    "curated": "RESPONSE_TOO_LARGE",
+    "raw": "RESPONSE_TOO_LARGE",
+    "retryable": false
+  },
+  "notes": "Generated-size policy fixture; no multi-megabyte upstream payload is committed."
+}

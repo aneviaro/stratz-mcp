@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-06-19",
+  "probes": [
+    {
+      "id": "minimal_named_query",
+      "purpose": "Verify authenticated GraphQL transport and bearer-token acceptance.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 200 over HTTP/2 with application/graphql-response+json and data.__typename=DotaQuery; credentials redacted.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "success",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "minimal_gzip",
+      "purpose": "Verify gzip response negotiation and decoding.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 200 with Content-Encoding gzip; 55 wire bytes decoded to the 35-byte successful JSON response.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "success",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "without_accept",
+      "purpose": "Determine whether Accept is operationally mandatory.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 200; Accept is optional, although production sends the preferred GraphQL and JSON media types.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "success",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "without_content_type",
+      "purpose": "Verify request media-type enforcement.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 400 GraphQL JSON with CSRF_PROTECTION.",
+      "mappings": [
+        {
+          "context": "project_generated_request",
+          "outcome": "error",
+          "mcp_error": "UPSTREAM_PROTOCOL_ERROR",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "without_user_agent",
+      "purpose": "Verify the non-empty user-agent requirement and WAF classification.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 403 Cloudflare managed HTML challenge with cf-mitigated=challenge.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "error",
+          "mcp_error": "UPSTREAM_WAF_BLOCKED",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "invalid_token_malformed",
+      "purpose": "Verify malformed bearer-token behavior without exposing a real credential.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "The literal invalid-discovery-token value produced HTTP 500 JSON with a generic message.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "error",
+          "mcp_error": "AUTHENTICATION_FAILED",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "invalid_token_signature_corrupted",
+      "purpose": "Verify a JWT-shaped credential with a deliberately corrupted signature.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 403 JSON with WWW-Authenticate Key realm=kong, matching the missing-token gateway response.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "error",
+          "mcp_error": "AUTHENTICATION_FAILED",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "missing_token",
+      "purpose": "Verify missing bearer-token behavior.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 403 JSON with WWW-Authenticate Key realm=kong.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "error",
+          "mcp_error": "AUTHENTICATION_FAILED",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "malformed_json",
+      "purpose": "Verify malformed JSON handling.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 400 GraphQL JSON with JSON_INVALID.",
+      "mappings": [
+        {
+          "context": "raw_user_input",
+          "outcome": "error",
+          "mcp_error": "INVALID_ARGUMENT",
+          "retryable": false
+        },
+        {
+          "context": "project_generated_request",
+          "outcome": "error",
+          "mcp_error": "UPSTREAM_PROTOCOL_ERROR",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "invalid_graphql_syntax",
+      "purpose": "Verify invalid GraphQL syntax handling.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 400 GraphQL JSON with SYNTAX_ERROR.",
+      "mappings": [
+        {
+          "context": "raw_user_input",
+          "outcome": "error",
+          "mcp_error": "INVALID_ARGUMENT",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "invalid_graphql_field",
+      "purpose": "Verify GraphQL validation-error handling.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 400 GraphQL JSON with FIELDS_ON_CORRECT_TYPE.",
+      "mappings": [
+        {
+          "context": "raw_user_input",
+          "outcome": "error",
+          "mcp_error": "INVALID_ARGUMENT",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "nullable_or_missing_data",
+      "purpose": "Define behavior for a GraphQL response containing both data and errors.",
+      "evidence_type": "mock_policy",
+      "observed_at": "2026-06-19",
+      "artifact": "internal/discoveryevidence/testdata/partial-result.json",
+      "summary": "Deterministic policy fixture preserves bounded partial data for raw calls and rejects partial normalized data for curated calls.",
+      "mappings": [
+        {
+          "context": "raw",
+          "outcome": "partial_success",
+          "retryable": false
+        },
+        {
+          "context": "curated",
+          "outcome": "error",
+          "mcp_error": "UPSTREAM_PARTIAL_ERROR",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "missing_match",
+      "purpose": "Verify a known absent entity with no GraphQL errors.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 200 with data.match=null and no errors.",
+      "mappings": [
+        {
+          "context": "raw",
+          "outcome": "success",
+          "retryable": false
+        },
+        {
+          "context": "curated",
+          "outcome": "error",
+          "mcp_error": "NOT_FOUND",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "private_profile",
+      "purpose": "Define fail-closed behavior for a private or inaccessible player without searching for a real private account.",
+      "evidence_type": "mock_policy",
+      "observed_at": "2026-06-19",
+      "artifact": "internal/discoveryevidence/testdata/private-profile.json",
+      "summary": "A project sentinel fixture maps verified private semantics to PRIVATE for curated tools and preserves the bounded upstream shape for raw calls.",
+      "mappings": [
+        {
+          "context": "raw",
+          "outcome": "partial_success",
+          "retryable": false
+        },
+        {
+          "context": "curated",
+          "outcome": "error",
+          "mcp_error": "PRIVATE",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "introspection",
+      "purpose": "Verify authenticated schema introspection availability.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "HTTP 200; query type and schema metadata were returned.",
+      "mappings": [
+        {
+          "context": "schema_pull",
+          "outcome": "success",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "rate_headers",
+      "purpose": "Verify repeated safe requests expose multiple simultaneous gateway windows.",
+      "evidence_type": "live",
+      "observed_at": "2026-06-18",
+      "summary": "Three below-quota requests returned second, minute, hour, and day limit and remaining headers plus aggregate RateLimit fields.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "success",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "near_limit",
+      "purpose": "Document policy for probing near a real quota boundary.",
+      "evidence_type": "documentary_policy",
+      "observed_at": "2026-06-19",
+      "summary": "Skipped by policy because spending quota solely to approach a limit is unnecessary and potentially abusive; bounded mock tests cover scheduling behavior.",
+      "mappings": [
+        {
+          "context": "discovery",
+          "outcome": "skipped_non_destructive_policy",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "oversized_response",
+      "purpose": "Define decompressed response-size enforcement without requesting a large live payload.",
+      "evidence_type": "mock_policy",
+      "observed_at": "2026-06-19",
+      "artifact": "internal/discoveryevidence/testdata/oversized-response.json",
+      "summary": "A generated 5 MiB plus one byte decoded-size fixture is rejected at the streaming boundary.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "error",
+          "mcp_error": "RESPONSE_TOO_LARGE",
+          "retryable": false
+        }
+      ]
+    },
+    {
+      "id": "client_timeout",
+      "purpose": "Define context deadline and cancellation behavior without sending an expensive live operation.",
+      "evidence_type": "mock_policy",
+      "observed_at": "2026-06-19",
+      "artifact": "internal/discoveryevidence/testdata/timeout.json",
+      "summary": "A deterministic context-deadline fixture maps to a bounded retryable timeout.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "error",
+          "mcp_error": "UPSTREAM_TIMEOUT",
+          "retryable": true
+        }
+      ]
+    },
+    {
+      "id": "rate_limited_429",
+      "purpose": "Define HTTP 429 behavior without exhausting a real STRATZ quota.",
+      "evidence_type": "mock_policy",
+      "observed_at": "2026-06-19",
+      "artifact": "internal/discoveryevidence/testdata/rate-limited-429.json",
+      "summary": "Mock HTTP 429 policy uses bounded retry behavior and the verified or documented reset time.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "error",
+          "mcp_error": "RATE_LIMITED",
+          "retryable": true
+        }
+      ]
+    },
+    {
+      "id": "expired_token",
+      "purpose": "Define behavior for an expired but otherwise correctly shaped credential.",
+      "evidence_type": "mock_policy",
+      "observed_at": "2026-06-19",
+      "artifact": "internal/discoveryevidence/testdata/expired-token.json",
+      "summary": "No correctly signed expired test credential is available; the credential state fails closed as authentication failure.",
+      "mappings": [
+        {
+          "context": "all",
+          "outcome": "error",
+          "mcp_error": "AUTHENTICATION_FAILED",
+          "retryable": false
+        }
+      ]
+    }
+  ]
+}
