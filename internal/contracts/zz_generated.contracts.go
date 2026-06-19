@@ -6,6 +6,33 @@ const ContractVersion = "1.0.0-draft.2"
 const MCPProtocolVersion = "2025-11-25"
 const SchemaDraft = "https://json-schema.org/draft/2020-12/schema"
 
+func RawGraphQLAllowedRootFields() []string {
+	return []string{
+		"constants",
+		"guild",
+		"heroStats",
+		"leaderboard",
+		"league",
+		"leagues",
+		"live",
+		"match",
+		"matches",
+		"player",
+		"players",
+		"team",
+		"teams",
+	}
+}
+
+func RawGraphQLDeniedRootFields() []string {
+	return []string{
+		"plus",
+		"stratz",
+		"vendor",
+		"yogurt",
+	}
+}
+
 type ToolResult[T any] struct {
 	Kind       string      `json:"kind"`
 	Data       *T          `json:"data,omitempty"`

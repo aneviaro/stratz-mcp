@@ -111,12 +111,12 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 - Parse and validate one query operation; expand fragments; enforce default-deny roots, introspection policy, variable limits, depth, aliases, field counts, list bounds, nested lists, complexity, request budget, and response size.
 - Preserve bounded upstream `data`, `errors`, and `extensions`; mark partial raw responses.
 
-- [ ] Parse documents and select exactly one named or unambiguous operation.
-- [ ] Expand fragments with cycle detection and worst-case directive charging.
-- [ ] Enforce operation, root-field, alias, introspection, and schema policies.
-- [ ] Enforce document, variable, list, depth, field, and complexity limits.
-- [ ] Implement canonical raw execution and bounded response preservation.
-- [ ] Add cacheability and sensitive-field policy hooks with caching disabled by default.
+- [x] Parse documents and select exactly one named or unambiguous operation.
+- [x] Expand fragments with cycle detection and worst-case directive charging.
+- [x] Enforce operation, root-field, alias, introspection, and schema policies.
+- [x] Enforce document, variable, list, depth, field, and complexity limits.
+- [x] Implement canonical raw execution and bounded response preservation.
+- [x] Add cacheability and sensitive-field policy hooks with caching disabled by default.
 
 **Verification:** Adversarial tests cover aliases, fragments, cycles, directives, denied/unknown roots, mutations, subscriptions, introspection, unbounded lists, variable-supplied limits, and every raw-query error code.
 

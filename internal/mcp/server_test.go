@@ -28,6 +28,10 @@ func (serverExecutor) Execute(
 	limit := int64(150)
 	remaining := int64(149)
 	return &stratz.Response{
+		HTTPStatus: 200,
+		Data:       json.RawMessage(`{"match":{"id":"1"}}`),
+		Errors:     json.RawMessage(`[]`),
+		Extensions: json.RawMessage(`null`),
 		RateLimits: []stratz.RateLimit{{
 			Window:    "minute",
 			Limit:     &limit,
@@ -124,6 +128,40 @@ func TestSDKConformance(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertResultConforms(t, "stratz_server_info", success, false)
+
+	rawSuccess, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
+		Name: "stratz_execute_graphql",
+		Arguments: map[string]any{
+			"query": `query Match { match(id: 1) { id } }`,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultConforms(t, "stratz_execute_graphql", rawSuccess, false)
+
+	rawPolicyFailure, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
+		Name: "stratz_execute_graphql",
+		Arguments: map[string]any{
+			"query": `mutation { match(id: 1) { id } }`,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultConforms(t, "stratz_execute_graphql", rawPolicyFailure, true)
+
+	rawCacheFailure, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
+		Name: "stratz_execute_graphql",
+		Arguments: map[string]any{
+			"query": `query { match(id: 1) { id } }`,
+			"cache": true,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultConforms(t, "stratz_execute_graphql", rawCacheFailure, true)
 
 	example, err := contracts.Example("stratz_get_player", contracts.InputSchema)
 	if err != nil {

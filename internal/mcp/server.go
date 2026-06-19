@@ -10,6 +10,8 @@ import (
 
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
+	rawgraphql "github.com/aneviaro/stratz-mcp/internal/graphql"
+	graphqlpolicy "github.com/aneviaro/stratz-mcp/internal/graphql/policy"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 	sdk "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -55,6 +57,25 @@ func New(options Options) (*Server, error) {
 	handlers := make(map[string]ToolHandler, len(options.Handlers)+1)
 	for name, handler := range options.Handlers {
 		handlers[name] = handler
+	}
+	if handlers["stratz_execute_graphql"] == nil {
+		rawPolicy, err := graphqlpolicy.New(graphqlpolicy.Options{
+			Limits:             options.Config.Limits,
+			AllowIntrospection: options.Config.Features.RuntimeIntrospection,
+		})
+		if err != nil {
+			return nil, err
+		}
+		rawService, err := rawgraphql.NewRawService(rawgraphql.RawOptions{
+			Policy:              rawPolicy,
+			Executor:            options.Executor,
+			MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
+			DefaultCacheTTL:     options.Config.Cache.RawTTL,
+		})
+		if err != nil {
+			return nil, err
+		}
+		handlers["stratz_execute_graphql"] = rawGraphQLHandler(options, rawService)
 	}
 	handlers["stratz_server_info"] = serverInfoHandler(options)
 

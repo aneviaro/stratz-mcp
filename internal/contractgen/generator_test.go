@@ -75,6 +75,16 @@ func TestValidateRegistryRejectsContractVersionDrift(t *testing.T) {
 	}
 }
 
+func TestValidateRegistryRejectsUnsafeRawGraphQLPolicy(t *testing.T) {
+	reg := readTestRegistry(t)
+	reg.RawGraphQLPolicy.RootFieldDefault = "allow"
+
+	err := validateRegistry(reg)
+	if err == nil || !strings.Contains(err.Error(), "default-deny") {
+		t.Fatalf("validateRegistry() error = %v", err)
+	}
+}
+
 func TestGenerateMatchesCheckedInArtifacts(t *testing.T) {
 	root := filepath.Join("..", "..")
 	expected, err := Build(filepath.Join(root, contractRegistryPath))

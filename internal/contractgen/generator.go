@@ -54,8 +54,18 @@ type registry struct {
 	ContractVersion    string                    `json:"contractVersion"`
 	MCPProtocolVersion string                    `json:"mcpProtocolVersion"`
 	Description        string                    `json:"description"`
+	RawGraphQLPolicy   rawGraphQLPolicy          `json:"rawGraphqlPolicy"`
 	Defs               map[string]any            `json:"$defs"`
 	Tools              map[string]toolDefinition `json:"tools"`
+}
+
+type rawGraphQLPolicy struct {
+	OperationTypes    map[string]string `json:"operationTypes"`
+	RootFieldDefault  string            `json:"rootFieldDefault"`
+	AllowedRootFields []string          `json:"allowedRootFields"`
+	DeniedRootFields  []string          `json:"deniedRootFields"`
+	MetaFields        map[string]string `json:"metaFields"`
+	UnknownRootFields string            `json:"unknownRootFields"`
 }
 
 type toolDefinition struct {
@@ -237,6 +247,9 @@ func validateRegistry(reg registry) error {
 	if len(reg.Defs) == 0 {
 		return errors.New("contract registry $defs must not be empty")
 	}
+	if err := validateRawGraphQLPolicy(reg.RawGraphQLPolicy); err != nil {
+		return err
+	}
 
 	names := sortedToolNames(reg.Tools)
 	if !slices.Equal(names, expectedTools) {
@@ -263,6 +276,51 @@ func validateRegistry(reg registry) error {
 		}
 		if err := compileSourceSchema(name+".outputSchema", tool.OutputSchema, reg.Defs); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func validateRawGraphQLPolicy(policy rawGraphQLPolicy) error {
+	if policy.OperationTypes["query"] != "allow_subject_to_root_policy" ||
+		policy.OperationTypes["mutation"] != "deny" ||
+		policy.OperationTypes["subscription"] != "deny" {
+		return errors.New("raw GraphQL operation policy is invalid")
+	}
+	if policy.RootFieldDefault != "deny" ||
+		policy.UnknownRootFields != "deny_until_policy_revision" {
+		return errors.New("raw GraphQL root policy must be default-deny")
+	}
+	if policy.MetaFields["__typename"] != "allow" ||
+		policy.MetaFields["__schema"] != "allow_only_with_runtime_introspection_flag" ||
+		policy.MetaFields["__type"] != "allow_only_with_runtime_introspection_flag" {
+		return errors.New("raw GraphQL meta-field policy is invalid")
+	}
+	if len(policy.AllowedRootFields) == 0 {
+		return errors.New("raw GraphQL allowed root fields must not be empty")
+	}
+	if !slices.IsSorted(policy.AllowedRootFields) ||
+		!slices.IsSorted(policy.DeniedRootFields) {
+		return errors.New("raw GraphQL root field lists must be sorted")
+	}
+	seen := make(map[string]string)
+	for classification, fields := range map[string][]string{
+		"allowed": policy.AllowedRootFields,
+		"denied":  policy.DeniedRootFields,
+	} {
+		for _, field := range fields {
+			if strings.TrimSpace(field) == "" {
+				return errors.New("raw GraphQL root field names must not be empty")
+			}
+			if previous, exists := seen[field]; exists {
+				return fmt.Errorf(
+					"raw GraphQL root field %q is both %s and %s",
+					field,
+					previous,
+					classification,
+				)
+			}
+			seen[field] = classification
 		}
 	}
 	return nil
@@ -717,6 +775,16 @@ func renderGo(reg registry, names []string) ([]byte, error) {
 	fmt.Fprintf(&builder, "const ContractVersion = %q\n", reg.ContractVersion)
 	fmt.Fprintf(&builder, "const MCPProtocolVersion = %q\n", reg.MCPProtocolVersion)
 	fmt.Fprintf(&builder, "const SchemaDraft = %q\n\n", reg.Schema)
+	renderStringSliceFunction(
+		&builder,
+		"RawGraphQLAllowedRootFields",
+		reg.RawGraphQLPolicy.AllowedRootFields,
+	)
+	renderStringSliceFunction(
+		&builder,
+		"RawGraphQLDeniedRootFields",
+		reg.RawGraphQLPolicy.DeniedRootFields,
+	)
 	builder.WriteString("type ToolResult[T any] struct {\n")
 	builder.WriteString("\tKind string `json:\"kind\"`\n")
 	builder.WriteString("\tData *T `json:\"data,omitempty\"`\n")
@@ -777,6 +845,16 @@ func renderGo(reg registry, names []string) ([]byte, error) {
 		return nil, fmt.Errorf("format generated Go contracts: %w\n%s", err, builder.String())
 	}
 	return formatted, nil
+}
+
+func renderStringSliceFunction(builder *strings.Builder, name string, values []string) {
+	fmt.Fprintf(builder, "func %s() []string {\n", name)
+	builder.WriteString("\treturn []string{\n")
+	for _, value := range values {
+		fmt.Fprintf(builder, "\t\t%q,\n", value)
+	}
+	builder.WriteString("\t}\n")
+	builder.WriteString("}\n\n")
 }
 
 func renderNamedType(builder *strings.Builder, name string, schema any, context string) {
