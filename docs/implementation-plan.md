@@ -97,12 +97,12 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 - Create one result encoder that emits authoritative `structuredContent`, its exact compact JSON text mirror, correct `outputSchema`, and execution-error `isError`.
 - Add `doctor` and `stratz_server_info`.
 
-- [ ] Create the application composition root and stdio server.
-- [ ] Register static capabilities and generated tool schemas.
-- [ ] Implement shared success and execution-error result encoding.
-- [ ] Implement protocol-safe stderr diagnostics and shutdown.
-- [ ] Implement `doctor` and `stratz_server_info`.
-- [ ] Add an SDK conformance and raw stdio protocol harness.
+- [x] Create the application composition root and stdio server.
+- [x] Register static capabilities and generated tool schemas.
+- [x] Implement shared success and execution-error result encoding.
+- [x] Implement protocol-safe stderr diagnostics and shutdown.
+- [x] Implement `doctor` and `stratz_server_info`.
+- [x] Add an SDK conformance and raw stdio protocol harness.
 
 **Verification:** Protocol tests negotiate `2025-11-25`, reject pre-initialization calls, keep stdout JSON-RPC-only, distinguish protocol and tool errors, and byte-compare the text mirror against compact `structuredContent`.
 

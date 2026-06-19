@@ -1022,5 +1022,6 @@
       ],
       "type": "object"
     }
-  ]
+  ],
+  "type": "object"
 }

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -9,7 +10,18 @@ import (
 	"testing"
 
 	"github.com/aneviaro/stratz-mcp/internal/app"
+	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
+
+type cliExecutor struct{}
+
+func (cliExecutor) Execute(
+	context.Context,
+	*stratz.RequestBudget,
+	stratz.Request,
+) (*stratz.Response, error) {
+	return &stratz.Response{}, nil
+}
 
 func TestRunDisplaysHelpWithoutSubcommand(t *testing.T) {
 	var stdout bytes.Buffer
@@ -102,6 +114,7 @@ func TestDoctorChecksLocalConfigurationAndPermissions(t *testing.T) {
 		app.BuildInfo{},
 		Dependencies{
 			UserCacheDir: func() (string, error) { return directory, nil },
+			Executor:     cliExecutor{},
 		},
 	)
 	if code != 0 {
@@ -112,6 +125,9 @@ func TestDoctorChecksLocalConfigurationAndPermissions(t *testing.T) {
 	}
 	if strings.Contains(stdout.String(), tokenPath) || strings.Contains(stdout.String(), "fixture-token") {
 		t.Fatalf("doctor output leaked credential details: %q", stdout.String())
+	}
+	if !strings.Contains(stdout.String(), "upstream: STRATZ is reachable") {
+		t.Fatalf("doctor did not report connectivity: %q", stdout.String())
 	}
 }
 
@@ -135,7 +151,7 @@ func TestDoctorFailsWhenCredentialIsAbsent(t *testing.T) {
 	}
 }
 
-func TestServeRedactsCredentialFromLogs(t *testing.T) {
+func TestServeRunsUntilStdinClosesWithoutLeakingCredential(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	code := RunWithDependencies(
@@ -146,15 +162,17 @@ func TestServeRedactsCredentialFromLogs(t *testing.T) {
 		Dependencies{
 			Environ:      []string{"STRATZ_API_TOKEN=fixture-token"},
 			UserCacheDir: func() (string, error) { return t.TempDir(), nil },
+			Stdin:        strings.NewReader(""),
+			Executor:     cliExecutor{},
 		},
 	)
-	if code != 2 {
-		t.Fatalf("exit code = %d, want 2", code)
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0; stderr = %q", code, stderr.String())
 	}
 	if strings.Contains(stderr.String(), "fixture-token") {
 		t.Fatalf("stderr leaked token: %q", stderr.String())
 	}
-	if !strings.Contains(stderr.String(), "not implemented") {
-		t.Fatalf("stderr = %q", stderr.String())
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want no protocol output without input", stdout.String())
 	}
 }

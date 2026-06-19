@@ -677,5 +677,6 @@
       ],
       "type": "object"
     }
-  ]
+  ],
+  "type": "object"
 }

@@ -681,5 +681,6 @@
       ],
       "type": "object"
     }
-  ]
+  ],
+  "type": "object"
 }

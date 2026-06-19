@@ -1,6 +1,8 @@
 package releasegate
 
 import (
+	"bytes"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +13,9 @@ import (
 )
 
 const SchemaVersion = 1
+
+//go:embed current.json
+var currentRecordJSON []byte
 
 var RequiredDecisionIDs = []string{
 	"api_wrapping",
@@ -48,9 +53,17 @@ func Load(path string) (Record, error) {
 		return Record{}, err
 	}
 	defer file.Close()
+	return decode(file)
+}
 
+// Current returns the release-clearance record embedded in the binary.
+func Current() (Record, error) {
+	return decode(bytes.NewReader(currentRecordJSON))
+}
+
+func decode(reader io.Reader) (Record, error) {
 	var record Record
-	decoder := json.NewDecoder(file)
+	decoder := json.NewDecoder(reader)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&record); err != nil {
 		return Record{}, err

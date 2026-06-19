@@ -39,6 +39,13 @@ func TestBuildGeneratesCompleteDeterministicContract(t *testing.T) {
 			if !bytes.Contains(artifact.Data, []byte(draft202012)) {
 				t.Fatalf("%s does not declare Draft 2020-12", artifact.Path)
 			}
+			var schema map[string]any
+			if err := json.Unmarshal(artifact.Data, &schema); err != nil {
+				t.Fatalf("decode %s: %v", artifact.Path, err)
+			}
+			if schema["type"] != "object" {
+				t.Fatalf("%s root type = %v, want object", artifact.Path, schema["type"])
+			}
 		}
 	}
 	if schemaCount != 30 {
