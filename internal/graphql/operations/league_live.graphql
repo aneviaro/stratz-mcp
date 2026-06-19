@@ -1,0 +1,63 @@
+fragment LeagueFields on LeagueType {
+  id
+  name
+  displayName
+  region
+  tier
+  startDateTime
+  endDateTime
+  isFuture
+  isEnded
+  isLive
+}
+
+query StratzGetLeague($id: Int!) {
+  league(id: $id) {
+    ...LeagueFields
+  }
+}
+
+query StratzListLeagues($request: LeagueRequestType!) {
+  leagues(request: $request) {
+    ...LeagueFields
+  }
+}
+
+query StratzListLeagueMatches($id: Int!, $request: LeagueMatchesRequestType!) {
+  league(id: $id) {
+    id
+    matches(request: $request) {
+      ...MatchSummaryFields
+    }
+  }
+}
+
+query StratzListLiveMatches($request: MatchLiveRequestType!) {
+  live {
+    matches(request: $request) {
+      id
+      startDateTime
+      gameTime
+      gameModeId
+      spectatorCount
+      radiantTeamId
+      direTeamId
+      radiantTeamName
+      direTeamName
+      league {
+        ...LeagueFields
+      }
+      players {
+        steamAccountId
+        heroId
+        isRadiant
+        playerSlot
+        kills
+        deaths
+        assists
+        networth
+        level
+      }
+    }
+  }
+}

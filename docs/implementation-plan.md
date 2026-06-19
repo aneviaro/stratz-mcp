@@ -191,12 +191,12 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 
 - Add league retrieval/listing/matches, derived status, bounded text scans, live native filters, bounded client-side filters, and truthful incomplete-scan cursors.
 
-- [ ] Author and generate league singular, listing, and match operations.
-- [ ] Implement league normalization and deterministic status derivation.
-- [ ] Implement bounded league-name search and continuation.
-- [ ] Author and generate live-match operations with native filters and ordering.
-- [ ] Implement bounded team, player, mode, and spectator filtering.
-- [ ] Normalize incomplete scans without claiming snapshot completeness.
+- [x] Author and generate league singular, listing, and match operations.
+- [x] Implement league normalization and deterministic status derivation.
+- [x] Implement bounded league-name search and continuation.
+- [x] Author and generate live-match operations with native filters and ordering.
+- [x] Implement bounded team, player, mode, and spectator filtering.
+- [x] Normalize incomplete scans without claiming snapshot completeness.
 
 **Verification:** Tests cover native and client-side filters, five-page exhaustion, continuation, derived statuses, changing live data, sort modes, and confirmation that unsupported region filtering is absent.
 

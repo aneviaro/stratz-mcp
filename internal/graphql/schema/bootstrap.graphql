@@ -14,6 +14,83 @@ type DotaQuery {
   matches(ids: [Long!]!): [MatchType!]!
   constants: ConstantsType!
   heroStats(request: HeroStatsRequestType!): HeroStatsType
+  league(id: Int!): LeagueType
+  leagues(request: LeagueRequestType!): [LeagueType!]!
+  live: LiveQuery!
+}
+
+input LeagueRequestType {
+  leagueIds: [Int!]
+  startDateTime: Long
+  endDateTime: Long
+  isFuture: Boolean
+  isEnded: Boolean
+  isLive: Boolean
+  tiers: [String!]
+  take: Int!
+  skip: Int!
+}
+
+input LeagueMatchesRequestType {
+  startDateTime: Long
+  endDateTime: Long
+  gameVersionIds: [String!]
+  take: Int!
+  skip: Int!
+}
+
+type LeagueType {
+  id: Int!
+  name: String!
+  displayName: String
+  region: String
+  tier: String
+  startDateTime: Long
+  endDateTime: Long
+  isFuture: Boolean
+  isEnded: Boolean
+  isLive: Boolean
+  matches(request: LeagueMatchesRequestType!): [MatchType!]!
+}
+
+type LiveQuery {
+  matches(request: MatchLiveRequestType!): [MatchLiveType!]!
+}
+
+input MatchLiveRequestType {
+  leagueIds: [Int!]
+  heroIds: [Int!]
+  gameStates: [String!]
+  leagueTiers: [String!]
+  orderBy: String!
+  take: Int!
+  skip: Int!
+}
+
+type MatchLiveType {
+  id: Long!
+  startDateTime: Long
+  gameTime: Int
+  gameModeId: Int
+  spectatorCount: Int
+  radiantTeamId: Int
+  direTeamId: Int
+  radiantTeamName: String
+  direTeamName: String
+  league: LeagueType
+  players: [MatchLivePlayerType!]!
+}
+
+type MatchLivePlayerType {
+  steamAccountId: Long
+  heroId: Int!
+  isRadiant: Boolean!
+  playerSlot: Int!
+  kills: Int!
+  deaths: Int!
+  assists: Int!
+  networth: Int
+  level: Int
 }
 
 type ConstantsType {

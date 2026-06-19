@@ -21,6 +21,11 @@
       "sourceLocation": "internal/graphql/operations/hero_constants.graphql"
     },
     {
+      "operationName": "StratzGetLeague",
+      "query": "\nquery StratzGetLeague ($id: Int!) {\n\tleague(id: $id) {\n\t\t... LeagueFields\n\t}\n}\nfragment LeagueFields on LeagueType {\n\tid\n\tname\n\tdisplayName\n\tregion\n\ttier\n\tstartDateTime\n\tendDateTime\n\tisFuture\n\tisEnded\n\tisLive\n}\n",
+      "sourceLocation": "internal/graphql/operations/league_live.graphql"
+    },
+    {
       "operationName": "StratzGetMatchFull",
       "query": "\nquery StratzGetMatchFull ($id: Long!) {\n\tmatch(id: $id) {\n\t\t... MatchFullFields\n\t}\n}\nfragment MatchFullFields on MatchType {\n\t... MatchStandardFields\n\tfights {\n\t\tstartTime\n\t\tendTime\n\t\tradiantKills\n\t\tdireKills\n\t\tradiantNetworthDelta\n\t\tparticipants {\n\t\t\tsteamAccountId\n\t\t\theroId\n\t\t\tisRadiant\n\t\t\tkills\n\t\t\tdeaths\n\t\t}\n\t}\n\teconomy {\n\t\ttime\n\t\tradiantNetworth\n\t\tdireNetworth\n\t\tradiantExperience\n\t\tdireExperience\n\t}\n}\nfragment MatchStandardFields on MatchType {\n\t... MatchSummaryFields\n\tplayers {\n\t\t... MatchPlayerFields\n\t}\n\tobjectives {\n\t\ttime\n\t\ttype\n\t\tisRadiant\n\t\tsteamAccountId\n\t\theroId\n\t\tvalue\n\t}\n\ttimeline {\n\t\ttime\n\t\ttype\n\t\tisRadiant\n\t\tsteamAccountId\n\t\theroId\n\t\tvalue\n\t}\n}\nfragment MatchSummaryFields on MatchType {\n\tid\n\tstartDateTime\n\tdurationSeconds\n\tdidRadiantWin\n\tradiantKills\n\tdireKills\n\tgameModeId\n\tlobbyTypeId\n\tregionId\n\tleagueId\n\tgameVersionId\n\tparsedDateTime\n\tstatsDateTime\n}\nfragment MatchPlayerFields on MatchPlayerType {\n\tsteamAccountId\n\theroId\n\tisRadiant\n\tplayerSlot\n\tkills\n\tdeaths\n\tassists\n\tnetworth\n\tlevel\n}\n",
       "sourceLocation": "internal/graphql/operations/match.graphql"
@@ -59,6 +64,21 @@
       "operationName": "StratzGetPlayers",
       "query": "\nquery StratzGetPlayers ($steamAccountIds: [Long!]!) {\n\tplayers(steamAccountIds: $steamAccountIds) {\n\t\t... PlayerFields\n\t}\n}\nfragment PlayerFields on PlayerType {\n\tsteamAccountId\n\tsteamAccount {\n\t\tid\n\t\tname\n\t\tavatar\n\t}\n\tidentity {\n\t\tname\n\t}\n\tmatchCount\n\twinCount\n\tlastMatchDate\n\tranks {\n\t\trank\n\t\tleaderboardRank\n\t}\n}\n",
       "sourceLocation": "internal/graphql/operations/player.graphql"
+    },
+    {
+      "operationName": "StratzListLeagueMatches",
+      "query": "\nquery StratzListLeagueMatches ($id: Int!, $request: LeagueMatchesRequestType!) {\n\tleague(id: $id) {\n\t\tid\n\t\tmatches(request: $request) {\n\t\t\t... MatchSummaryFields\n\t\t}\n\t}\n}\nfragment MatchSummaryFields on MatchType {\n\tid\n\tstartDateTime\n\tdurationSeconds\n\tdidRadiantWin\n\tradiantKills\n\tdireKills\n\tgameModeId\n\tlobbyTypeId\n\tregionId\n\tleagueId\n\tgameVersionId\n\tparsedDateTime\n\tstatsDateTime\n}\n",
+      "sourceLocation": "internal/graphql/operations/league_live.graphql"
+    },
+    {
+      "operationName": "StratzListLeagues",
+      "query": "\nquery StratzListLeagues ($request: LeagueRequestType!) {\n\tleagues(request: $request) {\n\t\t... LeagueFields\n\t}\n}\nfragment LeagueFields on LeagueType {\n\tid\n\tname\n\tdisplayName\n\tregion\n\ttier\n\tstartDateTime\n\tendDateTime\n\tisFuture\n\tisEnded\n\tisLive\n}\n",
+      "sourceLocation": "internal/graphql/operations/league_live.graphql"
+    },
+    {
+      "operationName": "StratzListLiveMatches",
+      "query": "\nquery StratzListLiveMatches ($request: MatchLiveRequestType!) {\n\tlive {\n\t\tmatches(request: $request) {\n\t\t\tid\n\t\t\tstartDateTime\n\t\t\tgameTime\n\t\t\tgameModeId\n\t\t\tspectatorCount\n\t\t\tradiantTeamId\n\t\t\tdireTeamId\n\t\t\tradiantTeamName\n\t\t\tdireTeamName\n\t\t\tleague {\n\t\t\t\t... LeagueFields\n\t\t\t}\n\t\t\tplayers {\n\t\t\t\tsteamAccountId\n\t\t\t\theroId\n\t\t\t\tisRadiant\n\t\t\t\tplayerSlot\n\t\t\t\tkills\n\t\t\t\tdeaths\n\t\t\t\tassists\n\t\t\t\tnetworth\n\t\t\t\tlevel\n\t\t\t}\n\t\t}\n\t}\n}\nfragment LeagueFields on LeagueType {\n\tid\n\tname\n\tdisplayName\n\tregion\n\ttier\n\tstartDateTime\n\tendDateTime\n\tisFuture\n\tisEnded\n\tisLive\n}\n",
+      "sourceLocation": "internal/graphql/operations/league_live.graphql"
     },
     {
       "operationName": "StratzListPlayerMatches",
