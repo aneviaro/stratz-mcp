@@ -1,0 +1,4 @@
+*
+!dist/image/
+!dist/image/stratz-mcp-linux-amd64
+!dist/image/stratz-mcp-linux-arm64

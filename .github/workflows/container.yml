@@ -1,0 +1,29 @@
+name: container
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: 1.25.x
+          cache: true
+      - name: Build Linux image input
+        run: |
+          mkdir -p dist/image
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o dist/image/stratz-mcp-linux-amd64 ./cmd/stratz-mcp
+      - name: Build image
+        run: docker build --build-arg TARGETARCH=amd64 -t stratz-mcp:test .
+      - name: Verify non-root read-only runtime
+        run: |
+          test "$(docker run --rm --entrypoint /stratz-mcp stratz-mcp:test version | head -c 10)" = "stratz-mcp"
+          CLIENT_PROFILE=codex ./scripts/interop-smoke.sh docker stratz-mcp:test
+          CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test
