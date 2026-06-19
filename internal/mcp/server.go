@@ -16,6 +16,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/domain/playermatch"
 	rawgraphql "github.com/aneviaro/stratz-mcp/internal/graphql"
 	graphqlpolicy "github.com/aneviaro/stratz-mcp/internal/graphql/policy"
+	"github.com/aneviaro/stratz-mcp/internal/prompts"
 	"github.com/aneviaro/stratz-mcp/internal/resources"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 	sdk "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -158,6 +159,7 @@ func New(options Options) (*Server, error) {
 		)
 	}
 	resources.New(options.SchemaDirectory).Register(server)
+	prompts.Register(server)
 	return &Server{sdk: server}, nil
 }
 

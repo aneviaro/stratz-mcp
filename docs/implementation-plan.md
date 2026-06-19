@@ -205,12 +205,12 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 - Define one canonical workflow source and generate the five MCP prompts plus five `SKILL.md` packages with Codex and Claude adapters.
 - Encode attribution, provenance, fact-versus-interpretation rules, and untrusted-content defenses.
 
-- [ ] Define the canonical workflow schema and five workflow definitions.
-- [ ] Generate and register MCP prompt templates and arguments.
-- [ ] Generate the five portable skill directories and `SKILL.md` files.
-- [ ] Add Codex and Claude installation guidance or adapters.
-- [ ] Add attribution, evidence, freshness, and insufficient-data rules.
-- [ ] Add untrusted-content and prompt-injection fixtures.
+- [x] Define the canonical workflow schema and five workflow definitions.
+- [x] Generate and register MCP prompt templates and arguments.
+- [x] Generate the five portable skill directories and `SKILL.md` files.
+- [x] Add Codex and Claude installation guidance or adapters.
+- [x] Add attribution, evidence, freshness, and insufficient-data rules.
+- [x] Add untrusted-content and prompt-injection fixtures.
 
 **Verification:** Generation is reproducible. Skill validation passes. Injection fixtures cannot cause link following, secret disclosure, configuration changes, or unrelated tool calls.
 
