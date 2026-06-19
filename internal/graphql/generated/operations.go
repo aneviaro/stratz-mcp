@@ -234,6 +234,112 @@ func (v *HeroStatsRequestType) GetIncludeMatchups() bool { return v.IncludeMatch
 // GetIncludeSynergies returns HeroStatsRequestType.IncludeSynergies, and is useful for accessing the field via an interface.
 func (v *HeroStatsRequestType) GetIncludeSynergies() bool { return v.IncludeSynergies }
 
+// LeagueFields includes the GraphQL fields of LeagueType requested by the fragment LeagueFields.
+type LeagueFields struct {
+	Id            int     `json:"id"`
+	Name          string  `json:"name"`
+	DisplayName   *string `json:"displayName"`
+	Region        *string `json:"region"`
+	Tier          *string `json:"tier"`
+	StartDateTime *int64  `json:"startDateTime"`
+	EndDateTime   *int64  `json:"endDateTime"`
+	IsFuture      *bool   `json:"isFuture"`
+	IsEnded       *bool   `json:"isEnded"`
+	IsLive        *bool   `json:"isLive"`
+}
+
+// GetId returns LeagueFields.Id, and is useful for accessing the field via an interface.
+func (v *LeagueFields) GetId() int { return v.Id }
+
+// GetName returns LeagueFields.Name, and is useful for accessing the field via an interface.
+func (v *LeagueFields) GetName() string { return v.Name }
+
+// GetDisplayName returns LeagueFields.DisplayName, and is useful for accessing the field via an interface.
+func (v *LeagueFields) GetDisplayName() *string { return v.DisplayName }
+
+// GetRegion returns LeagueFields.Region, and is useful for accessing the field via an interface.
+func (v *LeagueFields) GetRegion() *string { return v.Region }
+
+// GetTier returns LeagueFields.Tier, and is useful for accessing the field via an interface.
+func (v *LeagueFields) GetTier() *string { return v.Tier }
+
+// GetStartDateTime returns LeagueFields.StartDateTime, and is useful for accessing the field via an interface.
+func (v *LeagueFields) GetStartDateTime() *int64 { return v.StartDateTime }
+
+// GetEndDateTime returns LeagueFields.EndDateTime, and is useful for accessing the field via an interface.
+func (v *LeagueFields) GetEndDateTime() *int64 { return v.EndDateTime }
+
+// GetIsFuture returns LeagueFields.IsFuture, and is useful for accessing the field via an interface.
+func (v *LeagueFields) GetIsFuture() *bool { return v.IsFuture }
+
+// GetIsEnded returns LeagueFields.IsEnded, and is useful for accessing the field via an interface.
+func (v *LeagueFields) GetIsEnded() *bool { return v.IsEnded }
+
+// GetIsLive returns LeagueFields.IsLive, and is useful for accessing the field via an interface.
+func (v *LeagueFields) GetIsLive() *bool { return v.IsLive }
+
+type LeagueMatchesRequestType struct {
+	StartDateTime  *int64   `json:"startDateTime"`
+	EndDateTime    *int64   `json:"endDateTime"`
+	GameVersionIds []string `json:"gameVersionIds"`
+	Take           int      `json:"take"`
+	Skip           int      `json:"skip"`
+}
+
+// GetStartDateTime returns LeagueMatchesRequestType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *LeagueMatchesRequestType) GetStartDateTime() *int64 { return v.StartDateTime }
+
+// GetEndDateTime returns LeagueMatchesRequestType.EndDateTime, and is useful for accessing the field via an interface.
+func (v *LeagueMatchesRequestType) GetEndDateTime() *int64 { return v.EndDateTime }
+
+// GetGameVersionIds returns LeagueMatchesRequestType.GameVersionIds, and is useful for accessing the field via an interface.
+func (v *LeagueMatchesRequestType) GetGameVersionIds() []string { return v.GameVersionIds }
+
+// GetTake returns LeagueMatchesRequestType.Take, and is useful for accessing the field via an interface.
+func (v *LeagueMatchesRequestType) GetTake() int { return v.Take }
+
+// GetSkip returns LeagueMatchesRequestType.Skip, and is useful for accessing the field via an interface.
+func (v *LeagueMatchesRequestType) GetSkip() int { return v.Skip }
+
+type LeagueRequestType struct {
+	LeagueIds     []int    `json:"leagueIds"`
+	StartDateTime *int64   `json:"startDateTime"`
+	EndDateTime   *int64   `json:"endDateTime"`
+	IsFuture      *bool    `json:"isFuture"`
+	IsEnded       *bool    `json:"isEnded"`
+	IsLive        *bool    `json:"isLive"`
+	Tiers         []string `json:"tiers"`
+	Take          int      `json:"take"`
+	Skip          int      `json:"skip"`
+}
+
+// GetLeagueIds returns LeagueRequestType.LeagueIds, and is useful for accessing the field via an interface.
+func (v *LeagueRequestType) GetLeagueIds() []int { return v.LeagueIds }
+
+// GetStartDateTime returns LeagueRequestType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *LeagueRequestType) GetStartDateTime() *int64 { return v.StartDateTime }
+
+// GetEndDateTime returns LeagueRequestType.EndDateTime, and is useful for accessing the field via an interface.
+func (v *LeagueRequestType) GetEndDateTime() *int64 { return v.EndDateTime }
+
+// GetIsFuture returns LeagueRequestType.IsFuture, and is useful for accessing the field via an interface.
+func (v *LeagueRequestType) GetIsFuture() *bool { return v.IsFuture }
+
+// GetIsEnded returns LeagueRequestType.IsEnded, and is useful for accessing the field via an interface.
+func (v *LeagueRequestType) GetIsEnded() *bool { return v.IsEnded }
+
+// GetIsLive returns LeagueRequestType.IsLive, and is useful for accessing the field via an interface.
+func (v *LeagueRequestType) GetIsLive() *bool { return v.IsLive }
+
+// GetTiers returns LeagueRequestType.Tiers, and is useful for accessing the field via an interface.
+func (v *LeagueRequestType) GetTiers() []string { return v.Tiers }
+
+// GetTake returns LeagueRequestType.Take, and is useful for accessing the field via an interface.
+func (v *LeagueRequestType) GetTake() int { return v.Take }
+
+// GetSkip returns LeagueRequestType.Skip, and is useful for accessing the field via an interface.
+func (v *LeagueRequestType) GetSkip() int { return v.Skip }
+
 // MatchFullFields includes the GraphQL fields of MatchType requested by the fragment MatchFullFields.
 type MatchFullFields struct {
 	MatchStandardFields `json:"-"`
@@ -511,6 +617,37 @@ func (v *MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantTyp
 func (v *MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType) GetDeaths() int {
 	return v.Deaths
 }
+
+type MatchLiveRequestType struct {
+	LeagueIds   []int    `json:"leagueIds"`
+	HeroIds     []int    `json:"heroIds"`
+	GameStates  []string `json:"gameStates"`
+	LeagueTiers []string `json:"leagueTiers"`
+	OrderBy     string   `json:"orderBy"`
+	Take        int      `json:"take"`
+	Skip        int      `json:"skip"`
+}
+
+// GetLeagueIds returns MatchLiveRequestType.LeagueIds, and is useful for accessing the field via an interface.
+func (v *MatchLiveRequestType) GetLeagueIds() []int { return v.LeagueIds }
+
+// GetHeroIds returns MatchLiveRequestType.HeroIds, and is useful for accessing the field via an interface.
+func (v *MatchLiveRequestType) GetHeroIds() []int { return v.HeroIds }
+
+// GetGameStates returns MatchLiveRequestType.GameStates, and is useful for accessing the field via an interface.
+func (v *MatchLiveRequestType) GetGameStates() []string { return v.GameStates }
+
+// GetLeagueTiers returns MatchLiveRequestType.LeagueTiers, and is useful for accessing the field via an interface.
+func (v *MatchLiveRequestType) GetLeagueTiers() []string { return v.LeagueTiers }
+
+// GetOrderBy returns MatchLiveRequestType.OrderBy, and is useful for accessing the field via an interface.
+func (v *MatchLiveRequestType) GetOrderBy() string { return v.OrderBy }
+
+// GetTake returns MatchLiveRequestType.Take, and is useful for accessing the field via an interface.
+func (v *MatchLiveRequestType) GetTake() int { return v.Take }
+
+// GetSkip returns MatchLiveRequestType.Skip, and is useful for accessing the field via an interface.
+func (v *MatchLiveRequestType) GetSkip() int { return v.Skip }
 
 // MatchPlayerFields includes the GraphQL fields of MatchPlayerType requested by the fragment MatchPlayerFields.
 type MatchPlayerFields struct {
@@ -1955,6 +2092,122 @@ type StratzGetHeroStatsWeekResponse struct {
 func (v *StratzGetHeroStatsWeekResponse) GetHeroStats() *StratzGetHeroStatsWeekHeroStatsHeroStatsType {
 	return v.HeroStats
 }
+
+// StratzGetLeagueLeagueLeagueType includes the requested fields of the GraphQL type LeagueType.
+type StratzGetLeagueLeagueLeagueType struct {
+	LeagueFields `json:"-"`
+}
+
+// GetId returns StratzGetLeagueLeagueLeagueType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueLeagueLeagueType) GetId() int { return v.LeagueFields.Id }
+
+// GetName returns StratzGetLeagueLeagueLeagueType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueLeagueLeagueType) GetName() string { return v.LeagueFields.Name }
+
+// GetDisplayName returns StratzGetLeagueLeagueLeagueType.DisplayName, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueLeagueLeagueType) GetDisplayName() *string { return v.LeagueFields.DisplayName }
+
+// GetRegion returns StratzGetLeagueLeagueLeagueType.Region, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueLeagueLeagueType) GetRegion() *string { return v.LeagueFields.Region }
+
+// GetTier returns StratzGetLeagueLeagueLeagueType.Tier, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueLeagueLeagueType) GetTier() *string { return v.LeagueFields.Tier }
+
+// GetStartDateTime returns StratzGetLeagueLeagueLeagueType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueLeagueLeagueType) GetStartDateTime() *int64 {
+	return v.LeagueFields.StartDateTime
+}
+
+// GetEndDateTime returns StratzGetLeagueLeagueLeagueType.EndDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueLeagueLeagueType) GetEndDateTime() *int64 { return v.LeagueFields.EndDateTime }
+
+// GetIsFuture returns StratzGetLeagueLeagueLeagueType.IsFuture, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueLeagueLeagueType) GetIsFuture() *bool { return v.LeagueFields.IsFuture }
+
+// GetIsEnded returns StratzGetLeagueLeagueLeagueType.IsEnded, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueLeagueLeagueType) GetIsEnded() *bool { return v.LeagueFields.IsEnded }
+
+// GetIsLive returns StratzGetLeagueLeagueLeagueType.IsLive, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueLeagueLeagueType) GetIsLive() *bool { return v.LeagueFields.IsLive }
+
+func (v *StratzGetLeagueLeagueLeagueType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetLeagueLeagueLeagueType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetLeagueLeagueLeagueType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.LeagueFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetLeagueLeagueLeagueType struct {
+	Id int `json:"id"`
+
+	Name string `json:"name"`
+
+	DisplayName *string `json:"displayName"`
+
+	Region *string `json:"region"`
+
+	Tier *string `json:"tier"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	EndDateTime *int64 `json:"endDateTime"`
+
+	IsFuture *bool `json:"isFuture"`
+
+	IsEnded *bool `json:"isEnded"`
+
+	IsLive *bool `json:"isLive"`
+}
+
+func (v *StratzGetLeagueLeagueLeagueType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetLeagueLeagueLeagueType) __premarshalJSON() (*__premarshalStratzGetLeagueLeagueLeagueType, error) {
+	var retval __premarshalStratzGetLeagueLeagueLeagueType
+
+	retval.Id = v.LeagueFields.Id
+	retval.Name = v.LeagueFields.Name
+	retval.DisplayName = v.LeagueFields.DisplayName
+	retval.Region = v.LeagueFields.Region
+	retval.Tier = v.LeagueFields.Tier
+	retval.StartDateTime = v.LeagueFields.StartDateTime
+	retval.EndDateTime = v.LeagueFields.EndDateTime
+	retval.IsFuture = v.LeagueFields.IsFuture
+	retval.IsEnded = v.LeagueFields.IsEnded
+	retval.IsLive = v.LeagueFields.IsLive
+	return &retval, nil
+}
+
+// StratzGetLeagueResponse is returned by StratzGetLeague on success.
+type StratzGetLeagueResponse struct {
+	League *StratzGetLeagueLeagueLeagueType `json:"league"`
+}
+
+// GetLeague returns StratzGetLeagueResponse.League, and is useful for accessing the field via an interface.
+func (v *StratzGetLeagueResponse) GetLeague() *StratzGetLeagueLeagueLeagueType { return v.League }
 
 // StratzGetMatchFullMatchMatchType includes the requested fields of the GraphQL type MatchType.
 type StratzGetMatchFullMatchMatchType struct {
@@ -3504,6 +3757,572 @@ type StratzGetPlayersResponse struct {
 // GetPlayers returns StratzGetPlayersResponse.Players, and is useful for accessing the field via an interface.
 func (v *StratzGetPlayersResponse) GetPlayers() []StratzGetPlayersPlayersPlayerType { return v.Players }
 
+// StratzListLeagueMatchesLeagueLeagueType includes the requested fields of the GraphQL type LeagueType.
+type StratzListLeagueMatchesLeagueLeagueType struct {
+	Id      int                                                       `json:"id"`
+	Matches []StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType `json:"matches"`
+}
+
+// GetId returns StratzListLeagueMatchesLeagueLeagueType.Id, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueType) GetId() int { return v.Id }
+
+// GetMatches returns StratzListLeagueMatchesLeagueLeagueType.Matches, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueType) GetMatches() []StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType {
+	return v.Matches
+}
+
+// StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType includes the requested fields of the GraphQL type MatchType.
+type StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType struct {
+	MatchSummaryFields `json:"-"`
+}
+
+// GetId returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetId() int64 {
+	return v.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetStartDateTime() *int64 {
+	return v.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetDurationSeconds() *int {
+	return v.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetDidRadiantWin() *bool {
+	return v.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetRadiantKills() *int {
+	return v.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetDireKills() *int {
+	return v.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetGameModeId() *int {
+	return v.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetLobbyTypeId() *int {
+	return v.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetRegionId() *int {
+	return v.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetLeagueId() *int64 {
+	return v.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetGameVersionId() *string {
+	return v.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetParsedDateTime() *int64 {
+	return v.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) GetStatsDateTime() *int64 {
+	return v.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchSummaryFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType struct {
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType) __premarshalJSON() (*__premarshalStratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType, error) {
+	var retval __premarshalStratzListLeagueMatchesLeagueLeagueTypeMatchesMatchType
+
+	retval.Id = v.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzListLeagueMatchesResponse is returned by StratzListLeagueMatches on success.
+type StratzListLeagueMatchesResponse struct {
+	League *StratzListLeagueMatchesLeagueLeagueType `json:"league"`
+}
+
+// GetLeague returns StratzListLeagueMatchesResponse.League, and is useful for accessing the field via an interface.
+func (v *StratzListLeagueMatchesResponse) GetLeague() *StratzListLeagueMatchesLeagueLeagueType {
+	return v.League
+}
+
+// StratzListLeaguesLeaguesLeagueType includes the requested fields of the GraphQL type LeagueType.
+type StratzListLeaguesLeaguesLeagueType struct {
+	LeagueFields `json:"-"`
+}
+
+// GetId returns StratzListLeaguesLeaguesLeagueType.Id, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesLeaguesLeagueType) GetId() int { return v.LeagueFields.Id }
+
+// GetName returns StratzListLeaguesLeaguesLeagueType.Name, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesLeaguesLeagueType) GetName() string { return v.LeagueFields.Name }
+
+// GetDisplayName returns StratzListLeaguesLeaguesLeagueType.DisplayName, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesLeaguesLeagueType) GetDisplayName() *string {
+	return v.LeagueFields.DisplayName
+}
+
+// GetRegion returns StratzListLeaguesLeaguesLeagueType.Region, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesLeaguesLeagueType) GetRegion() *string { return v.LeagueFields.Region }
+
+// GetTier returns StratzListLeaguesLeaguesLeagueType.Tier, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesLeaguesLeagueType) GetTier() *string { return v.LeagueFields.Tier }
+
+// GetStartDateTime returns StratzListLeaguesLeaguesLeagueType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesLeaguesLeagueType) GetStartDateTime() *int64 {
+	return v.LeagueFields.StartDateTime
+}
+
+// GetEndDateTime returns StratzListLeaguesLeaguesLeagueType.EndDateTime, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesLeaguesLeagueType) GetEndDateTime() *int64 {
+	return v.LeagueFields.EndDateTime
+}
+
+// GetIsFuture returns StratzListLeaguesLeaguesLeagueType.IsFuture, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesLeaguesLeagueType) GetIsFuture() *bool { return v.LeagueFields.IsFuture }
+
+// GetIsEnded returns StratzListLeaguesLeaguesLeagueType.IsEnded, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesLeaguesLeagueType) GetIsEnded() *bool { return v.LeagueFields.IsEnded }
+
+// GetIsLive returns StratzListLeaguesLeaguesLeagueType.IsLive, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesLeaguesLeagueType) GetIsLive() *bool { return v.LeagueFields.IsLive }
+
+func (v *StratzListLeaguesLeaguesLeagueType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzListLeaguesLeaguesLeagueType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzListLeaguesLeaguesLeagueType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.LeagueFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzListLeaguesLeaguesLeagueType struct {
+	Id int `json:"id"`
+
+	Name string `json:"name"`
+
+	DisplayName *string `json:"displayName"`
+
+	Region *string `json:"region"`
+
+	Tier *string `json:"tier"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	EndDateTime *int64 `json:"endDateTime"`
+
+	IsFuture *bool `json:"isFuture"`
+
+	IsEnded *bool `json:"isEnded"`
+
+	IsLive *bool `json:"isLive"`
+}
+
+func (v *StratzListLeaguesLeaguesLeagueType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzListLeaguesLeaguesLeagueType) __premarshalJSON() (*__premarshalStratzListLeaguesLeaguesLeagueType, error) {
+	var retval __premarshalStratzListLeaguesLeaguesLeagueType
+
+	retval.Id = v.LeagueFields.Id
+	retval.Name = v.LeagueFields.Name
+	retval.DisplayName = v.LeagueFields.DisplayName
+	retval.Region = v.LeagueFields.Region
+	retval.Tier = v.LeagueFields.Tier
+	retval.StartDateTime = v.LeagueFields.StartDateTime
+	retval.EndDateTime = v.LeagueFields.EndDateTime
+	retval.IsFuture = v.LeagueFields.IsFuture
+	retval.IsEnded = v.LeagueFields.IsEnded
+	retval.IsLive = v.LeagueFields.IsLive
+	return &retval, nil
+}
+
+// StratzListLeaguesResponse is returned by StratzListLeagues on success.
+type StratzListLeaguesResponse struct {
+	Leagues []StratzListLeaguesLeaguesLeagueType `json:"leagues"`
+}
+
+// GetLeagues returns StratzListLeaguesResponse.Leagues, and is useful for accessing the field via an interface.
+func (v *StratzListLeaguesResponse) GetLeagues() []StratzListLeaguesLeaguesLeagueType {
+	return v.Leagues
+}
+
+// StratzListLiveMatchesLiveLiveQuery includes the requested fields of the GraphQL type LiveQuery.
+type StratzListLiveMatchesLiveLiveQuery struct {
+	Matches []StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType `json:"matches"`
+}
+
+// GetMatches returns StratzListLiveMatchesLiveLiveQuery.Matches, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQuery) GetMatches() []StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType {
+	return v.Matches
+}
+
+// StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType includes the requested fields of the GraphQL type MatchLiveType.
+type StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType struct {
+	Id              int64                                                                              `json:"id"`
+	StartDateTime   *int64                                                                             `json:"startDateTime"`
+	GameTime        *int                                                                               `json:"gameTime"`
+	GameModeId      *int                                                                               `json:"gameModeId"`
+	SpectatorCount  *int                                                                               `json:"spectatorCount"`
+	RadiantTeamId   *int                                                                               `json:"radiantTeamId"`
+	DireTeamId      *int                                                                               `json:"direTeamId"`
+	RadiantTeamName *string                                                                            `json:"radiantTeamName"`
+	DireTeamName    *string                                                                            `json:"direTeamName"`
+	League          *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType            `json:"league"`
+	Players         []StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType `json:"players"`
+}
+
+// GetId returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.Id, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetId() int64 { return v.Id }
+
+// GetStartDateTime returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetStartDateTime() *int64 {
+	return v.StartDateTime
+}
+
+// GetGameTime returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.GameTime, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetGameTime() *int {
+	return v.GameTime
+}
+
+// GetGameModeId returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetGameModeId() *int {
+	return v.GameModeId
+}
+
+// GetSpectatorCount returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.SpectatorCount, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetSpectatorCount() *int {
+	return v.SpectatorCount
+}
+
+// GetRadiantTeamId returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.RadiantTeamId, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetRadiantTeamId() *int {
+	return v.RadiantTeamId
+}
+
+// GetDireTeamId returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.DireTeamId, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetDireTeamId() *int {
+	return v.DireTeamId
+}
+
+// GetRadiantTeamName returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.RadiantTeamName, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetRadiantTeamName() *string {
+	return v.RadiantTeamName
+}
+
+// GetDireTeamName returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.DireTeamName, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetDireTeamName() *string {
+	return v.DireTeamName
+}
+
+// GetLeague returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.League, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetLeague() *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType {
+	return v.League
+}
+
+// GetPlayers returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.Players, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetPlayers() []StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType {
+	return v.Players
+}
+
+// StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType includes the requested fields of the GraphQL type LeagueType.
+type StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType struct {
+	LeagueFields `json:"-"`
+}
+
+// GetId returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.Id, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetId() int {
+	return v.LeagueFields.Id
+}
+
+// GetName returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.Name, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetName() string {
+	return v.LeagueFields.Name
+}
+
+// GetDisplayName returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.DisplayName, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetDisplayName() *string {
+	return v.LeagueFields.DisplayName
+}
+
+// GetRegion returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.Region, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetRegion() *string {
+	return v.LeagueFields.Region
+}
+
+// GetTier returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.Tier, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetTier() *string {
+	return v.LeagueFields.Tier
+}
+
+// GetStartDateTime returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetStartDateTime() *int64 {
+	return v.LeagueFields.StartDateTime
+}
+
+// GetEndDateTime returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.EndDateTime, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetEndDateTime() *int64 {
+	return v.LeagueFields.EndDateTime
+}
+
+// GetIsFuture returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.IsFuture, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetIsFuture() *bool {
+	return v.LeagueFields.IsFuture
+}
+
+// GetIsEnded returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.IsEnded, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetIsEnded() *bool {
+	return v.LeagueFields.IsEnded
+}
+
+// GetIsLive returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.IsLive, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetIsLive() *bool {
+	return v.LeagueFields.IsLive
+}
+
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.LeagueFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType struct {
+	Id int `json:"id"`
+
+	Name string `json:"name"`
+
+	DisplayName *string `json:"displayName"`
+
+	Region *string `json:"region"`
+
+	Tier *string `json:"tier"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	EndDateTime *int64 `json:"endDateTime"`
+
+	IsFuture *bool `json:"isFuture"`
+
+	IsEnded *bool `json:"isEnded"`
+
+	IsLive *bool `json:"isLive"`
+}
+
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) __premarshalJSON() (*__premarshalStratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType, error) {
+	var retval __premarshalStratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType
+
+	retval.Id = v.LeagueFields.Id
+	retval.Name = v.LeagueFields.Name
+	retval.DisplayName = v.LeagueFields.DisplayName
+	retval.Region = v.LeagueFields.Region
+	retval.Tier = v.LeagueFields.Tier
+	retval.StartDateTime = v.LeagueFields.StartDateTime
+	retval.EndDateTime = v.LeagueFields.EndDateTime
+	retval.IsFuture = v.LeagueFields.IsFuture
+	retval.IsEnded = v.LeagueFields.IsEnded
+	retval.IsLive = v.LeagueFields.IsLive
+	return &retval, nil
+}
+
+// StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType includes the requested fields of the GraphQL type MatchLivePlayerType.
+type StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType struct {
+	SteamAccountId *int64 `json:"steamAccountId"`
+	HeroId         int    `json:"heroId"`
+	IsRadiant      bool   `json:"isRadiant"`
+	PlayerSlot     int    `json:"playerSlot"`
+	Kills          int    `json:"kills"`
+	Deaths         int    `json:"deaths"`
+	Assists        int    `json:"assists"`
+	Networth       *int   `json:"networth"`
+	Level          *int   `json:"level"`
+}
+
+// GetSteamAccountId returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.SteamAccountId, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetSteamAccountId() *int64 {
+	return v.SteamAccountId
+}
+
+// GetHeroId returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetHeroId() int {
+	return v.HeroId
+}
+
+// GetIsRadiant returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.IsRadiant, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetIsRadiant() bool {
+	return v.IsRadiant
+}
+
+// GetPlayerSlot returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.PlayerSlot, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetPlayerSlot() int {
+	return v.PlayerSlot
+}
+
+// GetKills returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.Kills, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetKills() int {
+	return v.Kills
+}
+
+// GetDeaths returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.Deaths, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetDeaths() int {
+	return v.Deaths
+}
+
+// GetAssists returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.Assists, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetAssists() int {
+	return v.Assists
+}
+
+// GetNetworth returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.Networth, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetNetworth() *int {
+	return v.Networth
+}
+
+// GetLevel returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.Level, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetLevel() *int {
+	return v.Level
+}
+
+// StratzListLiveMatchesResponse is returned by StratzListLiveMatches on success.
+type StratzListLiveMatchesResponse struct {
+	Live StratzListLiveMatchesLiveLiveQuery `json:"live"`
+}
+
+// GetLive returns StratzListLiveMatchesResponse.Live, and is useful for accessing the field via an interface.
+func (v *StratzListLiveMatchesResponse) GetLive() StratzListLiveMatchesLiveLiveQuery { return v.Live }
+
 // StratzListPlayerMatchesPlayerPlayerType includes the requested fields of the GraphQL type PlayerType.
 type StratzListPlayerMatchesPlayerPlayerType struct {
 	SteamAccountId int64                                                     `json:"steamAccountId"`
@@ -3710,6 +4529,14 @@ type __StratzGetHeroStatsWeekInput struct {
 // GetRequest returns __StratzGetHeroStatsWeekInput.Request, and is useful for accessing the field via an interface.
 func (v *__StratzGetHeroStatsWeekInput) GetRequest() HeroStatsRequestType { return v.Request }
 
+// __StratzGetLeagueInput is used internally by genqlient
+type __StratzGetLeagueInput struct {
+	Id int `json:"id"`
+}
+
+// GetId returns __StratzGetLeagueInput.Id, and is useful for accessing the field via an interface.
+func (v *__StratzGetLeagueInput) GetId() int { return v.Id }
+
 // __StratzGetMatchFullInput is used internally by genqlient
 type __StratzGetMatchFullInput struct {
 	Id int64 `json:"id"`
@@ -3773,6 +4600,34 @@ type __StratzGetPlayersInput struct {
 
 // GetSteamAccountIds returns __StratzGetPlayersInput.SteamAccountIds, and is useful for accessing the field via an interface.
 func (v *__StratzGetPlayersInput) GetSteamAccountIds() []int64 { return v.SteamAccountIds }
+
+// __StratzListLeagueMatchesInput is used internally by genqlient
+type __StratzListLeagueMatchesInput struct {
+	Id      int                      `json:"id"`
+	Request LeagueMatchesRequestType `json:"request"`
+}
+
+// GetId returns __StratzListLeagueMatchesInput.Id, and is useful for accessing the field via an interface.
+func (v *__StratzListLeagueMatchesInput) GetId() int { return v.Id }
+
+// GetRequest returns __StratzListLeagueMatchesInput.Request, and is useful for accessing the field via an interface.
+func (v *__StratzListLeagueMatchesInput) GetRequest() LeagueMatchesRequestType { return v.Request }
+
+// __StratzListLeaguesInput is used internally by genqlient
+type __StratzListLeaguesInput struct {
+	Request LeagueRequestType `json:"request"`
+}
+
+// GetRequest returns __StratzListLeaguesInput.Request, and is useful for accessing the field via an interface.
+func (v *__StratzListLeaguesInput) GetRequest() LeagueRequestType { return v.Request }
+
+// __StratzListLiveMatchesInput is used internally by genqlient
+type __StratzListLiveMatchesInput struct {
+	Request MatchLiveRequestType `json:"request"`
+}
+
+// GetRequest returns __StratzListLiveMatchesInput.Request, and is useful for accessing the field via an interface.
+func (v *__StratzListLiveMatchesInput) GetRequest() MatchLiveRequestType { return v.Request }
 
 // __StratzListPlayerMatchesInput is used internally by genqlient
 type __StratzListPlayerMatchesInput struct {
@@ -4043,6 +4898,52 @@ func StratzGetHeroStatsWeek(
 	}
 
 	data_ = &StratzGetHeroStatsWeekResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzGetLeague.
+const StratzGetLeague_Operation = `
+query StratzGetLeague ($id: Int!) {
+	league(id: $id) {
+		... LeagueFields
+	}
+}
+fragment LeagueFields on LeagueType {
+	id
+	name
+	displayName
+	region
+	tier
+	startDateTime
+	endDateTime
+	isFuture
+	isEnded
+	isLive
+}
+`
+
+func StratzGetLeague(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	id int,
+) (data_ *StratzGetLeagueResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzGetLeague",
+		Query:  StratzGetLeague_Operation,
+		Variables: &__StratzGetLeagueInput{
+			Id: id,
+		},
+	}
+
+	data_ = &StratzGetLeagueResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -4649,6 +5550,176 @@ func StratzGetPlayers(
 	}
 
 	data_ = &StratzGetPlayersResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzListLeagueMatches.
+const StratzListLeagueMatches_Operation = `
+query StratzListLeagueMatches ($id: Int!, $request: LeagueMatchesRequestType!) {
+	league(id: $id) {
+		id
+		matches(request: $request) {
+			... MatchSummaryFields
+		}
+	}
+}
+fragment MatchSummaryFields on MatchType {
+	id
+	startDateTime
+	durationSeconds
+	didRadiantWin
+	radiantKills
+	direKills
+	gameModeId
+	lobbyTypeId
+	regionId
+	leagueId
+	gameVersionId
+	parsedDateTime
+	statsDateTime
+}
+`
+
+func StratzListLeagueMatches(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	id int,
+	request LeagueMatchesRequestType,
+) (data_ *StratzListLeagueMatchesResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzListLeagueMatches",
+		Query:  StratzListLeagueMatches_Operation,
+		Variables: &__StratzListLeagueMatchesInput{
+			Id:      id,
+			Request: request,
+		},
+	}
+
+	data_ = &StratzListLeagueMatchesResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzListLeagues.
+const StratzListLeagues_Operation = `
+query StratzListLeagues ($request: LeagueRequestType!) {
+	leagues(request: $request) {
+		... LeagueFields
+	}
+}
+fragment LeagueFields on LeagueType {
+	id
+	name
+	displayName
+	region
+	tier
+	startDateTime
+	endDateTime
+	isFuture
+	isEnded
+	isLive
+}
+`
+
+func StratzListLeagues(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	request LeagueRequestType,
+) (data_ *StratzListLeaguesResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzListLeagues",
+		Query:  StratzListLeagues_Operation,
+		Variables: &__StratzListLeaguesInput{
+			Request: request,
+		},
+	}
+
+	data_ = &StratzListLeaguesResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzListLiveMatches.
+const StratzListLiveMatches_Operation = `
+query StratzListLiveMatches ($request: MatchLiveRequestType!) {
+	live {
+		matches(request: $request) {
+			id
+			startDateTime
+			gameTime
+			gameModeId
+			spectatorCount
+			radiantTeamId
+			direTeamId
+			radiantTeamName
+			direTeamName
+			league {
+				... LeagueFields
+			}
+			players {
+				steamAccountId
+				heroId
+				isRadiant
+				playerSlot
+				kills
+				deaths
+				assists
+				networth
+				level
+			}
+		}
+	}
+}
+fragment LeagueFields on LeagueType {
+	id
+	name
+	displayName
+	region
+	tier
+	startDateTime
+	endDateTime
+	isFuture
+	isEnded
+	isLive
+}
+`
+
+func StratzListLiveMatches(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	request MatchLiveRequestType,
+) (data_ *StratzListLiveMatchesResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzListLiveMatches",
+		Query:  StratzListLiveMatches_Operation,
+		Variables: &__StratzListLiveMatchesInput{
+			Request: request,
+		},
+	}
+
+	data_ = &StratzListLiveMatchesResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
