@@ -68,12 +68,12 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 - Add strict CLI/environment/YAML precedence, explicit dotenv loading, mutually exclusive secret sources, bounded token-file parsing, permission diagnostics, and centralized redaction.
 - Implement `version` and command help behavior.
 
-- [ ] Define strict configuration types, defaults, and validation.
-- [ ] Implement CLI, environment, explicit YAML, and explicit dotenv loading.
-- [ ] Implement mutually exclusive environment and file token sources.
-- [ ] Add token/config/cache permission checks for `doctor`.
-- [ ] Implement stderr logging with centralized secret and header redaction.
-- [ ] Implement root help and `version`.
+- [x] Define strict configuration types, defaults, and validation.
+- [x] Implement CLI, environment, explicit YAML, and explicit dotenv loading.
+- [x] Implement mutually exclusive environment and file token sources.
+- [x] Add token/config/cache permission checks for `doctor`.
+- [x] Implement stderr logging with centralized secret and header redaction.
+- [x] Implement root help and `version`.
 
 **Verification:** Table-driven tests cover precedence, unknown YAML keys, conflicting sources, symlinks, multiline/NUL/oversized tokens, absent credentials, and redaction of every sensitive header.
 
