@@ -16,6 +16,7 @@ import (
 
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
+	promptcatalog "github.com/aneviaro/stratz-mcp/internal/prompts"
 	resourcecatalog "github.com/aneviaro/stratz-mcp/internal/resources"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 	sdk "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -157,8 +158,22 @@ func TestSDKConformance(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(prompts.Prompts) != 0 {
-		t.Fatalf("prompts = %#v, want empty static list", prompts.Prompts)
+	if len(prompts.Prompts) != len(promptcatalog.Definitions()) {
+		t.Fatalf("prompt count = %d, want %d", len(prompts.Prompts), len(promptcatalog.Definitions()))
+	}
+	matchPrompt, err := clientSession.GetPrompt(ctx, &sdk.GetPromptParams{
+		Name:      "analyze_dota_match",
+		Arguments: map[string]string{"match_id": "123"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matchPrompt.Messages) != 1 {
+		t.Fatalf("prompt messages = %d, want 1", len(matchPrompt.Messages))
+	}
+	promptText, ok := matchPrompt.Messages[0].Content.(*sdk.TextContent)
+	if !ok || !strings.Contains(promptText.Text, "match_id: \"123\"") {
+		t.Fatalf("unexpected prompt content %#v", matchPrompt.Messages[0].Content)
 	}
 
 	success, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
