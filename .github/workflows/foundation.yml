@@ -29,6 +29,8 @@ jobs:
         run: go mod download
       - name: Verify modules
         run: go mod verify
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)"
       - name: Vet
         run: go vet ./...
       - name: Test
@@ -39,6 +41,13 @@ jobs:
         run: make check-restricted
       - name: Verify build metadata
         run: ./scripts/verify-build-info.sh
+      - name: Verify release policies
+        run: make check-policies
+      - name: Native interoperability smoke
+        run: |
+          make build
+          CLIENT_PROFILE=codex ./scripts/interop-smoke.sh native dist/stratz-mcp
+          CLIENT_PROFILE=claude ./scripts/interop-smoke.sh native dist/stratz-mcp
 
   cross-build:
     name: Build ${{ matrix.goos }}/${{ matrix.goarch }}

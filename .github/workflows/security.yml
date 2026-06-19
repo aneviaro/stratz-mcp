@@ -1,0 +1,41 @@
+name: security
+
+on:
+  pull_request:
+  push:
+  schedule:
+    - cron: "23 4 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: 1.25.x
+          cache: true
+      - name: Vulnerability scan
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@v1.1.4
+          govulncheck ./...
+      - name: OSV module scan
+        run: |
+          go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.3
+          osv-scanner scan source -r .
+      - name: License inventory and policy
+        run: |
+          go install github.com/google/go-licenses@v1.6.0
+          go-licenses check ./... --allowed_licenses=Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MIT,MPL-2.0
+          make notices
+          git diff --exit-code -- THIRD_PARTY_NOTICES
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@cb7149a9b57168e998490483d6bb80d3c9f645bc # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Race tests
+        run: go test -race ./...

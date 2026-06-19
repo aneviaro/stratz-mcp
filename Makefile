@@ -8,13 +8,16 @@ LDFLAGS := -X $(COMMAND_PACKAGE).version=$(VERSION) \
 	-X $(COMMAND_PACKAGE).revision=$(REVISION) \
 	-X $(COMMAND_PACKAGE).schemaVersion=$(SCHEMA_VERSION)
 
-.PHONY: build check check-generated check-restricted cross-build dev generate test tools vet verify verify-build-info
+.PHONY: build check check-format check-generated check-policies check-restricted cross-build dev generate interop-smoke notices package test tools vet verify verify-build-info
 
 build:
 	mkdir -p dist
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o dist/stratz-mcp ./cmd/stratz-mcp
 
-check: verify vet test check-generated check-restricted verify-build-info
+check: verify check-format vet test check-generated check-restricted check-policies verify-build-info
+
+check-format:
+	@test -z "$$(gofmt -l -- $$(find . -name '*.go' -type f))"
 
 check-generated:
 	./scripts/check-generated.sh
@@ -25,6 +28,19 @@ check-restricted:
 cross-build:
 	VERSION="$(VERSION)" REVISION="$(REVISION)" SCHEMA_VERSION="$(SCHEMA_VERSION)" \
 		GO="$(GO)" ./scripts/cross-build.sh
+
+interop-smoke: build
+	./scripts/interop-smoke.sh native dist/stratz-mcp
+
+notices:
+	GO="$(GO)" ./scripts/generate-notices.sh
+
+package:
+	VERSION="$(VERSION)" REVISION="$(REVISION)" SCHEMA_VERSION="$(SCHEMA_VERSION)" \
+		GO="$(GO)" ./scripts/package-release.sh
+
+check-policies:
+	./scripts/check-release-policies.sh
 
 dev:
 	$(GO) run -ldflags "$(LDFLAGS)" ./cmd/stratz-mcp
