@@ -5,3 +5,6 @@ generated: internal/graphql/generated/operations.go
 package: generated
 export_operations: internal/graphql/generated/operations.json
 optional: pointer
+bindings:
+  Long:
+    type: int64

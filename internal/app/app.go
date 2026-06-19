@@ -79,6 +79,7 @@ func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 		CacheStatus:     cacheStore.Status(),
 		Config:          options.Config,
 		Executor:        executor,
+		CursorToken:     options.Credential.Token,
 		Logger:          options.Logger,
 		Now:             options.Now,
 		Handlers:        options.Handlers,

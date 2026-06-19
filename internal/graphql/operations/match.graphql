@@ -1,0 +1,117 @@
+fragment MatchSummaryFields on MatchType {
+  id
+  startDateTime
+  durationSeconds
+  didRadiantWin
+  radiantKills
+  direKills
+  gameModeId
+  lobbyTypeId
+  regionId
+  leagueId
+  gameVersionId
+  parsedDateTime
+  statsDateTime
+}
+
+fragment MatchPlayerFields on MatchPlayerType {
+  steamAccountId
+  heroId
+  isRadiant
+  playerSlot
+  kills
+  deaths
+  assists
+  networth
+  level
+}
+
+fragment MatchStandardFields on MatchType {
+  ...MatchSummaryFields
+  players {
+    ...MatchPlayerFields
+  }
+  objectives {
+    time
+    type
+    isRadiant
+    steamAccountId
+    heroId
+    value
+  }
+  timeline {
+    time
+    type
+    isRadiant
+    steamAccountId
+    heroId
+    value
+  }
+}
+
+fragment MatchFullFields on MatchType {
+  ...MatchStandardFields
+  fights {
+    startTime
+    endTime
+    radiantKills
+    direKills
+    radiantNetworthDelta
+    participants {
+      steamAccountId
+      heroId
+      isRadiant
+      kills
+      deaths
+    }
+  }
+  economy {
+    time
+    radiantNetworth
+    direNetworth
+    radiantExperience
+    direExperience
+  }
+}
+
+query StratzGetMatchSummary($id: Long!) {
+  match(id: $id) {
+    ...MatchSummaryFields
+    players {
+      ...MatchPlayerFields
+    }
+  }
+}
+
+query StratzGetMatchStandard($id: Long!) {
+  match(id: $id) {
+    ...MatchStandardFields
+  }
+}
+
+query StratzGetMatchFull($id: Long!) {
+  match(id: $id) {
+    ...MatchFullFields
+  }
+}
+
+query StratzGetMatchesSummary($ids: [Long!]!) {
+  matches(ids: $ids) {
+    ...MatchSummaryFields
+    players {
+      ...MatchPlayerFields
+    }
+  }
+}
+
+query StratzGetMatchesStandard($ids: [Long!]!) {
+  matches(ids: $ids) {
+    ...MatchStandardFields
+  }
+}
+
+query StratzGetMatchesFull($ids: [Long!]!) {
+  matches(ids: $ids) {
+    ...MatchFullFields
+  }
+}

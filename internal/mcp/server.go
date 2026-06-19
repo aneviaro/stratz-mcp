@@ -11,6 +11,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
+	"github.com/aneviaro/stratz-mcp/internal/domain/playermatch"
 	rawgraphql "github.com/aneviaro/stratz-mcp/internal/graphql"
 	graphqlpolicy "github.com/aneviaro/stratz-mcp/internal/graphql/policy"
 	"github.com/aneviaro/stratz-mcp/internal/resources"
@@ -32,6 +33,7 @@ type Options struct {
 	CacheStatus     cache.Status
 	Config          config.Config
 	Executor        stratz.Executor
+	CursorToken     string
 	Logger          *slog.Logger
 	Now             func() time.Time
 	Handlers        map[string]ToolHandler
@@ -80,6 +82,19 @@ func New(options Options) (*Server, error) {
 			return nil, err
 		}
 		handlers["stratz_execute_graphql"] = rawGraphQLHandler(options, rawService)
+	}
+	if options.CursorToken != "" {
+		playerMatchService, err := playermatch.New(playermatch.Options{
+			Executor:            options.Executor,
+			Token:               options.CursorToken,
+			SchemaVersion:       options.SchemaVersion,
+			MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
+			Now:                 options.Now,
+		})
+		if err != nil {
+			return nil, err
+		}
+		registerPlayerMatchHandlers(handlers, options, playerMatchService)
 	}
 	handlers["stratz_server_info"] = serverInfoHandler(options)
 

@@ -4,6 +4,118 @@ schema {
   query: DotaQuery
 }
 
+scalar Long
+
 type DotaQuery {
   health: String
+  player(steamAccountId: Long!): PlayerType
+  players(steamAccountIds: [Long!]!): [PlayerType!]!
+  match(id: Long!): MatchType
+  matches(ids: [Long!]!): [MatchType!]!
+}
+
+type PlayerType {
+  steamAccountId: Long!
+  steamAccount: SteamAccountType
+  identity: PlayerIdentityType
+  matchCount: Int
+  winCount: Int
+  lastMatchDate: Long
+  ranks: [PlayerRankType!]
+  matches(request: PlayerMatchesRequestType!): [MatchType!]!
+}
+
+type SteamAccountType {
+  id: Long
+  name: String
+  avatar: String
+}
+
+type PlayerIdentityType {
+  name: String
+}
+
+type PlayerRankType {
+  rank: Int
+  leaderboardRank: Int
+}
+
+input PlayerMatchesRequestType {
+  startDateTime: Long
+  endDateTime: Long
+  heroIds: [Int!]
+  roleIds: [String!]
+  gameModeIds: [Int!]
+  lobbyTypeIds: [Int!]
+  isVictory: Boolean
+  gameVersionIds: [String!]
+  take: Int!
+  skip: Int!
+}
+
+type MatchType {
+  id: Long!
+  startDateTime: Long
+  durationSeconds: Int
+  didRadiantWin: Boolean
+  radiantKills: Int
+  direKills: Int
+  gameModeId: Int
+  lobbyTypeId: Int
+  regionId: Int
+  leagueId: Long
+  gameVersionId: String
+  parsedDateTime: Long
+  statsDateTime: Long
+  players: [MatchPlayerType!]!
+  objectives: [MatchEventType!]
+  timeline: [MatchEventType!]
+  fights: [MatchFightType!]
+  economy: [MatchEconomyType!]
+}
+
+type MatchPlayerType {
+  steamAccountId: Long
+  heroId: Int!
+  isRadiant: Boolean!
+  playerSlot: Int!
+  kills: Int!
+  deaths: Int!
+  assists: Int!
+  networth: Int
+  level: Int
+}
+
+type MatchEventType {
+  time: Int!
+  type: String!
+  isRadiant: Boolean
+  steamAccountId: Long
+  heroId: Int
+  value: String
+}
+
+type MatchFightType {
+  startTime: Int!
+  endTime: Int!
+  radiantKills: Int!
+  direKills: Int!
+  radiantNetworthDelta: Int
+  participants: [MatchFightParticipantType!]!
+}
+
+type MatchFightParticipantType {
+  steamAccountId: Long
+  heroId: Int!
+  isRadiant: Boolean!
+  kills: Int!
+  deaths: Int!
+}
+
+type MatchEconomyType {
+  time: Int!
+  radiantNetworth: Int
+  direNetworth: Int
+  radiantExperience: Int
+  direExperience: Int
 }
