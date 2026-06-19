@@ -1,7 +1,7 @@
 ---
 Created: 2026-06-18
 Purpose: Record live and documentary discovery of the STRATZ upstream HTTP, authentication, rate-limit, WAF, and API-use contracts.
-Status: Authenticated HTTP contract verified; private/partial-result probes and current STRATZ terms confirmation pending
+Status: HTTP discovery and edge-policy fixtures complete; public release remains blocked on current STRATZ permission
 ---
 
 # STRATZ upstream integration discovery
@@ -44,7 +44,7 @@ The token, bearer scheme, GraphQL endpoint, successful media type, gzip support,
 
 Earlier `curl` requests with similar headers were challenged by Cloudflare. Go's standard HTTP transport with a non-empty explicit user agent succeeded. Suppressing the user agent in the Go client reproduced the Cloudflare managed challenge. The implementation must preserve the verified Go transport behavior and user-agent requirement.
 
-Private-profile, execution-time partial-result, deliberate-timeout, oversized-response, and `429` behavior remain unverified. The project must not intentionally exhaust a real quota to produce a `429`.
+On June 19, 2026, the remaining destructive, sensitive, or non-deterministic edge cases were closed with explicit mock-policy fixtures. The project does not search for a real private profile, submit intentionally expensive operations, request oversized live payloads, or exhaust a real quota to produce a `429`. These policies are recorded in [discovery-evidence.json](./discovery-evidence.json) and exercised by automated tests.
 
 ## 2. Endpoint
 
@@ -166,6 +166,8 @@ Behavior:
 
 Run these probes using a dedicated test token loaded from an explicitly selected dotenv or secret file. Redact the token and cookies from every artifact.
 
+Every row below has a dated live observation, documentary policy, or mock-policy artifact in [discovery-evidence.json](./discovery-evidence.json). Mock fixtures are stored under `internal/discoveryevidence/testdata` and deliberately use project sentinels rather than claiming unobserved STRATZ error codes.
+
 | Probe | Purpose | Required capture |
 |---|---|---|
 | Minimal named query | Verified | HTTP 200, GraphQL response JSON |
@@ -178,14 +180,14 @@ Run these probes using a dedicated test token loaded from an explicitly selected
 | Malformed JSON | Verified | HTTP 400, `JSON_INVALID` |
 | Invalid GraphQL syntax | Verified | HTTP 400, `SYNTAX_ERROR` |
 | Valid syntax with invalid field | Verified | HTTP 400, `FIELDS_ON_CORRECT_TYPE` |
-| Query returning nullable/missing data | Verify partial-result behavior | Status, `data`, `errors`, extensions |
+| Query returning nullable/missing data | Mock policy verified June 19, 2026 | Status, `data`, `errors`, extensions |
 | Known missing match | Verified | HTTP 200 with `data.match: null` |
-| Known private/inaccessible profile | Map privacy semantics | Status and GraphQL result |
+| Known private/inaccessible profile | Mock policy verified June 19, 2026; no real private account sought | Status and GraphQL result |
 | Introspection query | Verified | HTTP 200; schema introspection is available |
 | Repeated safe queries below quota | Verified | Per-window and aggregate Kong headers observed |
-| Request near but not exhausting a limit | Not required | Do not spend quota solely to approach a limit |
-| Oversized selected response bounded client-side | Verify streaming cancellation | Bytes read, connection cancellation behavior |
-| Deliberate short client timeout | Verify cancellation | Network error type and server behavior |
+| Request near but not exhausting a limit | Documentary policy recorded June 19, 2026 | Do not spend quota solely to approach a limit |
+| Oversized selected response bounded client-side | Mock policy verified June 19, 2026 | Generated decoded size and resulting cancellation |
+| Deliberate short client timeout | Mock policy verified June 19, 2026 | Context deadline classification |
 
 Do not intentionally exhaust a STRATZ quota or trigger abusive traffic.
 
@@ -204,15 +206,18 @@ Verified:
 - Introspection availability.
 - Cloudflare challenge classification.
 
-Remaining:
+Closed by deterministic policy fixture on June 19, 2026:
 
-- Expired-but-correctly-signed token behavior.
-- Private-profile semantics.
-- Runtime partial `data` plus `errors`.
-- Actual `429` response fields. Use Kong's documented behavior and mock tests rather than intentionally exhausting the STRATZ quota.
-- Oversized-response cancellation.
-- Deliberate timeout/cancellation.
-- Current STRATZ API-use permissions.
+- Expired-but-correctly-signed token maps to non-retryable `AUTHENTICATION_FAILED`; no signed expired STRATZ credential is available.
+- Private-profile semantics map curated calls to `PRIVATE`; raw calls preserve bounded upstream `data` and `errors`.
+- Runtime partial `data` plus `errors` maps curated calls to `UPSTREAM_PARTIAL_ERROR`; raw calls preserve the bounded partial response.
+- HTTP `429` maps to retryable `RATE_LIMITED` using verified or documented reset metadata. A live quota is never intentionally exhausted.
+- A decoded response above 5 MiB maps to non-retryable `RESPONSE_TOO_LARGE`.
+- A client or context deadline maps to retryable `UPSTREAM_TIMEOUT`.
+
+Remaining external release dependency:
+
+- Current STRATZ API-use, caching, redistribution, attribution, and branding permission.
 
 Commit only redacted fixtures. Preserve exact header names and representative safe values.
 
@@ -284,6 +289,8 @@ The documentation and live headers therefore disagree. The server:
 
 ## 10. API-use, attribution, caching, and redistribution
 
+The official sources below were re-reviewed on June 19, 2026. They remained available and retained their historical 2020 wording, but they did not provide sufficiently explicit current permission for all planned product behavior. [release-clearance.json](./release-clearance.json) is the normative machine-checkable record.
+
 STRATZ's public knowledge base historically states:
 
 - Default-token users should link back to STRATZ as the data source.
@@ -307,18 +314,30 @@ Before public release, obtain and record current STRATZ terms or written confirm
 5. Branding and trademark language.
 6. Rate-limit and fair-use expectations.
 
-Until confirmed:
+Current decisions:
+
+| Area | Status | Release behavior |
+|---|---|---|
+| General-purpose API wrapper | Pending | Local implementation and private testing only; public release blocked |
+| Persistent local caching and stale serving | Pending | May be developed with safeguards; public release blocked |
+| GraphQL schema redistribution | Pending | Keep fetched snapshots local; never commit or package them |
+| Constants and badge redistribution | Pending | Keep fetched data local; never commit or package it |
+| Attribution and referral | Pending | Apply conservative linked attribution while exact requirements remain unresolved |
+| Branding and trademarks | Pending | No logos or endorsement claims; identify the project as unofficial |
+
+Until all required fields are explicitly approved:
 
 - Do not commit a fetched STRATZ schema or constants to a public release branch.
 - Do not publish cached STRATZ data.
 - Display `Data provided by STRATZ` with a link to `https://stratz.com` in user-facing documentation and generated analyses where practical.
 - State that the project is unofficial and not affiliated with or endorsed by STRATZ.
+- Run `go run ./cmd/release-clearance-check` in every public publishing job. The command must exit non-zero while any required decision is pending or denied.
 
 ## 11. Sources
 
-- [Official STRATZ API entry page](https://stratz.com/api)
-- [Official STRATZ knowledge base: API data](https://github.com/STRATZ-Esports/knowledge-base/issues/7)
-- [Official STRATZ knowledge base: rate limits](https://github.com/STRATZ-Esports/knowledge-base/issues/15)
-- [Official STRATZ knowledge base: API cost and attribution](https://github.com/STRATZ-Esports/knowledge-base/issues/31)
-- [Official STRATZ knowledge base: token types](https://github.com/STRATZ-Esports/knowledge-base/issues/37)
+- [Official STRATZ API entry page](https://stratz.com/api) — reviewed June 19, 2026
+- [Official STRATZ knowledge base: API data](https://github.com/STRATZ-Esports/knowledge-base/issues/7) — opened October 22, 2020; reviewed June 19, 2026
+- [Official STRATZ knowledge base: rate limits](https://github.com/STRATZ-Esports/knowledge-base/issues/15) — opened October 22, 2020; reviewed June 19, 2026
+- [Official STRATZ knowledge base: API cost and attribution](https://github.com/STRATZ-Esports/knowledge-base/issues/31) — opened October 22, 2020; reviewed June 19, 2026
+- [Official STRATZ knowledge base: token types](https://github.com/STRATZ-Esports/knowledge-base/issues/37) — reviewed June 19, 2026
 - [Kong rate-limiting response headers](https://developer.konghq.com/plugins/rate-limiting/#headers-sent-to-the-client)

@@ -1,0 +1,13 @@
+{
+  "id": "nullable_or_missing_data",
+  "kind": "graphql_response",
+  "http_status": 200,
+  "has_data": true,
+  "has_errors": true,
+  "expected": {
+    "curated": "UPSTREAM_PARTIAL_ERROR",
+    "raw": "partial_success",
+    "retryable": false
+  },
+  "notes": "Policy fixture for a successful GraphQL transport response containing both data and errors."
+}

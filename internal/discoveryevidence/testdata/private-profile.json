@@ -1,0 +1,14 @@
+{
+  "id": "private_profile",
+  "kind": "graphql_response",
+  "http_status": 200,
+  "graphql_code": "PRIVATE_PROFILE",
+  "has_data": true,
+  "has_errors": true,
+  "expected": {
+    "curated": "PRIVATE",
+    "raw": "partial_success",
+    "retryable": false
+  },
+  "notes": "Policy fixture only. PRIVATE_PROFILE is a project sentinel, not a claimed live STRATZ error code."
+}
