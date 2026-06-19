@@ -42,11 +42,11 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 - Add the production command, recommended internal packages, pinned dependencies, generation entrypoints, and build-version injection.
 - Retain existing discovery commands as development utilities.
 
-- [ ] Create `cmd/stratz-mcp` and the approved internal package skeleton.
-- [ ] Pin the MCP, GraphQL, configuration, SQLite, and compression dependencies.
-- [ ] Add build-time version, revision, and schema-version injection.
-- [ ] Add generation commands and developer entrypoints.
-- [ ] Add the Go 1.25/1.26 test matrix and native cross-build matrix.
+- [x] Create `cmd/stratz-mcp` and the approved internal package skeleton.
+- [x] Pin the MCP, GraphQL, configuration, SQLite, and compression dependencies.
+- [x] Add build-time version, revision, and schema-version injection.
+- [x] Add generation commands and developer entrypoints.
+- [x] Add the Go 1.25/1.26 test matrix and native cross-build matrix.
 
 **Verification:** `go mod verify`, `go vet ./...`, and `go test ./...` pass on Go 1.25 and 1.26. A minimal cross-compile succeeds for every native target.
 
