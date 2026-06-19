@@ -114,7 +114,8 @@ func NewRequestBudget(limit int) (*RequestBudget, error) {
 	return &RequestBudget{limit: limit}, nil
 }
 
-func (budget *RequestBudget) consume() bool {
+// Take charges one request attempt to the shared budget.
+func (budget *RequestBudget) Take() bool {
 	if budget == nil {
 		return false
 	}
@@ -125,6 +126,10 @@ func (budget *RequestBudget) consume() bool {
 	}
 	budget.used++
 	return true
+}
+
+func (budget *RequestBudget) consume() bool {
+	return budget.Take()
 }
 
 // Used returns the number of transport attempts charged so far.
