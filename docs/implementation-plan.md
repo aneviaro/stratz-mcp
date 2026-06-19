@@ -151,13 +151,13 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 - Add migrations, WAL mode, busy timeout, token namespaces, cache classes, TTL/stale rules, asynchronous writes, Zstandard compression, LRU eviction, permissions, corruption fallback, and cache CLI commands.
 - Disable raw caching until field classifications are approved.
 
-- [ ] Define the cache schema, migrations, indexes, and format version.
-- [ ] Implement secure database creation, WAL mode, and busy timeout.
-- [ ] Implement canonical keys, token namespaces, and cache classifications.
-- [ ] Implement reads, fresh bypass, TTL, stale fallback, and asynchronous writes.
-- [ ] Add compression, access tracking, size accounting, and LRU eviction.
-- [ ] Implement `cache stats` and transactional `cache clear` variants.
-- [ ] Add process-level fallback when cache initialization or operation fails.
+- [x] Define the cache schema, migrations, indexes, and format version.
+- [x] Implement secure database creation, WAL mode, and busy timeout.
+- [x] Implement canonical keys, token namespaces, and cache classifications.
+- [x] Implement reads, fresh bypass, TTL, stale fallback, and asynchronous writes.
+- [x] Add compression, access tracking, size accounting, and LRU eviction.
+- [x] Implement `cache stats` and transactional `cache clear` variants.
+- [x] Add process-level fallback when cache initialization or operation fails.
 
 **Verification:** Tests cover hit/miss/stale/fresh behavior, exclusions, namespace isolation, compression threshold, eviction, concurrent processes, lock/corruption fallback, permissions, symlink handling, statistics, and transactional clearing.
 

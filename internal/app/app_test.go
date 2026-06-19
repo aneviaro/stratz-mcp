@@ -4,9 +4,12 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/aneviaro/stratz-mcp/internal/auth"
+	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
@@ -67,5 +70,38 @@ func TestNewRuntimeComposesServerAndExecutor(t *testing.T) {
 	}
 	if runtime.Executor() == nil {
 		t.Fatal("runtime executor is nil")
+	}
+	if runtime.Cache() == nil {
+		t.Fatal("runtime cache is nil")
+	}
+	if runtime.Cache().Status() != cache.StatusHealthy {
+		t.Fatalf("cache status = %q, want healthy", runtime.Cache().Status())
+	}
+}
+
+func TestNewRuntimeFallsBackWhenCacheInitializationFails(t *testing.T) {
+	directory := t.TempDir()
+	cacheRoot := filepath.Join(directory, "cache-root")
+	if err := os.WriteFile(cacheRoot, []byte("not a directory"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Defaults(directory)
+	cfg.Cache.Directory = cacheRoot
+
+	runtime, err := NewRuntime(RuntimeOptions{
+		Build: BuildInfo{
+			Version:       "v1.2.3",
+			SchemaVersion: "sha256:fixture",
+		},
+		Config:     cfg,
+		Credential: auth.Credential{Token: "unused"},
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Executor:   runtimeExecutor{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if runtime.Cache().Status() != cache.StatusDegraded {
+		t.Fatalf("cache status = %q, want degraded", runtime.Cache().Status())
 	}
 }

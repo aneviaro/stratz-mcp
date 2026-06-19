@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
@@ -11,9 +12,12 @@ import (
 func serverInfoHandler(options Options) ToolHandler {
 	return func(ctx context.Context, _ any) (any, error) {
 		health := stratz.Probe(ctx, options.Executor)
-		cacheStatus := "disabled"
+		cacheStatus := string(cache.StatusDisabled)
 		if options.Config.Cache.Enabled {
-			cacheStatus = "degraded"
+			cacheStatus = string(options.CacheStatus)
+			if cacheStatus == "" {
+				cacheStatus = string(cache.StatusHealthy)
+			}
 		}
 		warnings := []string{}
 		if health.Status != stratz.HealthReachable {
