@@ -12,6 +12,80 @@ type DotaQuery {
   players(steamAccountIds: [Long!]!): [PlayerType!]!
   match(id: Long!): MatchType
   matches(ids: [Long!]!): [MatchType!]!
+  constants: ConstantsType!
+  heroStats(request: HeroStatsRequestType!): HeroStatsType
+}
+
+type ConstantsType {
+  heroes: [HeroConstantType!]!
+  items: [ConstantType!]!
+  abilities: [ConstantType!]!
+  gameModes: [ConstantType!]!
+  regions: [ConstantType!]!
+  ranks: [ConstantType!]
+}
+
+type ConstantType {
+  id: String!
+  name: String!
+  localizedName: String
+  metadata: [ConstantMetadataType!]!
+}
+
+type ConstantMetadataType {
+  key: String!
+  value: String
+}
+
+type HeroConstantType {
+  id: Int!
+  name: String!
+  localizedName: String
+  primaryAttribute: String
+  attackType: String
+  roles: [String!]!
+}
+
+input HeroStatsRequestType {
+  heroId: Int!
+  bucket: String!
+  startDateTime: Long!
+  endDateTime: Long!
+  gameVersionId: String
+  rankBracket: String
+  role: String
+  lane: String
+  includeMatchups: Boolean!
+  includeSynergies: Boolean!
+}
+
+type HeroStatsType {
+  heroId: Int!
+  matchCount: Int!
+  pickCount: Int!
+  winCount: Int!
+  banCount: Int!
+  populationMatchCount: Int!
+  rankDataAvailable: Boolean
+  roles: [HeroStatsBreakdownType!]!
+  lanes: [HeroStatsBreakdownType!]!
+  matchups: [HeroStatsRelationType!]!
+  synergies: [HeroStatsRelationType!]!
+}
+
+type HeroStatsBreakdownType {
+  name: String!
+  matchCount: Int!
+  pickCount: Int!
+  winCount: Int!
+  populationMatchCount: Int!
+}
+
+type HeroStatsRelationType {
+  heroId: Int!
+  matchCount: Int!
+  winCount: Int!
+  expectedWinRate: Float
 }
 
 type PlayerType {

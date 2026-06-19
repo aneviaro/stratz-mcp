@@ -1,0 +1,91 @@
+query StratzGetConstants {
+  constants {
+    heroes {
+      id
+      name
+      localizedName
+      primaryAttribute
+      attackType
+      roles
+    }
+    items {
+      ... ConstantFields
+    }
+    abilities {
+      ... ConstantFields
+    }
+    gameModes {
+      ... ConstantFields
+    }
+    regions {
+      ... ConstantFields
+    }
+    ranks {
+      ... ConstantFields
+    }
+  }
+}
+
+query StratzGetHeroStatsDay($request: HeroStatsRequestType!) {
+  heroStats(request: $request) {
+    ... HeroStatsFields
+  }
+}
+
+query StratzGetHeroStatsWeek($request: HeroStatsRequestType!) {
+  heroStats(request: $request) {
+    ... HeroStatsFields
+  }
+}
+
+query StratzGetHeroStatsMonth($request: HeroStatsRequestType!) {
+  heroStats(request: $request) {
+    ... HeroStatsFields
+  }
+}
+
+fragment ConstantFields on ConstantType {
+  id
+  name
+  localizedName
+  metadata {
+    key
+    value
+  }
+}
+
+fragment HeroStatsFields on HeroStatsType {
+  heroId
+  matchCount
+  pickCount
+  winCount
+  banCount
+  populationMatchCount
+  rankDataAvailable
+  roles {
+    name
+    matchCount
+    pickCount
+    winCount
+    populationMatchCount
+  }
+  lanes {
+    name
+    matchCount
+    pickCount
+    winCount
+    populationMatchCount
+  }
+  matchups {
+    heroId
+    matchCount
+    winCount
+    expectedWinRate
+  }
+  synergies {
+    heroId
+    matchCount
+    winCount
+    expectedWinRate
+  }
+}

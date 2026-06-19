@@ -103,6 +103,10 @@ func curatedEnvelope(
 	rates []stratz.RateLimit,
 	dateRange map[string]any,
 ) map[string]any {
+	var publicDetail any
+	if detail != "" {
+		publicDetail = detail
+	}
 	output := map[string]any{
 		"kind":    "success",
 		"data":    data,
@@ -111,7 +115,7 @@ func curatedEnvelope(
 			"retrieved_at":   options.Now().UTC().Format(time.RFC3339),
 			"operation":      operation,
 			"schema_version": options.SchemaVersion,
-			"detail_level":   detail,
+			"detail_level":   publicDetail,
 			"cache": map[string]any{
 				"status":      "miss",
 				"age_seconds": nil,
