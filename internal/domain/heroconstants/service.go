@@ -107,7 +107,17 @@ func (service *Service) BatchHeroes(ctx context.Context, identifiers []any) (*Re
 
 // ResolveHeroID resolves any public hero identifier to its canonical numeric ID.
 func (service *Service) ResolveHeroID(ctx context.Context, identifier any) (int64, error) {
-	_, constants, err := service.loadConstants(ctx, service.budget())
+	return service.ResolveHeroIDWithBudget(ctx, identifier, service.budget())
+}
+
+// ResolveHeroIDWithBudget resolves a hero while charging the caller's shared
+// per-MCP-call request budget.
+func (service *Service) ResolveHeroIDWithBudget(
+	ctx context.Context,
+	identifier any,
+	budget *stratz.RequestBudget,
+) (int64, error) {
+	_, constants, err := service.loadConstants(ctx, budget)
 	if err != nil {
 		return 0, err
 	}

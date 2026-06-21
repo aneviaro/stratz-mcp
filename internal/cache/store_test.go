@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -538,6 +539,57 @@ func TestCacheDisablesItselfAfterLockedWriteFailure(t *testing.T) {
 	}
 	if result.Status != LookupDisabled {
 		t.Fatalf("lookup status after degradation = %q, want disabled", result.Status)
+	}
+}
+
+func TestConcurrentOperationsRemainSafeDuringDegradationAndClose(t *testing.T) {
+	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+	store := openTestStore(t, nowPointer(&now), func(cfg *config.Config) {})
+	key, class := testKey(t, store, "token-a", "heroes", ClassPublicReference)
+	if err := store.Put(context.Background(), Entry{
+		Key:            key,
+		Classification: class,
+		Payload:        []byte(`{"x":1}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	start := make(chan struct{})
+	var workers sync.WaitGroup
+	for index := 0; index < 24; index++ {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			<-start
+			for attempt := 0; attempt < 50; attempt++ {
+				_, _ = store.Lookup(context.Background(), LookupRequest{Key: key})
+				_, _ = store.Stats(context.Background())
+				_ = store.Put(context.Background(), Entry{
+					Key:            key,
+					Classification: class,
+					Payload:        []byte(`{"x":2}`),
+				})
+			}
+		}()
+	}
+	close(start)
+	_ = store.fail(errors.New("forced degradation"), "test")
+	if store.db == nil {
+		t.Fatal("degradation cleared the immutable database handle")
+	}
+	workers.Wait()
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if store.db == nil {
+		t.Fatal("close cleared the immutable database handle")
+	}
+	result, err := store.Lookup(context.Background(), LookupRequest{Key: key})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Status != LookupDisabled {
+		t.Fatalf("lookup after close = %q, want disabled", result.Status)
 	}
 }
 

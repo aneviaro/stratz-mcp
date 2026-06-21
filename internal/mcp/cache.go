@@ -3,9 +3,11 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/cache"
+	"github.com/aneviaro/stratz-mcp/internal/contracts"
 )
 
 type cacheSpecification struct {
@@ -17,15 +19,15 @@ var cacheSpecifications = map[string]cacheSpecification{
 	"stratz_get_player":          {domain: "players", class: cache.ClassProfileSensitive},
 	"stratz_list_player_matches": {domain: "matches", class: cache.ClassPublicRecent},
 	"stratz_batch_get_players":   {domain: "players", class: cache.ClassProfileSensitive},
-	"stratz_get_match":           {domain: "matches", class: cache.ClassPublicHistorical},
-	"stratz_batch_get_matches":   {domain: "matches", class: cache.ClassPublicHistorical},
+	"stratz_get_match":           {domain: "matches", class: cache.ClassPublicRecent},
+	"stratz_batch_get_matches":   {domain: "matches", class: cache.ClassPublicRecent},
 	"stratz_get_hero":            {domain: "heroes", class: cache.ClassPublicReference},
 	"stratz_batch_get_heroes":    {domain: "heroes", class: cache.ClassPublicReference},
 	"stratz_get_hero_stats":      {domain: "heroes", class: cache.ClassPublicRecent},
 	"stratz_get_constants":       {domain: "constants", class: cache.ClassPublicReference},
 	"stratz_get_league":          {domain: "leagues", class: cache.ClassPublicReference},
 	"stratz_list_leagues":        {domain: "leagues", class: cache.ClassPublicRecent},
-	"stratz_list_league_matches": {domain: "matches", class: cache.ClassPublicHistorical},
+	"stratz_list_league_matches": {domain: "matches", class: cache.ClassPublicRecent},
 	"stratz_list_live_matches":   {domain: "live", class: cache.ClassPublicLive},
 }
 
@@ -83,7 +85,7 @@ func cachedToolHandler(
 		}
 
 		output, err := handler(ctx, input)
-		if err != nil && !fresh {
+		if err != nil && !fresh && staleFallbackAllowed(err) {
 			stale, staleErr := options.Cache.Lookup(ctx, cache.LookupRequest{
 				Key:        key,
 				AllowStale: true,
@@ -114,6 +116,24 @@ func cachedToolHandler(
 			})
 		}
 		return output, nil
+	}
+}
+
+func staleFallbackAllowed(err error) bool {
+	var executionErr *ExecutionError
+	if !errors.As(err, &executionErr) {
+		return false
+	}
+	switch executionErr.Code {
+	case contracts.ErrorCodeUpstreamNetworkError,
+		contracts.ErrorCodeUpstreamTLSError,
+		contracts.ErrorCodeUpstreamTimeout,
+		contracts.ErrorCodeRateLimited,
+		contracts.ErrorCodeUpstreamWAFBlocked,
+		contracts.ErrorCodeUpstreamError:
+		return true
+	default:
+		return false
 	}
 }
 
