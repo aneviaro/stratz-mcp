@@ -1,11 +1,15 @@
 package mcp
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
+	"github.com/aneviaro/stratz-mcp/internal/domain/heroconstants"
 	"github.com/aneviaro/stratz-mcp/internal/domain/leaguelive"
 )
 
@@ -36,3 +40,38 @@ func TestLeagueLiveEnvelopesValidate(t *testing.T) {
 }
 
 func stringPointer(value string) *string { return &value }
+
+func TestHeroFilteredLiveMatchListSharesRequestBudget(t *testing.T) {
+	cfg := config.Defaults(t.TempDir())
+	executor := &budgetFixtureExecutor{}
+	heroes, err := heroconstants.New(heroconstants.Options{
+		Executor: executor, MaxUpstreamRequests: cfg.Limits.MaxUpstreamRequests,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	live, err := leaguelive.New(leaguelive.Options{
+		Executor: executor, Token: "token", SchemaVersion: "schema-v1",
+		MaxUpstreamRequests: cfg.Limits.MaxUpstreamRequests,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	options := Options{Config: cfg, SchemaVersion: "schema-v1", Now: time.Now}
+	handlers := map[string]ToolHandler{}
+	registerLeagueLiveHandlers(handlers, options, live, heroes)
+
+	_, err = handlers["stratz_list_live_matches"](context.Background(), map[string]any{
+		"hero":               "axe",
+		"limit":              json.Number("1"),
+		"minimum_spectators": json.Number("999"),
+	})
+	var executionErr *ExecutionError
+	if !errors.As(err, &executionErr) ||
+		executionErr.Code != contracts.ErrorCodeRequestBudgetExceeded {
+		t.Fatalf("error = %#v, want REQUEST_BUDGET_EXCEEDED", err)
+	}
+	if executor.attempts != cfg.Limits.MaxUpstreamRequests {
+		t.Fatalf("upstream attempts = %d, want %d", executor.attempts, cfg.Limits.MaxUpstreamRequests)
+	}
+}

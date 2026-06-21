@@ -70,11 +70,12 @@ func registerPlayerMatchHandlers(
 	if handlers["stratz_list_player_matches"] == nil {
 		handlers["stratz_list_player_matches"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
-			filters, err := decodePlayerMatchFilters(ctx, object, heroes)
+			budget, _ := stratz.NewRequestBudget(options.Config.Limits.MaxUpstreamRequests)
+			filters, err := decodePlayerMatchFilters(ctx, object, heroes, budget)
 			if err != nil {
 				return nil, err
 			}
-			result, domainErr := service.ListPlayerMatches(ctx, filters)
+			result, domainErr := service.ListPlayerMatchesWithBudget(ctx, filters, budget)
 			if domainErr != nil {
 				return nil, playerMatchExecutionError(domainErr)
 			}
@@ -185,6 +186,7 @@ func decodePlayerMatchFilters(
 	ctx context.Context,
 	input map[string]any,
 	heroes *heroconstants.Service,
+	budget *stratz.RequestBudget,
 ) (playermatch.PlayerMatchFilters, error) {
 	filters := playermatch.PlayerMatchFilters{PlayerID: input["player_id"].(string)}
 	if value, ok := input["limit"]; ok {
@@ -233,7 +235,7 @@ func decodePlayerMatchFilters(
 		}
 	}
 	if hero, present := input["hero"]; present {
-		number, resolveErr := heroes.ResolveHeroID(ctx, hero)
+		number, resolveErr := heroes.ResolveHeroIDWithBudget(ctx, hero, budget)
 		if resolveErr != nil {
 			return filters, heroConstantsExecutionError(resolveErr)
 		}

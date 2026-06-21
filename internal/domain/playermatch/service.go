@@ -289,6 +289,16 @@ func (service *Service) ListPlayerMatches(
 	ctx context.Context,
 	filters PlayerMatchFilters,
 ) (*Result[contracts.StratzListPlayerMatchesData], error) {
+	return service.ListPlayerMatchesWithBudget(ctx, filters, service.budget())
+}
+
+// ListPlayerMatchesWithBudget executes the list using the caller's shared
+// per-MCP-call request budget.
+func (service *Service) ListPlayerMatchesWithBudget(
+	ctx context.Context,
+	filters PlayerMatchFilters,
+	budget *stratz.RequestBudget,
+) (*Result[contracts.StratzListPlayerMatchesData], error) {
 	playerID, err := NormalizePlayerID(filters.PlayerID)
 	if err != nil {
 		return nil, err
@@ -320,7 +330,6 @@ func (service *Service) ListPlayerMatches(
 			return nil, cursorError(err)
 		}
 	}
-	budget := service.budget()
 	rawPages := make([]any, 0, service.maxUpstreamRequests)
 	var rateLimits []stratz.RateLimit
 	pageSize := filters.Limit

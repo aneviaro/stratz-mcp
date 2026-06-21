@@ -452,13 +452,14 @@ func (store *Store) Close() error {
 	store.closeOnce.Do(func() {
 		store.mu.Lock()
 		store.closing = true
+		if store.status == StatusHealthy {
+			store.status = StatusDisabled
+			store.reason = "cache is closed"
+		}
 		store.mu.Unlock()
 		store.writeWG.Wait()
-		store.mu.Lock()
-		defer store.mu.Unlock()
 		if store.db != nil {
 			err = store.db.Close()
-			store.db = nil
 		}
 	})
 	return err
@@ -735,10 +736,6 @@ func (store *Store) fail(err error, action string) error {
 	if store.status == StatusHealthy {
 		store.status = StatusDegraded
 		store.reason = fmt.Sprintf("%s failed: %v", action, err)
-		if store.db != nil {
-			_ = store.db.Close()
-			store.db = nil
-		}
 		store.logger.Warn("disabling cache for this process", "error", err, "action", action)
 	}
 	return err

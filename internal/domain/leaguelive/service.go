@@ -186,6 +186,16 @@ func (service *Service) ListLeagueMatches(ctx context.Context, filters LeagueMat
 }
 
 func (service *Service) ListLiveMatches(ctx context.Context, filters LiveFilters) (*Result[contracts.StratzListLiveMatchesData], error) {
+	return service.ListLiveMatchesWithBudget(ctx, filters, service.budget())
+}
+
+// ListLiveMatchesWithBudget executes the list using the caller's shared
+// per-MCP-call request budget.
+func (service *Service) ListLiveMatchesWithBudget(
+	ctx context.Context,
+	filters LiveFilters,
+	budget *stratz.RequestBudget,
+) (*Result[contracts.StratzListLiveMatchesData], error) {
 	if err := validateLive(&filters); err != nil {
 		return nil, err
 	}
@@ -197,7 +207,6 @@ func (service *Service) ListLiveMatches(ctx context.Context, filters LiveFilters
 			return nil, cursorError(err)
 		}
 	}
-	budget := service.budget()
 	rawPages := []any{}
 	var rates []stratz.RateLimit
 	pageSize := max(filters.Limit, 20)

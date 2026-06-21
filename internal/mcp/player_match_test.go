@@ -1,11 +1,19 @@
 package mcp
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
+	"github.com/aneviaro/stratz-mcp/internal/domain/heroconstants"
+	"github.com/aneviaro/stratz-mcp/internal/domain/playermatch"
+	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
 func TestCuratedPlayerAndMatchEnvelopesValidate(t *testing.T) {
@@ -76,5 +84,90 @@ func TestDataNotReadyErrorEnvelopeValidates(t *testing.T) {
 	}
 	if !result.IsError {
 		t.Fatal("DATA_NOT_READY did not use the MCP error path")
+	}
+}
+
+func TestHeroFilteredPlayerMatchListSharesRequestBudget(t *testing.T) {
+	cfg := config.Defaults(t.TempDir())
+	executor := &budgetFixtureExecutor{}
+	heroes, err := heroconstants.New(heroconstants.Options{
+		Executor: executor, MaxUpstreamRequests: cfg.Limits.MaxUpstreamRequests,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	matches, err := playermatch.New(playermatch.Options{
+		Executor: executor, Token: "token", SchemaVersion: "schema-v1",
+		MaxUpstreamRequests: cfg.Limits.MaxUpstreamRequests,
+		MaxBatchSize:        cfg.Limits.MaxBatchSize,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	options := Options{Config: cfg, SchemaVersion: "schema-v1", Now: time.Now}
+	handlers := map[string]ToolHandler{}
+	registerPlayerMatchHandlers(handlers, options, matches, heroes)
+
+	_, err = handlers["stratz_list_player_matches"](context.Background(), map[string]any{
+		"player_id":                "1",
+		"hero":                     "axe",
+		"limit":                    json.Number("1"),
+		"minimum_duration_seconds": json.Number("999"),
+	})
+	var executionErr *ExecutionError
+	if !errors.As(err, &executionErr) ||
+		executionErr.Code != contracts.ErrorCodeRequestBudgetExceeded {
+		t.Fatalf("error = %#v, want REQUEST_BUDGET_EXCEEDED", err)
+	}
+	if executor.attempts != cfg.Limits.MaxUpstreamRequests {
+		t.Fatalf("upstream attempts = %d, want %d", executor.attempts, cfg.Limits.MaxUpstreamRequests)
+	}
+}
+
+type budgetFixtureExecutor struct {
+	attempts int
+}
+
+func (executor *budgetFixtureExecutor) Execute(
+	_ context.Context,
+	budget *stratz.RequestBudget,
+	request stratz.Request,
+) (*stratz.Response, error) {
+	if !budget.Take() {
+		return nil, &stratz.Error{
+			Code: contracts.ErrorCodeRequestBudgetExceeded, Message: "budget exhausted",
+			Details: map[string]any{},
+		}
+	}
+	executor.attempts++
+	switch request.OperationName {
+	case "StratzGetConstants":
+		return &stratz.Response{Data: json.RawMessage(
+			`{"constants":{"heroes":[{"id":1,"name":"npc_dota_hero_axe","localizedName":"Axe","roles":[]}]}}`,
+		)}, nil
+	case "StratzListPlayerMatches":
+		items := make([]string, 20)
+		for index := range items {
+			items[index] = fmt.Sprintf(
+				`{"id":%d,"durationSeconds":1,"parseStatus":"parsed","players":[]}`,
+				executor.attempts*100+index,
+			)
+		}
+		return &stratz.Response{Data: json.RawMessage(
+			`{"player":{"steamAccountId":1,"matches":[` + strings.Join(items, ",") + `]}}`,
+		)}, nil
+	case "StratzListLiveMatches":
+		items := make([]string, 20)
+		for index := range items {
+			items[index] = fmt.Sprintf(
+				`{"id":%d,"spectatorCount":1,"players":[]}`,
+				executor.attempts*100+index,
+			)
+		}
+		return &stratz.Response{Data: json.RawMessage(
+			`{"live":{"matches":[` + strings.Join(items, ",") + `]}}`,
+		)}, nil
+	default:
+		return nil, fmt.Errorf("unexpected operation %s", request.OperationName)
 	}
 }

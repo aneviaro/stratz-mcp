@@ -10,6 +10,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/domain/heroconstants"
 	"github.com/aneviaro/stratz-mcp/internal/domain/leaguelive"
 	"github.com/aneviaro/stratz-mcp/internal/domain/playermatch"
+	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
 func registerLeagueLiveHandlers(
@@ -59,11 +60,12 @@ func registerLeagueLiveHandlers(
 	if handlers["stratz_list_live_matches"] == nil {
 		handlers["stratz_list_live_matches"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
-			filters, err := decodeLiveFilters(ctx, object, heroes)
+			budget, _ := stratz.NewRequestBudget(options.Config.Limits.MaxUpstreamRequests)
+			filters, err := decodeLiveFilters(ctx, object, heroes, budget)
 			if err != nil {
 				return nil, err
 			}
-			result, domainErr := service.ListLiveMatches(ctx, filters)
+			result, domainErr := service.ListLiveMatchesWithBudget(ctx, filters, budget)
 			if domainErr != nil {
 				return nil, leagueLiveExecutionError(domainErr)
 			}
@@ -109,6 +111,7 @@ func decodeLiveFilters(
 	ctx context.Context,
 	input map[string]any,
 	heroes *heroconstants.Service,
+	budget *stratz.RequestBudget,
 ) (leaguelive.LiveFilters, error) {
 	var filters leaguelive.LiveFilters
 	if value, ok := input["limit"]; ok {
@@ -140,7 +143,7 @@ func decodeLiveFilters(
 		filters.PlayerID = &number
 	}
 	if value, ok := input["hero"]; ok {
-		number, err := heroes.ResolveHeroID(ctx, value)
+		number, err := heroes.ResolveHeroIDWithBudget(ctx, value, budget)
 		if err != nil {
 			return filters, heroConstantsExecutionError(err)
 		}
