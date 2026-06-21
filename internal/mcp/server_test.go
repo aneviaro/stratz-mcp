@@ -62,7 +62,7 @@ func testServer(t *testing.T, logger *slog.Logger) *Server {
 		}
 		content := []byte("{}\n")
 		if definition.MIMEType == "application/graphql" {
-			content = []byte("type Query { fixture: Boolean }\n")
+			content = []byte("scalar Long\ntype Query { match(id: Long!): Match }\ntype Match { id: Long! }\n")
 		}
 		if err := os.WriteFile(path, content, 0o600); err != nil {
 			t.Fatal(err)
@@ -186,7 +186,7 @@ func TestSDKConformance(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(readResource.Contents) != 1 ||
-		readResource.Contents[0].Text != "type Query { fixture: Boolean }\n" {
+		readResource.Contents[0].Text != "scalar Long\ntype Query { match(id: Long!): Match }\ntype Match { id: Long! }\n" {
 		t.Fatalf("read resource = %#v", readResource)
 	}
 	prompts, err := clientSession.ListPrompts(ctx, nil)

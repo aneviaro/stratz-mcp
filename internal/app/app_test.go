@@ -105,6 +105,16 @@ func TestNewRuntimeUsesPulledSchemaVersion(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(directory, schema.ManifestFile), data, 0o600); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.MkdirAll(filepath.Join(directory, "schema"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(
+		filepath.Join(directory, schema.FullSchemaFile),
+		[]byte("scalar Long\ntype Query { player(id: Long!): Player }\ntype Player { id: Long! }\n"),
+		0o600,
+	); err != nil {
+		t.Fatal(err)
+	}
 	runtime, err := NewRuntime(RuntimeOptions{
 		Build:      BuildInfo{Version: "v1.2.3", SchemaVersion: "unavailable"},
 		Config:     cfg,

@@ -1,5 +1,5 @@
 {
-  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_execute_graphql:output",
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.3:stratz_execute_graphql:output",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
     {

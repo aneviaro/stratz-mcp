@@ -2,6 +2,7 @@ package releasepack
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -28,6 +29,54 @@ func TestReleaseSurface(t *testing.T) {
 		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
 			t.Errorf("required release file %s: %v", name, err)
 		}
+	}
+}
+
+func TestPackageReleaseProducesArchivesChecksumsAndImageInput(t *testing.T) {
+	root := filepath.Join("..", "..")
+	output := filepath.Join(t.TempDir(), "release")
+	imageOutput := filepath.Join(t.TempDir(), "image")
+	command := exec.Command("sh", filepath.Join("scripts", "package-release.sh"))
+	command.Dir = root
+	command.Env = append(os.Environ(),
+		"VERSION=v1.2.3",
+		"REVISION=fixture-revision",
+		"SCHEMA_VERSION=fixture-schema",
+		"OUTPUT_DIR="+output,
+		"IMAGE_OUTPUT_DIR="+imageOutput,
+		"TARGETS=linux/amd64 windows/amd64",
+	)
+	if result, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("package release: %v\n%s", err, result)
+	}
+	for _, path := range []string{
+		"stratz-mcp_v1.2.3_linux_amd64.tar.gz",
+		"stratz-mcp_v1.2.3_windows_amd64.zip",
+		"checksums.txt",
+		"release-metadata.json",
+	} {
+		if _, err := os.Stat(filepath.Join(output, path)); err != nil {
+			t.Fatalf("missing release artifact %s: %v", path, err)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(imageOutput, "stratz-mcp-linux-amd64")); err != nil {
+		t.Fatalf("missing Linux image input: %v", err)
+	}
+	checksums, err := os.ReadFile(filepath.Join(output, "checksums.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(checksums), "linux_amd64.tar.gz") ||
+		!strings.Contains(string(checksums), "windows_amd64.zip") {
+		t.Fatalf("checksums = %s", checksums)
+	}
+	metadata, err := os.ReadFile(filepath.Join(output, "release-metadata.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(metadata), `"version":"v1.2.3"`) ||
+		!strings.Contains(string(metadata), `"revision":"fixture-revision"`) {
+		t.Fatalf("release metadata = %s", metadata)
 	}
 }
 

@@ -324,7 +324,7 @@ func (service *Service) ListPlayerMatchesWithBudget(
 		SchemaVersion:    service.schemaVersion,
 		OperationVersion: playerListOperationVersion,
 	}
-	var state pagination.ScanState[int64, upstreamMatch]
+	var state pagination.ScanState[int64]
 	if filters.Cursor != "" {
 		if _, err := service.cursor.Decode(filters.Cursor, binding, &state); err != nil {
 			return nil, cursorError(err)
@@ -539,7 +539,7 @@ func filterBinding(id PlayerID, filters PlayerMatchFilters) map[string]any {
 	return result
 }
 
-func optionalState(cursor string, state *pagination.ScanState[int64, upstreamMatch]) *pagination.ScanState[int64, upstreamMatch] {
+func optionalState(cursor string, state *pagination.ScanState[int64]) *pagination.ScanState[int64] {
 	if cursor == "" {
 		return nil
 	}

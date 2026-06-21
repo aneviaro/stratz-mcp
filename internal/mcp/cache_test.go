@@ -177,6 +177,55 @@ func TestEvolvingMatchToolsUseRecentCacheClass(t *testing.T) {
 	}
 }
 
+func TestPlayerHistoryUsesProfileSensitiveTTL(t *testing.T) {
+	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+	cfg := config.Defaults(t.TempDir())
+	store, err := cache.Open(cache.Options{
+		Config: cfg.Cache, Features: cfg.Features, Now: func() time.Time { return now },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	options := Options{
+		Config: cfg, Cache: store, CacheNamespace: "fixture",
+		SchemaVersion: "schema", Now: func() time.Time { return now },
+	}
+	calls := 0
+	handler := cachedToolHandler(
+		options,
+		"stratz_list_player_matches",
+		cacheSpecifications["stratz_list_player_matches"],
+		func(context.Context, any) (any, error) {
+			calls++
+			return curatedEnvelope(
+				options,
+				"list_player_matches",
+				contracts.DetailLevelSummary,
+				map[string]any{"items": []any{}},
+				nil,
+				false,
+				nil,
+				nil,
+			), nil
+		},
+	)
+	input := map[string]any{"player_id": "1"}
+	if _, err := handler(context.Background(), input); err != nil {
+		t.Fatal(err)
+	}
+	waitForCacheEntries(t, store, 1)
+	now = now.Add(cfg.Cache.PublicRecentTTL + time.Second)
+	output, err := handler(context.Background(), input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if calls != 1 {
+		t.Fatalf("handler calls = %d, want cached hit", calls)
+	}
+	assertCacheStatus(t, output, "hit")
+}
+
 func waitForCacheEntries(t *testing.T, store *cache.Store, want int64) {
 	t.Helper()
 	deadline := time.Now().Add(time.Second)

@@ -1,5 +1,5 @@
 {
-  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_batch_get_players:input",
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.3:stratz_batch_get_players:input",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {

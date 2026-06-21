@@ -137,7 +137,7 @@ func (client *Client) Execute(parent context.Context, budget *RequestBudget, req
 			return nil, requestErr
 		}
 		if budget.Remaining() == 0 {
-			return nil, requestBudgetError()
+			return nil, requestErr
 		}
 
 		delay, ok := client.retryDelay(ctx, requestErr, attempt)

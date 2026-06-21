@@ -1,5 +1,5 @@
 {
-  "$id": "urn:stratz-mcp:contract:1.0.0-draft.2:stratz_list_live_matches:output",
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.3:stratz_list_live_matches:output",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
     {
@@ -342,7 +342,10 @@
                             },
                             "hero_id": {
                               "minimum": 1,
-                              "type": "integer"
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
                             },
                             "kills": {
                               "minimum": 0,
@@ -375,7 +378,10 @@
                               "type": "string"
                             },
                             "won": {
-                              "type": "boolean"
+                              "type": [
+                                "boolean",
+                                "null"
+                              ]
                             }
                           },
                           "required": [

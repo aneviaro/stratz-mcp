@@ -2,11 +2,34 @@
 
 `stratz-mcp` applies configuration in this order: command-line flags, environment variables, an explicitly selected strict YAML file, then bounded defaults. YAML rejects unknown keys. Dotenv files are loaded only with `--env-file` or `STRATZ_ENV_FILE`.
 
-Credentials must come from exactly one source: `STRATZ_API_TOKEN`, an explicit dotenv file, or `--token-file`/`STRATZ_API_TOKEN_FILE`. Token files must be regular, non-symlink files with restrictive permissions and a bounded single-line value.
+Credentials must come from exactly one source: `STRATZ_API_TOKEN`, an explicit dotenv file, or `--token-file`/`STRATZ_API_TOKEN_FILE`. Token files must be regular, non-symlink files with a bounded single-line value. Restrictive POSIX permissions are strongly recommended; `doctor` warns when a token file is group/other accessible.
 
 Use `stratz-mcp doctor` to validate configuration, permissions, cache initialization, connectivity, schema status, and release clearance. Use `--log-level error|warn|info|debug` and `--log-format text|json`; logs are written to stderr with centralized credential/header redaction.
 
-Durations use Go syntax such as `20s`, `15m`, or `24h`. Byte values are decimal integers. Safety limits may only be tightened below their defaults.
+Durations use Go syntax such as `20s`, `15m`, or `24h`. Byte values are decimal integers. Demand-control limits and cache size cannot exceed their defaults. The upstream timeout and cache TTLs have separate maxima.
+
+## Configuration source selection
+
+| Purpose | CLI | Environment |
+| --- | --- | --- |
+| Strict YAML configuration | `--config PATH` | `STRATZ_CONFIG_FILE` |
+| Explicit dotenv file | `--env-file PATH` | `STRATZ_ENV_FILE` |
+| Token file | `--token-file PATH` | `STRATZ_API_TOKEN_FILE` |
+
+CLI selectors override environment selectors. Files are never auto-discovered.
+
+## Bounds
+
+| Setting group | Default | Maximum |
+| --- | --- | --- |
+| Upstream timeout | `20s` | `2m` |
+| Response/query/batch/request limits | Values below | Their listed defaults |
+| Cache size | `512 MiB` | `512 MiB` |
+| Historical TTL | `6h` | `24h` |
+| Profile-sensitive TTL | `15m` | `1h` |
+| Recent TTL | `5m` | `1h` |
+| Live TTL | `30s` | `2m` |
+| Raw TTL (currently disabled) | `5m` | `1h` |
 
 ```yaml
 limits:

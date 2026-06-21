@@ -83,9 +83,18 @@ func (service *Service) ListLeagues(ctx context.Context, filters LeagueFilters) 
 	if err := validateList(filters.Limit, filters.From, filters.To); err != nil {
 		return nil, err
 	}
+	if filters.Status != nil {
+		switch strings.ToLower(strings.TrimSpace(*filters.Status)) {
+		case "live", "ongoing", "completed", "ended", "upcoming", "future":
+		default:
+			return nil, invalid("Unsupported league status", map[string]any{
+				"status": *filters.Status,
+			})
+		}
+	}
 	filters.Limit = defaultLimit(filters.Limit)
 	binding := service.binding("stratz_list_leagues", leagueBinding(filters), filters.Limit, leagueListOperationVersion)
-	var state pagination.ScanState[int64, upstreamLeague]
+	var state pagination.ScanState[int64]
 	if filters.Cursor != "" {
 		if _, err := service.cursor.Decode(filters.Cursor, binding, &state); err != nil {
 			return nil, cursorError(err)
@@ -201,7 +210,7 @@ func (service *Service) ListLiveMatchesWithBudget(
 	}
 	filters.Limit = defaultLimit(filters.Limit)
 	binding := service.binding("stratz_list_live_matches", liveBinding(filters), filters.Limit, liveListOperationVersion)
-	var state pagination.ScanState[int64, upstreamLiveMatch]
+	var state pagination.ScanState[int64]
 	if filters.Cursor != "" {
 		if _, err := service.cursor.Decode(filters.Cursor, binding, &state); err != nil {
 			return nil, cursorError(err)
@@ -425,7 +434,7 @@ func pointerValue(value *int64) int64 {
 	return *value
 }
 func equalID(left, right *int64) bool { return left != nil && right != nil && *left == *right }
-func stateIf[C any, I any](cursor string, state *pagination.ScanState[C, I]) *pagination.ScanState[C, I] {
+func stateIf[C any](cursor string, state *pagination.ScanState[C]) *pagination.ScanState[C] {
 	if cursor == "" {
 		return nil
 	}

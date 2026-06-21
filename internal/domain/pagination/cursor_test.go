@@ -40,7 +40,7 @@ func TestCodecRoundTrip(t *testing.T) {
 	now := time.Date(2026, time.June, 19, 12, 0, 0, 0, time.UTC)
 	codec := NewCodec(Options{Now: func() time.Time { return now }})
 	next := "after:20"
-	state := ScanState[string, int]{
+	state := ScanState[string]{
 		Next:            &next,
 		HasMoreUpstream: true,
 	}
@@ -50,7 +50,7 @@ func TestCodecRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var decodedState ScanState[string, int]
+	var decodedState ScanState[string]
 	payload, err := codec.Decode(cursor, binding, &decodedState)
 	if err != nil {
 		t.Fatal(err)

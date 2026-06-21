@@ -196,6 +196,32 @@ func TestWriteBundleReplacesChildSymlinkWithoutFollowingIt(t *testing.T) {
 	}
 }
 
+func TestWriteBundleReplacesExistingTreeAndRejectsUnsafePaths(t *testing.T) {
+	directory := filepath.Join(t.TempDir(), "schema")
+	if err := WriteBundle(directory, map[string][]byte{
+		"old.txt": []byte("old"),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteBundle(directory, map[string][]byte{
+		"nested/new.txt": []byte("new"),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(directory, "old.txt")); !os.IsNotExist(err) {
+		t.Fatalf("obsolete file still exists: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(directory, "nested", "new.txt"))
+	if err != nil || string(data) != "new" {
+		t.Fatalf("new file = %q, error = %v", data, err)
+	}
+	for _, path := range []string{"../escape", "/absolute"} {
+		if err := WriteBundle(directory, map[string][]byte{path: []byte("x")}); err == nil {
+			t.Fatalf("unsafe path %q was accepted", path)
+		}
+	}
+}
+
 func fixtureData(t *testing.T) json.RawMessage {
 	t.Helper()
 	data, err := os.ReadFile("testdata/introspection-data.json")

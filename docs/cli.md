@@ -8,6 +8,8 @@ Status: Current
 
 Global options may appear before or after the command: `--config`, `--env-file`, `--token-file`, `--log-level`, and `--log-format`.
 
+`STRATZ_CONFIG_FILE`, `STRATZ_ENV_FILE`, and `STRATZ_API_TOKEN_FILE` select the same explicit files when the corresponding CLI flag is absent. No configuration or dotenv file is auto-discovered.
+
 | Command | Behavior |
 | --- | --- |
 | `serve` | Run the MCP 2025-11-25 stdio server until EOF or cancellation. |

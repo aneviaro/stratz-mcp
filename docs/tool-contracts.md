@@ -641,3 +641,7 @@ Any change to a tool name, schema, detail-level inclusion rule, error code, curs
 2. Updated generated validators and examples.
 3. Compatibility tests against Codex and Claude.
 4. A migration or deprecation note when an existing client could break.
+
+### `1.0.0-draft.3` migration note
+
+Live-match players now use a dedicated shape where `hero_id` and `won` are nullable. Clients generated from `1.0.0-draft.2` must accept `null` while a hero is unselected and while the match outcome is not yet known. Completed-match player records are unchanged.

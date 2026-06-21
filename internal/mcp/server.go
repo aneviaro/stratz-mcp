@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/cache"
@@ -21,6 +24,8 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/schema"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 	sdk "github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/vektah/gqlparser/v2"
+	"github.com/vektah/gqlparser/v2/ast"
 )
 
 const serverName = "stratz-mcp"
@@ -82,6 +87,20 @@ func New(options Options) (*Server, error) {
 				}
 			}
 		} else {
+			schemaData, schemaErr := os.ReadFile(filepath.Join(
+				options.SchemaDirectory,
+				schema.FullSchemaFile,
+			))
+			if schemaErr != nil {
+				return nil, fmt.Errorf("read local GraphQL schema: %w", schemaErr)
+			}
+			graphqlSchema, schemaErr := gqlparser.LoadSchema(&ast.Source{
+				Name:  schema.FullSchemaFile,
+				Input: string(schemaData),
+			})
+			if schemaErr != nil {
+				return nil, fmt.Errorf("compile local GraphQL schema: %w", schemaErr)
+			}
 			schemaPolicy, policyErr := graphqlpolicy.FromManifest(manifest)
 			if policyErr != nil {
 				return nil, policyErr
@@ -90,6 +109,7 @@ func New(options Options) (*Server, error) {
 				Limits:             options.Config.Limits,
 				AllowIntrospection: options.Config.Features.RuntimeIntrospection,
 				Schema:             schemaPolicy,
+				GraphQLSchema:      graphqlSchema,
 			})
 			if err != nil {
 				return nil, err

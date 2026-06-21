@@ -13,7 +13,7 @@ type Page[Cursor any, Item any] struct {
 }
 
 // ScanState preserves only the upstream continuation point for a later call.
-type ScanState[Cursor any, Item any] struct {
+type ScanState[Cursor any] struct {
 	Next            *Cursor `json:"next,omitempty"`
 	HasMoreUpstream bool    `json:"has_more_upstream"`
 }
@@ -22,7 +22,7 @@ type ScanState[Cursor any, Item any] struct {
 type ScanOptions[Cursor any, Item any] struct {
 	Limit    int
 	MaxPages int
-	State    *ScanState[Cursor, Item]
+	State    *ScanState[Cursor]
 	Fetch    func(context.Context, *Cursor) (Page[Cursor, Item], error)
 	Accept   func(Item) bool
 	Advance  func(*Cursor, int) *Cursor
@@ -31,7 +31,7 @@ type ScanOptions[Cursor any, Item any] struct {
 // ScanResult contains the filtered items and any continuation state.
 type ScanResult[Cursor any, Item any] struct {
 	Items        []Item
-	Next         *ScanState[Cursor, Item]
+	Next         *ScanState[Cursor]
 	HasMore      bool
 	PagesScanned int
 }
@@ -98,7 +98,7 @@ func Scan[Cursor any, Item any](
 						continuation = options.Advance(start, index+1)
 						more = true
 					}
-					result.Next = normalizeState(&ScanState[Cursor, Item]{
+					result.Next = normalizeState(&ScanState[Cursor]{
 						Next:            continuation,
 						HasMoreUpstream: more,
 					})
@@ -112,7 +112,7 @@ func Scan[Cursor any, Item any](
 		}
 	}
 
-	result.Next = normalizeState(&ScanState[Cursor, Item]{
+	result.Next = normalizeState(&ScanState[Cursor]{
 		Next:            clonePointer(next),
 		HasMoreUpstream: hasMoreUpstream,
 	})
@@ -120,9 +120,9 @@ func Scan[Cursor any, Item any](
 	return result, nil
 }
 
-func normalizeState[Cursor any, Item any](
-	state *ScanState[Cursor, Item],
-) *ScanState[Cursor, Item] {
+func normalizeState[Cursor any](
+	state *ScanState[Cursor],
+) *ScanState[Cursor] {
 	if state == nil {
 		return nil
 	}
@@ -136,13 +136,13 @@ func normalizeState[Cursor any, Item any](
 	return state
 }
 
-func cloneState[Cursor any, Item any](
-	state *ScanState[Cursor, Item],
-) *ScanState[Cursor, Item] {
+func cloneState[Cursor any](
+	state *ScanState[Cursor],
+) *ScanState[Cursor] {
 	if state == nil {
 		return nil
 	}
-	return &ScanState[Cursor, Item]{
+	return &ScanState[Cursor]{
 		Next:            clonePointer(state.Next),
 		HasMoreUpstream: state.HasMoreUpstream,
 	}

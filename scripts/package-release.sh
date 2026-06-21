@@ -6,12 +6,15 @@ version=${VERSION:-dev}
 revision=${REVISION:-unknown}
 schema_version=${SCHEMA_VERSION:-unavailable}
 output=${OUTPUT_DIR:-dist/release}
+image_output=${IMAGE_OUTPUT_DIR:-dist/image}
+targets=${TARGETS:-"darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64"}
 
 rm -rf "$output"
-mkdir -p "$output" dist/image/cache
-: > dist/image/cache/.keep
+rm -rf "$image_output"
+mkdir -p "$output" "$image_output/cache"
+: > "$image_output/cache/.keep"
 
-for target in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64; do
+for target in $targets; do
 	os=${target%/*}
 	arch=${target#*/}
 	name="stratz-mcp_${version}_${os}_${arch}"
@@ -35,7 +38,7 @@ for target in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 wi
 		tar -C "$output" -czf "$output/$name.tar.gz" "$name"
 	fi
 	if [ "$os" = linux ]; then
-		cp "$stage/stratz-mcp" "dist/image/stratz-mcp-linux-$arch"
+		cp "$stage/stratz-mcp" "$image_output/stratz-mcp-linux-$arch"
 	fi
 	rm -rf "$stage"
 done

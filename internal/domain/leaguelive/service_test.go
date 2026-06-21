@@ -3,6 +3,7 @@ package leaguelive
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -142,7 +143,7 @@ func TestLeagueMatchesUsesNativeFiltersAndContinuation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if first.Data.Items[0].ParseStatus != "parsed" || first.Data.Items[1].ParseStatus != "unparsed" || first.Data.Page.NextCursor == nil {
+	if first.Data.Items[0].ParseStatus != "parsed" || first.Data.Items[1].ParseStatus != "pending" || first.Data.Page.NextCursor == nil {
 		t.Fatalf("first = %#v", first.Data)
 	}
 	second, err := service.ListLeagueMatches(context.Background(), LeagueMatchFilters{
@@ -153,6 +154,64 @@ func TestLeagueMatchesUsesNativeFiltersAndContinuation(t *testing.T) {
 	}
 	if second.Data.Items[0].MatchID != "3" {
 		t.Fatalf("second = %#v", second.Data)
+	}
+}
+
+func TestListLeaguesRejectsUnsupportedStatus(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(stratz.Request) (*stratz.Response, error) {
+		t.Fatal("upstream should not be called")
+		return nil, nil
+	}}
+	service := mustService(t, executor)
+	status := "typo"
+	_, err := service.ListLeagues(context.Background(), LeagueFilters{Status: &status, Limit: 20})
+	var domainErr *Error
+	if !errors.As(err, &domainErr) || domainErr.Code != contracts.ErrorCodeInvalidArgument {
+		t.Fatalf("error = %#v", err)
+	}
+}
+
+func TestMapLivePreservesUnknownHeroAndOutcome(t *testing.T) {
+	mapped := mapLive(&upstreamLiveMatch{
+		ID: 1,
+		Players: []upstreamLivePlayer{{
+			HeroID: 0, IsRadiant: true, PlayerSlot: 1,
+		}},
+	}, time.Now())
+	if len(mapped.Players) != 1 ||
+		mapped.Players[0].HeroID != nil ||
+		mapped.Players[0].Won != nil {
+		t.Fatalf("players = %#v", mapped.Players)
+	}
+}
+
+func TestLeagueServiceMapsUpstreamAndProtocolFailures(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		response *stratz.Response
+		err      error
+		want     contracts.ErrorCode
+	}{
+		{
+			name: "upstream",
+			err: &stratz.Error{
+				Code: contracts.ErrorCodeRateLimited, Message: "limited",
+				Details: map[string]any{},
+			},
+			want: contracts.ErrorCodeRateLimited,
+		},
+		{name: "nil response", want: contracts.ErrorCodeUpstreamProtocolError},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			service := mustService(t, &fixtureExecutor{execute: func(stratz.Request) (*stratz.Response, error) {
+				return test.response, test.err
+			}})
+			_, err := service.GetLeague(context.Background(), "1")
+			var domainErr *Error
+			if !errors.As(err, &domainErr) || domainErr.Code != test.want {
+				t.Fatalf("error = %#v", err)
+			}
+		})
 	}
 }
 
