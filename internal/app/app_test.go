@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/auth"
 	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
+	"github.com/aneviaro/stratz-mcp/internal/schema"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
@@ -76,6 +78,46 @@ func TestNewRuntimeComposesServerAndExecutor(t *testing.T) {
 	}
 	if runtime.Cache().Status() != cache.StatusHealthy {
 		t.Fatalf("cache status = %q, want healthy", runtime.Cache().Status())
+	}
+}
+
+func TestNewRuntimeUsesPulledSchemaVersion(t *testing.T) {
+	cfg := config.Defaults(t.TempDir())
+	directory := filepath.Join(cfg.Cache.Directory, "schema")
+	if err := os.MkdirAll(directory, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	manifest := schema.Manifest{
+		FormatVersion: schema.FormatVersion,
+		SchemaHash:    "sha256:pulled",
+		Validation: schema.ValidationMetadata{
+			QueryType: "Query",
+			Fields: map[string]map[string]schema.Ref{
+				"Query":  {"player": {Type: "Player"}},
+				"Player": {"id": {Type: "Long!"}},
+			},
+		},
+	}
+	data, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(directory, schema.ManifestFile), data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runtime, err := NewRuntime(RuntimeOptions{
+		Build:      BuildInfo{Version: "v1.2.3", SchemaVersion: "unavailable"},
+		Config:     cfg,
+		Credential: auth.Credential{Token: "unused"},
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Executor:   runtimeExecutor{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer runtime.Close()
+	if runtime.Build().SchemaVersion != "sha256:pulled" {
+		t.Fatalf("schema version = %q", runtime.Build().SchemaVersion)
 	}
 }
 

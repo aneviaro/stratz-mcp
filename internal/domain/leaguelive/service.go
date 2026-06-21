@@ -114,6 +114,7 @@ func (service *Service) ListLeagues(ctx context.Context, filters LeagueFilters) 
 			next := offset + int64(len(envelope.Leagues))
 			return pagination.Page[int64, upstreamLeague]{Items: envelope.Leagues, Next: &next, HasMore: len(envelope.Leagues) == pageSize}, nil
 		},
+		Advance: advanceOffset,
 		Accept: func(league upstreamLeague) bool {
 			return filters.Query == nil || strings.Contains(strings.ToLower(leagueName(&league)), strings.ToLower(strings.TrimSpace(*filters.Query)))
 		},
@@ -219,7 +220,8 @@ func (service *Service) ListLiveMatches(ctx context.Context, filters LiveFilters
 			next := offset + int64(len(envelope.Live.Matches))
 			return pagination.Page[int64, upstreamLiveMatch]{Items: envelope.Live.Matches, Next: &next, HasMore: len(envelope.Live.Matches) == pageSize}, nil
 		},
-		Accept: func(match upstreamLiveMatch) bool { return acceptsLive(match, filters) },
+		Advance: advanceOffset,
+		Accept:  func(match upstreamLiveMatch) bool { return acceptsLive(match, filters) },
 	})
 	if err != nil {
 		return nil, err
@@ -240,6 +242,14 @@ func (service *Service) ListLiveMatches(ctx context.Context, filters LiveFilters
 		Data: contracts.StratzListLiveMatchesData{Items: items, Page: contracts.PageInfo{NextCursor: next, HasMore: next != nil}},
 		Raw:  rawPages, RateLimits: rates, Warnings: warnings,
 	}, nil
+}
+
+func advanceOffset(offset *int64, consumed int) *int64 {
+	value := int64(consumed)
+	if offset != nil {
+		value += *offset
+	}
+	return &value
 }
 
 func (service *Service) execute(ctx context.Context, budget *stratz.RequestBudget, query, operation string, variables any) (*stratz.Response, error) {

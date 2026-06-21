@@ -51,6 +51,35 @@ func TestLeagueMappingDerivesDeterministicStatus(t *testing.T) {
 	}
 }
 
+func TestGetLeagueMapsSuccessAndNotFound(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(request stratz.Request) (*stratz.Response, error) {
+		if request.OperationName != "StratzGetLeague" {
+			t.Fatalf("operation = %q", request.OperationName)
+		}
+		if request.Variables.(map[string]any)["id"] != int64(42) {
+			t.Fatalf("variables = %#v", request.Variables)
+		}
+		return response(`{"league":{"id":42,"name":"fixture","displayName":"Fixture League","isLive":true}}`), nil
+	}}
+	result, err := mustService(t, executor).GetLeague(context.Background(), "42")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Data.LeagueID != "42" || result.Data.Name != "fixture" ||
+		result.Data.Status == nil || *result.Data.Status != "live" {
+		t.Fatalf("league = %#v", result.Data)
+	}
+
+	executor.execute = func(stratz.Request) (*stratz.Response, error) {
+		return response(`{"league":null}`), nil
+	}
+	if _, err := mustService(t, executor).GetLeague(context.Background(), "42"); err == nil {
+		t.Fatal("expected not-found error")
+	} else if domainErr, ok := err.(*Error); !ok || domainErr.Code != contracts.ErrorCodeNotFound {
+		t.Fatalf("not-found error = %#v", err)
+	}
+}
+
 func TestLeagueNameSearchStopsAtFivePagesAndResumes(t *testing.T) {
 	executor := &fixtureExecutor{execute: func(request stratz.Request) (*stratz.Response, error) {
 		if request.OperationName != "StratzListLeagues" {
@@ -162,6 +191,9 @@ func TestLiveNativeAndClientFiltersWithIncompleteSnapshotWarning(t *testing.T) {
 	}
 	if len(result.Data.Items) != 2 || result.Data.Page.NextCursor == nil || len(result.Warnings) != 1 {
 		t.Fatalf("result = %#v", result)
+	}
+	if len(*result.Data.Page.NextCursor) > 4096 {
+		t.Fatalf("cursor length = %d, want at most 4096", len(*result.Data.Page.NextCursor))
 	}
 	if result.Data.Items[0].Players[0].AccountID == nil || *result.Data.Items[0].Players[0].AccountID != "11" {
 		t.Fatalf("mapped item = %#v", result.Data.Items[0])

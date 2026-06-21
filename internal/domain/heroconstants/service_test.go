@@ -80,6 +80,20 @@ func TestHeroResolutionByIDNameSlugAmbiguityAndBatchDuplicates(t *testing.T) {
 	}
 }
 
+func TestHeroBatchHonorsConfiguredMaximum(t *testing.T) {
+	service, err := New(Options{
+		Executor:            &fixtureExecutor{},
+		MaxUpstreamRequests: 5,
+		MaxBatchSize:        2,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.BatchHeroes(context.Background(), []any{1, 2, 3}); err == nil {
+		t.Fatal("batch accepted more than the configured maximum")
+	}
+}
+
 func TestConstantsTypesExplicitAllAndMissingRanks(t *testing.T) {
 	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
 		return response(constantsFixture), nil

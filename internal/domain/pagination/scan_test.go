@@ -6,56 +6,32 @@ import (
 	"testing"
 )
 
-func TestScanUsesPendingBeforeFetching(t *testing.T) {
-	state := &ScanState[string, int]{
-		Pending: []int{1, 2},
-	}
-	calls := 0
-	result, err := Scan(context.Background(), ScanOptions[string, int]{
-		Limit:    1,
-		MaxPages: 5,
-		State:    state,
-		Fetch: func(context.Context, *string) (Page[string, int], error) {
-			calls++
-			return Page[string, int]{}, nil
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if calls != 0 {
-		t.Fatalf("fetch calls = %d, want 0", calls)
-	}
-	if want := []int{1}; !reflect.DeepEqual(result.Items, want) {
-		t.Fatalf("items = %#v, want %#v", result.Items, want)
-	}
-	if !result.HasMore || result.Next == nil || !reflect.DeepEqual(result.Next.Pending, []int{2}) {
-		t.Fatalf("continuation = %#v", result.Next)
-	}
-}
-
-func TestScanFiltersAcrossPagesAndResumesWithOverflow(t *testing.T) {
-	pageTwo := "page-two"
-	fetch := func(_ context.Context, cursor *string) (Page[string, int], error) {
-		if cursor == nil {
-			return Page[string, int]{
-				Items:   []int{1, 2},
-				Next:    &pageTwo,
-				HasMore: true,
-			}, nil
+func TestScanFiltersAcrossPagesAndResumesWithoutEmbeddingItems(t *testing.T) {
+	items := []int{1, 2, 3, 4, 5}
+	fetch := func(_ context.Context, cursor *int) (Page[int, int], error) {
+		offset := 0
+		if cursor != nil {
+			offset = *cursor
 		}
-		if *cursor != pageTwo {
-			t.Fatalf("cursor = %q, want %q", *cursor, pageTwo)
-		}
-		return Page[string, int]{
-			Items:   []int{3, 4, 5},
-			HasMore: false,
+		end := min(offset+2, len(items))
+		next := end
+		return Page[int, int]{
+			Items:   items[offset:end],
+			Next:    &next,
+			HasMore: end < len(items),
 		}, nil
 	}
-	first, err := Scan(context.Background(), ScanOptions[string, int]{
+	advance := func(cursor *int, consumed int) *int {
+		if cursor != nil {
+			consumed += *cursor
+		}
+		return &consumed
+	}
+	first, err := Scan(context.Background(), ScanOptions[int, int]{
 		Limit:    2,
 		MaxPages: 5,
 		Fetch:    fetch,
+		Advance:  advance,
 		Accept: func(value int) bool {
 			return value%2 == 1
 		},
@@ -66,15 +42,16 @@ func TestScanFiltersAcrossPagesAndResumesWithOverflow(t *testing.T) {
 	if want := []int{1, 3}; !reflect.DeepEqual(first.Items, want) {
 		t.Fatalf("first items = %#v, want %#v", first.Items, want)
 	}
-	if !first.HasMore || first.Next == nil || !reflect.DeepEqual(first.Next.Pending, []int{5}) {
+	if !first.HasMore || first.Next == nil || first.Next.Next == nil || *first.Next.Next != 3 {
 		t.Fatalf("first continuation = %#v", first.Next)
 	}
 
-	second, err := Scan(context.Background(), ScanOptions[string, int]{
+	second, err := Scan(context.Background(), ScanOptions[int, int]{
 		Limit:    2,
 		MaxPages: 5,
 		State:    first.Next,
 		Fetch:    fetch,
+		Advance:  advance,
 		Accept: func(value int) bool {
 			return value%2 == 1
 		},

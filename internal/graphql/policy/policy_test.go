@@ -8,6 +8,7 @@ import (
 
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
+	"github.com/aneviaro/stratz-mcp/internal/schema"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -316,6 +317,37 @@ func TestListAndComplexityLimits(t *testing.T) {
 			assertPolicyCode(t, err, test.wantCode)
 		})
 	}
+}
+
+func TestManifestSchemaPolicyRejectsUnboundedNestedLists(t *testing.T) {
+	manifest := schema.Manifest{
+		Validation: schema.ValidationMetadata{
+			QueryType: "Query",
+			Fields: map[string]map[string]schema.Ref{
+				"Query": {
+					"match": {Type: "Match"},
+				},
+				"Match": {
+					"timeline": {Type: "[TimelineEvent!]!", ListDepth: 1},
+				},
+				"TimelineEvent": {
+					"time": {Type: "Long!"},
+				},
+			},
+		},
+	}
+	schemaPolicy, err := FromManifest(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checker := mustPolicy(t, Options{
+		Limits: testLimits(),
+		Schema: schemaPolicy,
+	})
+	_, err = checker.Analyze(Request{
+		Query: `query { match(id: 1) { timeline { time } } }`,
+	})
+	assertPolicyCode(t, err, contracts.ErrorCodeQueryListLimitRequired)
 }
 
 func TestDefaultListPolicyAndCacheClassification(t *testing.T) {

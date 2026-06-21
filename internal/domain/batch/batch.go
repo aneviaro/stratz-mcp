@@ -2,11 +2,8 @@
 package batch
 
 import (
-	"context"
 	"errors"
 	"fmt"
-
-	"golang.org/x/sync/errgroup"
 )
 
 // Plan preserves the caller's original inputs while deduplicating a stable
@@ -102,40 +99,4 @@ func Reconstruct[Input any, Key comparable, Result any](
 		output[index] = result
 	}
 	return output, nil
-}
-
-// Job is one cancelable batch subtask.
-type Job[Result any] func(context.Context) (Result, error)
-
-// RunJobs executes jobs concurrently and cancels the remaining work after the
-// first failure.
-func RunJobs[Result any](
-	ctx context.Context,
-	jobs []Job[Result],
-) ([]Result, error) {
-	if len(jobs) == 0 {
-		return []Result{}, nil
-	}
-
-	group, groupContext := errgroup.WithContext(ctx)
-	results := make([]Result, len(jobs))
-	for index, job := range jobs {
-		if job == nil {
-			return nil, fmt.Errorf("job %d is nil", index)
-		}
-		index := index
-		job := job
-		group.Go(func() error {
-			result, err := job(groupContext)
-			if err != nil {
-				return err
-			}
-			results[index] = result
-			return nil
-		})
-	}
-	if err := group.Wait(); err != nil {
-		return nil, err
-	}
-	return results, nil
 }

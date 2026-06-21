@@ -12,10 +12,8 @@ type Page[Cursor any, Item any] struct {
 	HasMore bool
 }
 
-// ScanState preserves pending filtered items and the upstream continuation
-// point for a later call.
+// ScanState preserves only the upstream continuation point for a later call.
 type ScanState[Cursor any, Item any] struct {
-	Pending         []Item  `json:"pending,omitempty"`
 	Next            *Cursor `json:"next,omitempty"`
 	HasMoreUpstream bool    `json:"has_more_upstream"`
 }
@@ -27,6 +25,7 @@ type ScanOptions[Cursor any, Item any] struct {
 	State    *ScanState[Cursor, Item]
 	Fetch    func(context.Context, *Cursor) (Page[Cursor, Item], error)
 	Accept   func(Item) bool
+	Advance  func(*Cursor, int) *Cursor
 }
 
 // ScanResult contains the filtered items and any continuation state.
@@ -58,8 +57,7 @@ func Scan[Cursor any, Item any](
 		Items: make([]Item, 0, options.Limit),
 	}
 	state := cloneState(options.State)
-	drainPending(result, state, options.Limit)
-	if len(result.Items) == options.Limit || (state != nil && len(state.Pending) == 0 && !state.HasMoreUpstream && state.Next == nil) {
+	if state != nil && !state.HasMoreUpstream && state.Next == nil {
 		result.Next = normalizeState(state)
 		result.HasMore = result.Next != nil
 		return result, nil
@@ -75,7 +73,8 @@ func Scan[Cursor any, Item any](
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		page, err := options.Fetch(ctx, clonePointer(next))
+		start := clonePointer(next)
+		page, err := options.Fetch(ctx, start)
 		if err != nil {
 			return nil, err
 		}
@@ -86,31 +85,27 @@ func Scan[Cursor any, Item any](
 			next = nil
 		}
 
-		filtered := make([]Item, 0, len(page.Items))
-		for _, item := range page.Items {
+		for index, item := range page.Items {
 			if options.Accept(item) {
-				filtered = append(filtered, item)
+				result.Items = append(result.Items, item)
+				if len(result.Items) == options.Limit {
+					continuation := clonePointer(next)
+					more := hasMoreUpstream
+					if index+1 < len(page.Items) {
+						if options.Advance == nil {
+							return nil, errors.New("scan advance function is required for partial pages")
+						}
+						continuation = options.Advance(start, index+1)
+						more = true
+					}
+					result.Next = normalizeState(&ScanState[Cursor, Item]{
+						Next:            continuation,
+						HasMoreUpstream: more,
+					})
+					result.HasMore = result.Next != nil
+					return result, nil
+				}
 			}
-		}
-		result.Items = append(result.Items, filtered...)
-		if len(result.Items) > options.Limit {
-			overflow := append([]Item(nil), result.Items[options.Limit:]...)
-			result.Items = result.Items[:options.Limit]
-			result.Next = normalizeState(&ScanState[Cursor, Item]{
-				Pending:         overflow,
-				Next:            clonePointer(next),
-				HasMoreUpstream: hasMoreUpstream,
-			})
-			result.HasMore = result.Next != nil
-			return result, nil
-		}
-		if len(result.Items) == options.Limit {
-			result.Next = normalizeState(&ScanState[Cursor, Item]{
-				Next:            clonePointer(next),
-				HasMoreUpstream: hasMoreUpstream,
-			})
-			result.HasMore = result.Next != nil
-			return result, nil
 		}
 		if !hasMoreUpstream {
 			return result, nil
@@ -125,27 +120,6 @@ func Scan[Cursor any, Item any](
 	return result, nil
 }
 
-func drainPending[Cursor any, Item any](
-	result *ScanResult[Cursor, Item],
-	state *ScanState[Cursor, Item],
-	limit int,
-) {
-	if result == nil || state == nil || limit <= 0 {
-		return
-	}
-	remaining := limit - len(result.Items)
-	if remaining <= 0 || len(state.Pending) == 0 {
-		return
-	}
-	if len(state.Pending) <= remaining {
-		result.Items = append(result.Items, state.Pending...)
-		state.Pending = nil
-		return
-	}
-	result.Items = append(result.Items, state.Pending[:remaining]...)
-	state.Pending = append([]Item(nil), state.Pending[remaining:]...)
-}
-
 func normalizeState[Cursor any, Item any](
 	state *ScanState[Cursor, Item],
 ) *ScanState[Cursor, Item] {
@@ -153,10 +127,10 @@ func normalizeState[Cursor any, Item any](
 		return nil
 	}
 	state = cloneState(state)
-	if len(state.Pending) == 0 && !state.HasMoreUpstream {
+	if !state.HasMoreUpstream {
 		state.Next = nil
 	}
-	if len(state.Pending) == 0 && state.Next == nil && !state.HasMoreUpstream {
+	if state.Next == nil && !state.HasMoreUpstream {
 		return nil
 	}
 	return state
@@ -169,7 +143,6 @@ func cloneState[Cursor any, Item any](
 		return nil
 	}
 	return &ScanState[Cursor, Item]{
-		Pending:         append([]Item(nil), state.Pending...),
 		Next:            clonePointer(state.Next),
 		HasMoreUpstream: state.HasMoreUpstream,
 	}

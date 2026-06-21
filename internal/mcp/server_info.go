@@ -14,7 +14,11 @@ func serverInfoHandler(options Options) ToolHandler {
 		health := stratz.Probe(ctx, options.Executor)
 		cacheStatus := string(cache.StatusDisabled)
 		if options.Config.Cache.Enabled {
-			cacheStatus = string(options.CacheStatus)
+			if options.Cache != nil {
+				cacheStatus = string(options.Cache.Status())
+			} else {
+				cacheStatus = string(options.CacheStatus)
+			}
 			if cacheStatus == "" {
 				cacheStatus = string(cache.StatusHealthy)
 			}

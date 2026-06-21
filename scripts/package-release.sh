@@ -8,7 +8,8 @@ schema_version=${SCHEMA_VERSION:-unavailable}
 output=${OUTPUT_DIR:-dist/release}
 
 rm -rf "$output"
-mkdir -p "$output" dist/image
+mkdir -p "$output" dist/image/cache
+: > dist/image/cache/.keep
 
 for target in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64; do
 	os=${target%/*}

@@ -291,15 +291,24 @@ func TestConcurrentStoresShareSQLite(t *testing.T) {
 	defer storeB.Close()
 
 	var wg sync.WaitGroup
+	type prepared struct {
+		key   Key
+		class Classification
+	}
+	a := make([]prepared, 10)
+	b := make([]prepared, 10)
+	for index := 0; index < 10; index++ {
+		a[index].key, a[index].class = testKeyFromConfig(t, cfg, "token-a", "heroes", ClassPublicReference, map[string]any{"id": index})
+		b[index].key, b[index].class = testKeyFromConfig(t, cfg, "token-b", "matches", ClassPublicHistorical, map[string]any{"id": index})
+	}
 	for index := 0; index < 10; index++ {
 		index := index
 		wg.Add(2)
 		go func() {
 			defer wg.Done()
-			key, class := testKeyFromConfig(t, cfg, "token-a", "heroes", ClassPublicReference, map[string]any{"id": index})
 			if err := storeA.Put(context.Background(), Entry{
-				Key:            key,
-				Classification: class,
+				Key:            a[index].key,
+				Classification: a[index].class,
 				Payload:        []byte(strings.Repeat("a", 32)),
 			}); err != nil {
 				t.Errorf("storeA put: %v", err)
@@ -307,10 +316,9 @@ func TestConcurrentStoresShareSQLite(t *testing.T) {
 		}()
 		go func() {
 			defer wg.Done()
-			key, class := testKeyFromConfig(t, cfg, "token-b", "matches", ClassPublicHistorical, map[string]any{"id": index})
 			if err := storeB.Put(context.Background(), Entry{
-				Key:            key,
-				Classification: class,
+				Key:            b[index].key,
+				Classification: b[index].class,
 				Payload:        []byte(strings.Repeat("b", 32)),
 			}); err != nil {
 				t.Errorf("storeB put: %v", err)
@@ -326,6 +334,35 @@ func TestConcurrentStoresShareSQLite(t *testing.T) {
 	if stats.Entries != 20 {
 		t.Fatalf("entries = %d, want 20", stats.Entries)
 	}
+}
+
+func TestPutAsyncDoesNotRegisterAfterCloseStarts(t *testing.T) {
+	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+	store := openTestStore(t, nowPointer(&now), func(cfg *config.Config) {})
+	key, classification := testKey(t, store, "token-a", "heroes", ClassPublicReference)
+	entry := Entry{
+		Key:            key,
+		Classification: classification,
+		Payload:        []byte(`{"hero_id":1}`),
+	}
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for index := 0; index < 32; index++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			for attempt := 0; attempt < 32; attempt++ {
+				store.PutAsync(entry)
+			}
+		}()
+	}
+	close(start)
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	wg.Wait()
+	store.PutAsync(entry)
 }
 
 func TestOpenRejectsSymlinkAndAppliesPermissions(t *testing.T) {

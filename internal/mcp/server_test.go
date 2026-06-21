@@ -18,6 +18,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
 	promptcatalog "github.com/aneviaro/stratz-mcp/internal/prompts"
 	resourcecatalog "github.com/aneviaro/stratz-mcp/internal/resources"
+	"github.com/aneviaro/stratz-mcp/internal/schema"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 	sdk "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -25,15 +26,19 @@ import (
 type serverExecutor struct{}
 
 func (serverExecutor) Execute(
-	context.Context,
-	*stratz.RequestBudget,
-	stratz.Request,
+	_ context.Context,
+	_ *stratz.RequestBudget,
+	request stratz.Request,
 ) (*stratz.Response, error) {
 	limit := int64(150)
 	remaining := int64(149)
+	data := json.RawMessage(`{"match":{"id":"1"}}`)
+	if request.OperationName == "StratzGetPlayer" {
+		data = json.RawMessage(`{"player":{"steamAccountId":1,"isPrivate":false}}`)
+	}
 	return &stratz.Response{
 		HTTPStatus: 200,
-		Data:       json.RawMessage(`{"match":{"id":"1"}}`),
+		Data:       data,
 		Errors:     json.RawMessage(`[]`),
 		Extensions: json.RawMessage(`null`),
 		RateLimits: []stratz.RateLimit{{
@@ -63,12 +68,42 @@ func testServer(t *testing.T, logger *slog.Logger) *Server {
 			t.Fatal(err)
 		}
 	}
+	manifest := schema.Manifest{
+		FormatVersion: schema.FormatVersion,
+		SchemaHash:    "sha256:fixture",
+		Validation: schema.ValidationMetadata{
+			QueryType: "Query",
+			Fields: map[string]map[string]schema.Ref{
+				"Query": {
+					"match": {
+						Type: "Match",
+						Arguments: map[string]schema.Ref{
+							"id": {Type: "Long!"},
+						},
+					},
+				},
+				"Match": {"id": {Type: "Long!"}},
+			},
+		},
+	}
+	manifestData, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(
+		filepath.Join(schemaDirectory, schema.ManifestFile),
+		manifestData,
+		0o600,
+	); err != nil {
+		t.Fatal(err)
+	}
 	server, err := New(Options{
 		Version:         "v1.2.3",
 		SchemaVersion:   "sha256:fixture",
 		SchemaDirectory: schemaDirectory,
 		Config:          cfg,
 		Executor:        serverExecutor{},
+		CursorToken:     "fixture-token",
 		Logger:          logger,
 		Now: func() time.Time {
 			return time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
@@ -219,18 +254,14 @@ func TestSDKConformance(t *testing.T) {
 	}
 	assertResultConforms(t, "stratz_execute_graphql", rawCacheFailure, true)
 
-	example, err := contracts.Example("stratz_get_player", contracts.InputSchema)
-	if err != nil {
-		t.Fatal(err)
-	}
-	executionFailure, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
+	curatedSuccess, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
 		Name:      "stratz_get_player",
-		Arguments: example,
+		Arguments: map[string]any{"player_id": "1"},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertResultConforms(t, "stratz_get_player", executionFailure, true)
+	assertResultConforms(t, "stratz_get_player", curatedSuccess, false)
 
 	invalid, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
 		Name:      "stratz_get_player",
@@ -246,6 +277,71 @@ func TestSDKConformance(t *testing.T) {
 		Arguments: map[string]any{},
 	}); err == nil {
 		t.Fatal("unknown tool did not produce a protocol error")
+	}
+}
+
+func TestEveryToolRunsThroughTheRegisteredAdapter(t *testing.T) {
+	handlers := map[string]ToolHandler{}
+	for _, definition := range contracts.Definitions() {
+		if definition.Name == "stratz_server_info" {
+			continue
+		}
+		output, err := contracts.Example(definition.Name, contracts.OutputSchema)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fixture := output
+		handlers[definition.Name] = func(context.Context, any) (any, error) {
+			return fixture, nil
+		}
+	}
+	cfg := config.Defaults(t.TempDir())
+	cfg.Cache.Enabled = false
+	server, err := New(Options{
+		Version:       "test",
+		SchemaVersion: "schema-v1",
+		Config:        cfg,
+		Executor:      serverExecutor{},
+		Handlers:      handlers,
+		Now: func() time.Time {
+			return time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	serverTransport, clientTransport := sdk.NewInMemoryTransports()
+	serverSession, err := server.SDK().Connect(ctx, serverTransport, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer serverSession.Close()
+	client := sdk.NewClient(
+		&sdk.Implementation{Name: "adapter-test", Version: "1"},
+		&sdk.ClientOptions{},
+	)
+	clientSession, err := client.Connect(ctx, clientTransport, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clientSession.Close()
+	for _, definition := range contracts.Definitions() {
+		t.Run(definition.Name, func(t *testing.T) {
+			input, err := contracts.Example(definition.Name, contracts.InputSchema)
+			if err != nil {
+				t.Fatal(err)
+			}
+			result, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
+				Name:      definition.Name,
+				Arguments: input,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertResultConforms(t, definition.Name, result, false)
+		})
 	}
 }
 
@@ -300,7 +396,7 @@ func TestRawStdioProtocolHarness(t *testing.T) {
 	}
 	assertRawMirror(t, successResult)
 
-	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"stratz_get_player","arguments":{"player_id":"123"}}}`)
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"stratz_get_player","arguments":{"player_id":"abc"}}}`)
 	executionFailure := readRaw(t, reader, &rawLines)
 	failureResult := executionFailure["result"].(map[string]any)
 	if failureResult["isError"] != true {
@@ -401,7 +497,7 @@ func assertResultConforms(
 ) {
 	t.Helper()
 	if result.IsError != wantError {
-		t.Fatalf("isError = %v, want %v", result.IsError, wantError)
+		t.Fatalf("isError = %v, want %v; structured=%#v", result.IsError, wantError, result.StructuredContent)
 	}
 	if err := contracts.ValidateOutput(tool, result.StructuredContent); err != nil {
 		t.Fatal(err)

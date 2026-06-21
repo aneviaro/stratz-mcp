@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"go.yaml.in/yaml/v3"
 )
 
 func TestReleaseSurface(t *testing.T) {
@@ -34,16 +36,43 @@ func TestPublishingRequiresClearance(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	text := string(content)
-	gate := "go run ./cmd/release-clearance-check"
-	if !strings.Contains(text, gate) {
-		t.Fatalf("release workflow does not invoke %q", gate)
+	var workflow struct {
+		Jobs map[string]struct {
+			Needs       any    `yaml:"needs"`
+			Environment string `yaml:"environment"`
+			Steps       []struct {
+				Run  string `yaml:"run"`
+				Uses string `yaml:"uses"`
+			} `yaml:"steps"`
+		} `yaml:"jobs"`
 	}
-	if strings.Index(text, gate) > strings.Index(text, "softprops/action-gh-release") {
-		t.Fatal("clearance check must precede publication")
+	if err := yaml.Unmarshal(content, &workflow); err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(text, "environment: public-release") {
-		t.Fatal("publishing jobs must require protected environment approval")
+	clearance, ok := workflow.Jobs["clearance"]
+	if !ok {
+		t.Fatal("release workflow has no clearance job")
+	}
+	foundGate := false
+	for _, step := range clearance.Steps {
+		if strings.Contains(step.Run, "go run ./cmd/release-clearance-check") {
+			foundGate = true
+		}
+	}
+	if !foundGate {
+		t.Fatal("clearance job does not execute the release-clearance check")
+	}
+	for _, name := range []string{"artifacts", "image"} {
+		job, ok := workflow.Jobs[name]
+		if !ok {
+			t.Fatalf("release workflow has no %s job", name)
+		}
+		if job.Needs != "clearance" {
+			t.Fatalf("%s job needs = %#v, want clearance", name, job.Needs)
+		}
+		if job.Environment != "public-release" {
+			t.Fatalf("%s job environment = %q, want public-release", name, job.Environment)
+		}
 	}
 }
 
@@ -52,11 +81,36 @@ func TestContainerIsNonRootAndScratchBased(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	text := string(content)
-	if strings.Count(text, "FROM scratch") < 2 {
+	var instructions []string
+	for _, line := range strings.Split(string(content), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		instructions = append(instructions, line)
+	}
+	fromScratch := 0
+	for _, instruction := range instructions {
+		if strings.HasPrefix(instruction, "FROM scratch") {
+			fromScratch++
+		}
+	}
+	if fromScratch < 2 {
 		t.Fatal("Dockerfile must use immutable scratch stages")
 	}
-	if !strings.Contains(text, "USER 65532:65532") {
+	if !containsInstruction(instructions, "USER 65532:65532") {
 		t.Fatal("Dockerfile must use a numeric non-root user")
 	}
+	if !containsInstruction(instructions, "COPY --chown=65532:65532 dist/image/cache /cache") {
+		t.Fatal("Dockerfile must provision an owned cache directory")
+	}
+}
+
+func containsInstruction(instructions []string, want string) bool {
+	for _, instruction := range instructions {
+		if instruction == want {
+			return true
+		}
+	}
+	return false
 }

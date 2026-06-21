@@ -1,14 +1,14 @@
 ---
 Created: 2026-06-18
 Purpose: Define the dependency-ordered, testable implementation plan for STRATZ MCP v1.
-Status: Ready for implementation; public release remains blocked on STRATZ API-use clearance
+Status: Local implementation complete; manual release-candidate validation and STRATZ public-release clearance remain open
 ---
 
 # STRATZ MCP v1 Implementation Plan
 
 ## Summary
 
-Implement the architecture in dependency-ordered milestones. Every step ends with an automated or evidence-based completion gate. Local development may proceed before STRATZ permission clearance, but publishing remains blocked.
+The dependency-ordered milestones are implemented locally. Automated checks cover the code paths; Docker-daemon and installed-client acceptance evidence must still be recorded in the protected release environment. Publishing remains blocked.
 
 ## Locked interfaces and dependencies
 
@@ -224,12 +224,14 @@ Implement the architecture in dependency-ordered milestones. Every step ends wit
 - [x] Generate notices, SPDX/CycloneDX SBOMs, signatures, and provenance.
 - [x] Add `SECURITY.md`, dependency-update policy, and release procedures.
 - [x] Complete installation, configuration, tool, resource, prompt, skill, cache, and troubleshooting documentation.
-- [x] Execute and record native/Docker interoperability checks in Codex and Claude. (Docker local run skipped - daemon unavailable; required CI smoke job added.)
+- [ ] Execute and record installed-client native/Docker interoperability checks in Codex and Claude. (Native protocol profiles pass; local Docker was unavailable and CI coverage is required.)
 - [x] Require the STRATZ clearance gate before public publishing jobs run.
 
 **Verification:** Native and Docker stdio smoke tests pass in Codex and Claude. All target binaries and multi-architecture images build. Secret, vulnerability, and license scans pass. Artifacts include verifiable checksums, SBOMs, signatures, and attestations. Publishing remains disabled until the STRATZ clearance gate passes.
 
 ## Release-candidate acceptance test
+
+**Status:** Pending Docker-daemon and installed-client execution in the protected release environment.
 
 Start both native and Docker servers, discover all tools/resources/prompts, exercise representative success and error calls, validate every result against the generated schemas, check cache persistence and purge behavior, verify cursor integrity, and confirm no secret appears in stdout, stderr, SQLite, fixtures, or artifacts.
 

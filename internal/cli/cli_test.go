@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/app"
 	"github.com/aneviaro/stratz-mcp/internal/cache"
@@ -166,6 +168,39 @@ func TestDoctorFailsWhenCredentialIsAbsent(t *testing.T) {
 	}
 }
 
+func TestDoctorReportsCachePermissionsBeforeRuntimeRepairsThem(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX permission behavior")
+	}
+	root := t.TempDir()
+	cacheDirectory := filepath.Join(root, "stratz-mcp")
+	if err := os.Mkdir(cacheDirectory, 0o777); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(cacheDirectory, 0o777); err != nil {
+		t.Fatal(err)
+	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := RunWithDependencies(
+		[]string{"doctor"},
+		&stdout,
+		&stderr,
+		app.BuildInfo{},
+		Dependencies{
+			Environ:      []string{"STRATZ_API_TOKEN=fixture-token"},
+			UserCacheDir: func() (string, error) { return root, nil },
+			Executor:     cliExecutor{},
+		},
+	)
+	if code != 0 {
+		t.Fatalf("exit code = %d, stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "cache directory is accessible by group or others") {
+		t.Fatalf("doctor output = %q", stdout.String())
+	}
+}
+
 func TestServeRunsUntilStdinClosesWithoutLeakingCredential(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -189,6 +224,39 @@ func TestServeRunsUntilStdinClosesWithoutLeakingCredential(t *testing.T) {
 	}
 	if stdout.Len() != 0 {
 		t.Fatalf("stdout = %q, want no protocol output without input", stdout.String())
+	}
+}
+
+func TestServeStopsWhenContextIsCanceledWithOpenStdin(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	reader, writer := io.Pipe()
+	cacheRoot := t.TempDir()
+	defer reader.Close()
+	defer writer.Close()
+	done := make(chan int, 1)
+	go func() {
+		done <- RunWithDependencies(
+			[]string{"serve"},
+			io.Discard,
+			io.Discard,
+			app.BuildInfo{},
+			Dependencies{
+				Context:      ctx,
+				Environ:      []string{"STRATZ_API_TOKEN=fixture-token"},
+				UserCacheDir: func() (string, error) { return cacheRoot, nil },
+				Stdin:        reader,
+				Executor:     cliExecutor{},
+			},
+		)
+	}()
+	cancel()
+	select {
+	case code := <-done:
+		if code != 0 {
+			t.Fatalf("exit code = %d, want 0", code)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("serve did not stop after context cancellation")
 	}
 }
 
@@ -221,6 +289,12 @@ func TestSchemaPullGeneratesRestrictedLocalBundle(t *testing.T) {
 		"schema/manifest.json",
 		"schema/.stratz-restricted",
 		"schema/schema/full.graphql",
+		"schema/constants/heroes.json",
+		"schema/constants/items.json",
+		"schema/constants/abilities.json",
+		"schema/constants/game-modes.json",
+		"schema/constants/regions.json",
+		"schema/constants/ranks.json",
 	} {
 		if _, err := os.Stat(filepath.Join(directory, "stratz-mcp", relative)); err != nil {
 			t.Errorf("missing %s: %v", relative, err)

@@ -14,6 +14,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	mcpserver "github.com/aneviaro/stratz-mcp/internal/mcp"
+	"github.com/aneviaro/stratz-mcp/internal/schema"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
@@ -47,11 +48,15 @@ type Runtime struct {
 	server   *mcpserver.Server
 	cache    *cache.Store
 	executor stratz.Executor
+	build    BuildInfo
 }
 
 // NewRuntime composes the STRATZ client and static MCP server.
 func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 	build := options.Build.Normalized()
+	if manifest, err := schema.LoadManifest(schemaDirectory(options.Config.Cache.Directory)); err == nil {
+		build.SchemaVersion = manifest.SchemaHash
+	}
 	executor := options.Executor
 	if executor == nil {
 		client, err := stratz.New(options.Credential, build.Version, options.Config.Limits)
@@ -77,6 +82,8 @@ func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 		SchemaVersion:   build.SchemaVersion,
 		SchemaDirectory: schemaDirectory(options.Config.Cache.Directory),
 		CacheStatus:     cacheStore.Status(),
+		Cache:           cacheStore,
+		CacheNamespace:  cache.NamespaceForToken(options.Credential.Token),
 		Config:          options.Config,
 		Executor:        executor,
 		CursorToken:     options.Credential.Token,
@@ -94,7 +101,21 @@ func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 		server:   server,
 		cache:    cacheStore,
 		executor: executor,
+		build:    build,
 	}, nil
+}
+
+// Build returns the effective runtime metadata, including a pulled schema hash.
+func (runtime *Runtime) Build() BuildInfo {
+	return runtime.build
+}
+
+// Close flushes asynchronous cache writes and releases runtime resources.
+func (runtime *Runtime) Close() error {
+	if runtime == nil || runtime.cache == nil {
+		return nil
+	}
+	return runtime.cache.Close()
 }
 
 func schemaDirectory(cacheDirectory string) string {
