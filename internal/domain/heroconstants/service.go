@@ -18,17 +18,17 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
-const maximumBatchSize = 25
-
 type Options struct {
 	Executor            stratz.Executor
 	MaxUpstreamRequests int
+	MaxBatchSize        int
 	Now                 func() time.Time
 }
 
 type Service struct {
 	executor            stratz.Executor
 	maxUpstreamRequests int
+	maxBatchSize        int
 	now                 func() time.Time
 }
 
@@ -39,12 +39,19 @@ func New(options Options) (*Service, error) {
 	if options.MaxUpstreamRequests < 1 || options.MaxUpstreamRequests > 5 {
 		return nil, errors.New("upstream request budget must be between 1 and 5")
 	}
+	if options.MaxBatchSize == 0 {
+		options.MaxBatchSize = 25
+	}
+	if options.MaxBatchSize < 1 || options.MaxBatchSize > 25 {
+		return nil, errors.New("batch size must be between 1 and 25")
+	}
 	if options.Now == nil {
 		options.Now = time.Now
 	}
 	return &Service{
 		executor:            options.Executor,
 		maxUpstreamRequests: options.MaxUpstreamRequests,
+		maxBatchSize:        options.MaxBatchSize,
 		now:                 options.Now,
 	}, nil
 }
@@ -66,14 +73,14 @@ func (service *Service) GetHero(ctx context.Context, identifier any) (*Result[co
 }
 
 func (service *Service) BatchHeroes(ctx context.Context, identifiers []any) (*Result[[]contracts.Hero], error) {
-	if len(identifiers) == 0 || len(identifiers) > maximumBatchSize {
-		return nil, invalid(fmt.Sprintf("Hero batch size must be between 1 and %d", maximumBatchSize), nil)
+	if len(identifiers) == 0 || len(identifiers) > service.maxBatchSize {
+		return nil, invalid(fmt.Sprintf("Hero batch size must be between 1 and %d", service.maxBatchSize), nil)
 	}
 	response, constants, err := service.loadConstants(ctx, service.budget())
 	if err != nil {
 		return nil, err
 	}
-	plan, err := batch.NewPlan(identifiers, maximumBatchSize, canonicalIdentifier)
+	plan, err := batch.NewPlan(identifiers, service.maxBatchSize, canonicalIdentifier)
 	if err != nil {
 		return nil, invalid("Hero batch input is invalid", map[string]any{"reason": err.Error()})
 	}
@@ -96,6 +103,19 @@ func (service *Service) BatchHeroes(ctx context.Context, identifiers []any) (*Re
 		Raw:        rawData(response.Data),
 		RateLimits: response.RateLimits,
 	}, nil
+}
+
+// ResolveHeroID resolves any public hero identifier to its canonical numeric ID.
+func (service *Service) ResolveHeroID(ctx context.Context, identifier any) (int64, error) {
+	_, constants, err := service.loadConstants(ctx, service.budget())
+	if err != nil {
+		return 0, err
+	}
+	hero, resolveErr := resolveHero(constants.Heroes, identifier)
+	if resolveErr != nil {
+		return 0, resolveErr
+	}
+	return hero.ID, nil
 }
 
 func (service *Service) GetConstants(ctx context.Context, requested string) (*Result[contracts.StratzGetConstantsData], error) {

@@ -49,6 +49,7 @@ grep -q '"protocolVersion":"2025-11-25"' "$output"
 grep -q '"name":"stratz_server_info"' "$output"
 grep -q '"resources"' "$output"
 grep -q '"prompts"' "$output"
+grep -q '"cache_status":"healthy"' "$output"
 if grep -q 'smoke-test-token' "$output" "$errors"; then
 	echo "credential leaked during $client $mode smoke test" >&2
 	exit 1

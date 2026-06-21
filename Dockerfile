@@ -14,6 +14,7 @@ LABEL org.opencontainers.image.title="stratz-mcp" \
       org.opencontainers.image.revision="${REVISION}" \
       org.opencontainers.image.licenses="MIT"
 COPY --from=artifact /stratz-mcp /stratz-mcp
+COPY --chown=65532:65532 dist/image/cache /cache
 USER 65532:65532
 VOLUME ["/cache"]
 ENV XDG_CACHE_HOME=/cache

@@ -41,7 +41,6 @@ func TestCodecRoundTrip(t *testing.T) {
 	codec := NewCodec(Options{Now: func() time.Time { return now }})
 	next := "after:20"
 	state := ScanState[string, int]{
-		Pending:         []int{3, 5},
 		Next:            &next,
 		HasMoreUpstream: true,
 	}

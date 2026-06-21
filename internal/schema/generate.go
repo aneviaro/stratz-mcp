@@ -63,9 +63,10 @@ type ValidationMetadata struct {
 }
 
 type Ref struct {
-	Type      string `json:"type"`
-	ListDepth int    `json:"list_depth"`
-	Nullable  bool   `json:"nullable"`
+	Type      string         `json:"type"`
+	ListDepth int            `json:"list_depth"`
+	Nullable  bool           `json:"nullable"`
+	Arguments map[string]Ref `json:"arguments,omitempty"`
 }
 
 type Snapshot struct {
@@ -161,17 +162,26 @@ func WriteBundle(directory string, files map[string][]byte) error {
 	if info, err := os.Lstat(directory); err == nil && info.Mode()&os.ModeSymlink != 0 {
 		return errors.New("schema output directory must not be a symlink")
 	}
-	if err := os.MkdirAll(directory, 0o700); err != nil {
-		return fmt.Errorf("create schema output directory: %w", err)
+	parent := filepath.Dir(directory)
+	if err := os.MkdirAll(parent, 0o700); err != nil {
+		return fmt.Errorf("create schema output parent: %w", err)
 	}
-	if err := os.Chmod(directory, 0o700); err != nil {
-		return fmt.Errorf("secure schema output directory: %w", err)
+	if info, err := os.Lstat(parent); err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return errors.New("schema output parent must be a real directory")
+	}
+	staging, err := os.MkdirTemp(parent, ".schema-bundle-*")
+	if err != nil {
+		return fmt.Errorf("create schema staging directory: %w", err)
+	}
+	defer os.RemoveAll(staging)
+	if err := os.Chmod(staging, 0o700); err != nil {
+		return fmt.Errorf("secure schema staging directory: %w", err)
 	}
 	for _, path := range sortedByteKeys(files) {
 		if filepath.IsAbs(path) || strings.HasPrefix(filepath.Clean(path), "..") {
 			return fmt.Errorf("unsafe schema artifact path %q", path)
 		}
-		target := filepath.Join(directory, filepath.FromSlash(path))
+		target := filepath.Join(staging, filepath.FromSlash(path))
 		if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
 			return fmt.Errorf("create schema artifact directory: %w", err)
 		}
@@ -205,6 +215,30 @@ func WriteBundle(directory string, files map[string][]byte) error {
 			return fmt.Errorf("install schema artifact %s: %w", path, err)
 		}
 		ok = true
+	}
+	backup := directory + ".previous"
+	if err := os.RemoveAll(backup); err != nil {
+		return fmt.Errorf("remove previous schema backup: %w", err)
+	}
+	hadExisting := false
+	if _, err := os.Lstat(directory); err == nil {
+		if err := os.Rename(directory, backup); err != nil {
+			return fmt.Errorf("stage existing schema bundle: %w", err)
+		}
+		hadExisting = true
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("inspect existing schema bundle: %w", err)
+	}
+	if err := os.Rename(staging, directory); err != nil {
+		if hadExisting {
+			_ = os.Rename(backup, directory)
+		}
+		return fmt.Errorf("install schema bundle: %w", err)
+	}
+	if hadExisting {
+		if err := os.RemoveAll(backup); err != nil {
+			return fmt.Errorf("remove replaced schema bundle: %w", err)
+		}
 	}
 	return nil
 }
@@ -421,11 +455,29 @@ func buildValidation(document Document) ValidationMetadata {
 		metadata.SubscriptionType = document.SubscriptionType.Name
 	}
 	for _, definition := range document.Types {
-		if len(definition.Fields) == 0 {
+		if len(definition.Fields) == 0 && len(definition.InputFields) == 0 {
 			continue
 		}
 		fields := map[string]Ref{}
 		for _, field := range definition.Fields {
+			ref := Ref{
+				Type:      formatRef(field.Type),
+				ListDepth: listDepth(field.Type),
+				Nullable:  field.Type.Kind != "NON_NULL",
+			}
+			if len(field.Args) > 0 {
+				ref.Arguments = make(map[string]Ref, len(field.Args))
+				for _, argument := range field.Args {
+					ref.Arguments[argument.Name] = Ref{
+						Type:      formatRef(argument.Type),
+						ListDepth: listDepth(argument.Type),
+						Nullable:  argument.Type.Kind != "NON_NULL",
+					}
+				}
+			}
+			fields[field.Name] = ref
+		}
+		for _, field := range definition.InputFields {
 			fields[field.Name] = Ref{
 				Type:      formatRef(field.Type),
 				ListDepth: listDepth(field.Type),

@@ -755,6 +755,21 @@ func (defaultSchemaPolicy) Field(path []string, field *ast.Field) FieldRule {
 	case "teams":
 		rule.Kind = FieldList
 		rule.PageSizeArguments = []string{"teamIds"}
+	case "live.matches":
+		rule.Kind = FieldList
+		rule.PageSizeArguments = []string{"request.take"}
+	case "match.players", "live.matches.players", "match.fights.participants":
+		rule.Kind = FieldList
+		rule.FixedMaximum = 10
+	case "match.timeline", "match.economy":
+		rule.Kind = FieldList
+		rule.FixedMaximum = 5000
+	case "match.objectives", "match.fights", "constants.heroes",
+		"constants.items", "constants.abilities", "constants.gameModes",
+		"constants.regions", "constants.ranks", "heroStats.matchups",
+		"heroStats.synergies":
+		rule.Kind = FieldList
+		rule.FixedMaximum = 500
 	default:
 		if len(path) > 1 && field.Name == "matches" {
 			rule.Kind = FieldList

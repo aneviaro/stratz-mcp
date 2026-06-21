@@ -2,12 +2,11 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"strconv"
 	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
+	"github.com/aneviaro/stratz-mcp/internal/domain/heroconstants"
 	"github.com/aneviaro/stratz-mcp/internal/domain/playermatch"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
@@ -16,6 +15,7 @@ func registerPlayerMatchHandlers(
 	handlers map[string]ToolHandler,
 	options Options,
 	service *playermatch.Service,
+	heroes *heroconstants.Service,
 ) {
 	if handlers["stratz_get_player"] == nil {
 		handlers["stratz_get_player"] = func(ctx context.Context, input any) (any, error) {
@@ -70,7 +70,7 @@ func registerPlayerMatchHandlers(
 	if handlers["stratz_list_player_matches"] == nil {
 		handlers["stratz_list_player_matches"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
-			filters, err := decodePlayerMatchFilters(object)
+			filters, err := decodePlayerMatchFilters(ctx, object, heroes)
 			if err != nil {
 				return nil, err
 			}
@@ -181,7 +181,11 @@ func stringSlice(value any) ([]string, error) {
 	return result, nil
 }
 
-func decodePlayerMatchFilters(input map[string]any) (playermatch.PlayerMatchFilters, error) {
+func decodePlayerMatchFilters(
+	ctx context.Context,
+	input map[string]any,
+	heroes *heroconstants.Service,
+) (playermatch.PlayerMatchFilters, error) {
 	filters := playermatch.PlayerMatchFilters{PlayerID: input["player_id"].(string)}
 	if value, ok := input["limit"]; ok {
 		number, valid := rawInteger(value)
@@ -229,26 +233,11 @@ func decodePlayerMatchFilters(input map[string]any) (playermatch.PlayerMatchFilt
 		}
 	}
 	if hero, present := input["hero"]; present {
-		number, valid := rawInteger(hero)
-		if !valid {
-			if text, ok := hero.(string); ok {
-				parsed, err := strconv.ParseInt(text, 10, 64)
-				if err == nil && parsed > 0 {
-					number, valid = parsed, true
-				}
-			}
-		}
-		if !valid || number < 1 {
-			return filters, &ExecutionError{
-				Code:      contracts.ErrorCodeInvalidArgument,
-				Message:   "Player match hero filter must be a numeric hero ID until hero-name resolution is loaded",
-				Details:   map[string]any{},
-				Retryable: false,
-			}
+		number, resolveErr := heroes.ResolveHeroID(ctx, hero)
+		if resolveErr != nil {
+			return filters, heroConstantsExecutionError(resolveErr)
 		}
 		filters.HeroID = &number
 	}
 	return filters, nil
 }
-
-var _ = json.Number("")

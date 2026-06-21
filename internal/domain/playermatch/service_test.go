@@ -167,6 +167,22 @@ func TestBatchPlayersUsesNativeOperationAndRestoresDuplicates(t *testing.T) {
 	}
 }
 
+func TestBatchPlayersHonorsConfiguredMaximum(t *testing.T) {
+	service, err := New(Options{
+		Executor:            &fixtureExecutor{},
+		Token:               "test-token",
+		SchemaVersion:       "schema-v1",
+		MaxUpstreamRequests: 5,
+		MaxBatchSize:        2,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.BatchPlayers(context.Background(), []string{"1", "2", "3"}); err == nil {
+		t.Fatal("batch accepted more than the configured maximum")
+	}
+}
+
 func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 	payload := `{"match":{
 		"id":8000000000,

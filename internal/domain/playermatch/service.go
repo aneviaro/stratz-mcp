@@ -17,7 +17,6 @@ import (
 
 const (
 	playerListOperationVersion = "player-matches/v1"
-	maximumBatchSize           = 25
 )
 
 // Options configures player and match domain execution.
@@ -26,6 +25,7 @@ type Options struct {
 	Token               string
 	SchemaVersion       string
 	MaxUpstreamRequests int
+	MaxBatchSize        int
 	Now                 func() time.Time
 }
 
@@ -35,6 +35,7 @@ type Service struct {
 	token               string
 	schemaVersion       string
 	maxUpstreamRequests int
+	maxBatchSize        int
 	cursor              *pagination.Codec
 }
 
@@ -52,11 +53,18 @@ func New(options Options) (*Service, error) {
 	if options.MaxUpstreamRequests < 1 || options.MaxUpstreamRequests > 5 {
 		return nil, errors.New("upstream request budget must be between 1 and 5")
 	}
+	if options.MaxBatchSize == 0 {
+		options.MaxBatchSize = 25
+	}
+	if options.MaxBatchSize < 1 || options.MaxBatchSize > 25 {
+		return nil, errors.New("batch size must be between 1 and 25")
+	}
 	return &Service{
 		executor:            options.Executor,
 		token:               options.Token,
 		schemaVersion:       options.SchemaVersion,
 		maxUpstreamRequests: options.MaxUpstreamRequests,
+		maxBatchSize:        options.MaxBatchSize,
 		cursor:              pagination.NewCodec(pagination.Options{Now: options.Now}),
 	}, nil
 }
@@ -99,7 +107,7 @@ func (service *Service) BatchPlayers(
 	ctx context.Context,
 	identifiers []string,
 ) (*Result[[]contracts.Player], error) {
-	plan, err := batch.NewPlan(identifiers, maximumBatchSize, func(value string) (string, error) {
+	plan, err := batch.NewPlan(identifiers, service.maxBatchSize, func(value string) (string, error) {
 		id, normalizeErr := NormalizePlayerID(value)
 		if normalizeErr != nil {
 			return "", normalizeErr
@@ -206,7 +214,7 @@ func (service *Service) BatchMatches(
 	if err != nil {
 		return nil, err
 	}
-	plan, err := batch.NewPlan(identifiers, maximumBatchSize, func(value string) (string, error) {
+	plan, err := batch.NewPlan(identifiers, service.maxBatchSize, func(value string) (string, error) {
 		id, normalizeErr := NormalizeMatchID(value)
 		if normalizeErr != nil {
 			return "", normalizeErr
@@ -352,6 +360,13 @@ func (service *Service) ListPlayerMatches(
 				Next:    &next,
 				HasMore: hasMore,
 			}, nil
+		},
+		Advance: func(offset *int64, consumed int) *int64 {
+			value := int64(consumed)
+			if offset != nil {
+				value += *offset
+			}
+			return &value
 		},
 		Accept: func(match upstreamMatch) bool {
 			return filters.MinimumDurationSeconds == nil ||

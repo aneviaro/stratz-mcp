@@ -4,10 +4,10 @@ Unofficial, local-only MCP server for bounded access to the STRATZ GraphQL API. 
 
 ## Install
 
-During the clearance hold, build from source:
+Public images and archives are not published while clearance is blocked. After clearance, Docker is the recommended installation and signed native archives are the alternative. During the hold, developers can build from source:
 
 ```sh
-go build -o stratz-mcp ./cmd/stratz-mcp
+make build
 ```
 
 After clearance, signed native archives and the multi-architecture image `ghcr.io/aneviaro/stratz-mcp` are the supported distribution channels. Go 1.25 or newer is required for source builds.
@@ -24,7 +24,40 @@ export STRATZ_API_TOKEN='...'
 
 Alternatively use `--token-file`, or an explicit `--env-file`. Configuration precedence is CLI, environment, explicit YAML, defaults. Run `stratz-mcp help` for global options. Tokens are never accepted in YAML.
 
-Common environment variables include `STRATZ_CACHE_ENABLED`, `STRATZ_CACHE_DIRECTORY`, `STRATZ_LOG_LEVEL`, and `STRATZ_LOG_FORMAT`. See [docs/configuration.md](docs/configuration.md).
+Common environment variables include `STRATZ_CACHE_ENABLED`, `STRATZ_CACHE_DIR`, `STRATZ_LOG_LEVEL`, and `STRATZ_LOG_FORMAT`. See [configuration](docs/configuration.md) and the [CLI reference](docs/cli.md).
+
+## Connect an MCP client
+
+Codex native configuration in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.stratz]
+command = "/absolute/path/to/stratz-mcp"
+args = ["serve"]
+env_vars = ["STRATZ_API_TOKEN"]
+```
+
+Claude native configuration in `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "stratz": {
+      "command": "/absolute/path/to/stratz-mcp",
+      "args": ["serve"],
+      "env": {"STRATZ_API_TOKEN": "${STRATZ_API_TOKEN}"}
+    }
+  }
+}
+```
+
+For Docker, use `docker` as the command and arguments equivalent to:
+
+```sh
+docker run --rm -i --read-only -e STRATZ_API_TOKEN -v stratz-cache:/cache IMAGE serve
+```
+
+Replace `IMAGE` with the approved release image after clearance.
 
 ## MCP capabilities
 
@@ -33,6 +66,7 @@ The server exposes 15 tools covering players, matches, heroes, constants, league
 - [Tool reference](docs/generated-tool-contracts.md)
 - [Resources and prompts](docs/resources-prompts-skills.md)
 - [Cache operations](docs/cache.md)
+- [CLI reference](docs/cli.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Developer and release guide](docs/development.md)
 

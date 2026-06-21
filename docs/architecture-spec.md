@@ -1,7 +1,7 @@
 ---
 Created: 2026-06-18
 Purpose: Define the approved v1 architecture and product contract for the STRATZ MCP server and its portable agent skills.
-Status: Planning-ready; implementation verification is milestone work and public release remains blocked on STRATZ API-use clearance
+Status: Implemented locally; release-candidate verification and public STRATZ clearance remain open
 ---
 
 # STRATZ MCP Server — v1 Architecture Specification
@@ -18,7 +18,7 @@ The server uses a hybrid API design:
 - Parameterized MCP prompts for common analysis workflows.
 - Portable Agent Skills that work with Codex, Claude, and other clients supporting the open `SKILL.md` convention.
 
-The implementation will be written in Go and distributed both as native binaries and as a multi-architecture Docker image. Version 1 uses stdio as its only MCP transport.
+The implementation is written in Go and targets native binaries plus a multi-architecture Docker image. Version 1 uses stdio as its only MCP transport.
 
 Normative companion documents:
 
@@ -1432,17 +1432,14 @@ Version 1 is ready when:
 
 Public release remains blocked until criterion 16 is satisfied. That release blocker does not prevent implementation planning or local development/testing.
 
-## 26. Deferred decisions
+## 26. Implementation choices
 
-The following are intentionally left to implementation, provided they satisfy this specification:
-
-- CLI framework.
-- YAML library.
-- Logging library.
-- GraphQL AST parser.
-- Internal package interfaces.
-- Exact workflow source format.
-- SQLite table/index design and migration mechanism.
+- Standard-library CLI parsing.
+- YAML v3 strict decoding.
+- `log/slog` structured logging.
+- `gqlparser/v2` GraphQL AST parsing.
+- Canonical workflow JSON validated by `workflows/schema.json`.
+- Versioned SQLite migrations with WAL mode.
 
 Any implementation choice that changes a public tool contract, security rule, cache semantic, distribution target, or acceptance criterion requires an explicit specification update.
 

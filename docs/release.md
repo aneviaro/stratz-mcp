@@ -14,3 +14,18 @@ For a candidate:
 Interoperability evidence is produced by `scripts/interop-smoke.sh`. The profile names exercise the shared MCP 2025-11-25 stdio behavior expected by Codex and Claude. A real installed-client check remains a release-operator responsibility and is recorded in the GitHub environment approval.
 
 No long-lived signing key is stored. Publishing jobs have environment protection and minimal permissions.
+
+## Verify a candidate
+
+```sh
+cd dist/release
+sha256sum -c checksums.txt
+cosign verify-blob --bundle checksums.sigstore.json checksums.txt
+gh attestation verify ./* --repo aneviaro/stratz-mcp
+cosign verify ghcr.io/aneviaro/stratz-mcp@sha256:DIGEST
+docker image inspect ghcr.io/aneviaro/stratz-mcp@sha256:DIGEST
+docker run --rm --read-only --entrypoint /stratz-mcp \
+  ghcr.io/aneviaro/stratz-mcp@sha256:DIGEST version
+```
+
+Confirm each archive has `LICENSE`, `THIRD_PARTY_NOTICES`, `VERSION`, and the binary; each archive has SPDX and CycloneDX SBOMs; the image labels match the tag/revision; the runtime user is `65532:65532`; and a mounted `/cache` remains healthy across restart and purge.

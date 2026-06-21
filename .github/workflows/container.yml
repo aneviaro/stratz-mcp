@@ -18,7 +18,8 @@ jobs:
           cache: true
       - name: Build Linux image input
         run: |
-          mkdir -p dist/image
+          mkdir -p dist/image/cache
+          touch dist/image/cache/.keep
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o dist/image/stratz-mcp-linux-amd64 ./cmd/stratz-mcp
       - name: Build image
         run: docker build --build-arg TARGETARCH=amd64 -t stratz-mcp:test .

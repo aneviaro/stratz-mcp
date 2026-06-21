@@ -133,6 +133,7 @@ func RunWithDependencies(
 			logger.Error("runtime initialization failed", "error", err)
 			return 2
 		}
+		defer runtime.Close()
 		err = runtime.Serve(dependencies.Context, dependencies.Stdin, stdout)
 		if err == nil || errors.Is(err, context.Canceled) {
 			return 0
@@ -184,6 +185,7 @@ func runSchemaPull(
 		fmt.Fprintf(stderr, "stratz-mcp: runtime initialization error: %v\n", err)
 		return 2
 	}
+	defer runtime.Close()
 	directory := filepath.Join(loaded.Config.Cache.Directory, "schema")
 	manifest, err := schemalifecycle.Pull(
 		dependencies.Context,
@@ -226,6 +228,13 @@ func runDoctor(
 		fmt.Fprintf(stderr, "stratz-mcp: configure logging: %v\n", err)
 		return 2
 	}
+	paths := doctor.Paths{
+		TokenFile:      loaded.TokenFile,
+		EnvFile:        loaded.EnvFile,
+		ConfigFile:     loaded.ConfigFile,
+		CacheDirectory: loaded.Config.Cache.Directory,
+	}
+	permissionFindings := doctor.CheckPermissions(paths)
 	runtime, err := app.NewRuntime(app.RuntimeOptions{
 		Build:      info,
 		Config:     loaded.Config,
@@ -238,21 +247,18 @@ func runDoctor(
 		fmt.Fprintf(stderr, "stratz-mcp: runtime initialization error: %v\n", err)
 		return 2
 	}
+	defer runtime.Close()
 
 	fmt.Fprintln(stdout, "configuration: valid")
 	fmt.Fprintf(stdout, "credentials: valid (%s source)\n", credential.Source)
 	report := doctor.Diagnose(dependencies.Context, doctor.Options{
-		Paths: doctor.Paths{
-			TokenFile:      loaded.TokenFile,
-			EnvFile:        loaded.EnvFile,
-			ConfigFile:     loaded.ConfigFile,
-			CacheDirectory: loaded.Config.Cache.Directory,
-		},
+		Paths:         doctor.Paths{},
 		Cache:         runtime.Cache(),
 		Config:        loaded.Config,
 		Executor:      runtime.Executor(),
-		SchemaVersion: info.Normalized().SchemaVersion,
+		SchemaVersion: runtime.Build().SchemaVersion,
 	})
+	report.Findings = append(permissionFindings, report.Findings...)
 	for _, finding := range report.Findings {
 		fmt.Fprintf(
 			stdout,

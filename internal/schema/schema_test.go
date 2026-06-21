@@ -18,9 +18,9 @@ import (
 )
 
 type fixtureExecutor struct {
-	data    json.RawMessage
-	request stratz.Request
-	used    int
+	data                 json.RawMessage
+	introspectionRequest stratz.Request
+	used                 int
 }
 
 func (executor *fixtureExecutor) Execute(
@@ -28,9 +28,15 @@ func (executor *fixtureExecutor) Execute(
 	budget *stratz.RequestBudget,
 	request stratz.Request,
 ) (*stratz.Response, error) {
-	executor.request = request
 	executor.used = budget.Remaining()
-	return &stratz.Response{HTTPStatus: 200, Data: executor.data}, nil
+	if request.OperationName == OperationName {
+		executor.introspectionRequest = request
+		return &stratz.Response{HTTPStatus: 200, Data: executor.data}, nil
+	}
+	return &stratz.Response{
+		HTTPStatus: 200,
+		Data:       json.RawMessage(`{"constants":{"heroes":[],"items":[],"abilities":[],"gameModes":[],"regions":[],"ranks":[]}}`),
+	}, nil
 }
 
 func TestPullIsDeterministicAndRestricted(t *testing.T) {
@@ -60,11 +66,11 @@ func TestPullIsDeterministicAndRestricted(t *testing.T) {
 	if !firstManifest.Restricted {
 		t.Fatal("manifest did not mark fetched data restricted")
 	}
-	if firstExecutor.request.OperationName != OperationName ||
-		firstExecutor.request.Query != IntrospectionQuery ||
-		firstExecutor.request.Mode != stratz.ModeCurated ||
-		firstExecutor.request.AllowRetries {
-		t.Fatalf("introspection request = %#v", firstExecutor.request)
+	if firstExecutor.introspectionRequest.OperationName != OperationName ||
+		firstExecutor.introspectionRequest.Query != IntrospectionQuery ||
+		firstExecutor.introspectionRequest.Mode != stratz.ModeCurated ||
+		firstExecutor.introspectionRequest.AllowRetries {
+		t.Fatalf("introspection request = %#v", firstExecutor.introspectionRequest)
 	}
 
 	firstFiles := readTree(t, first)
@@ -84,6 +90,12 @@ func TestPullIsDeterministicAndRestricted(t *testing.T) {
 		"schema/league.graphql",
 		"schema/live.graphql",
 		"schema/constants.graphql",
+		"constants/heroes.json",
+		"constants/items.json",
+		"constants/abilities.json",
+		"constants/game-modes.json",
+		"constants/regions.json",
+		"constants/ranks.json",
 	} {
 		if _, ok := firstFiles[path]; !ok {
 			t.Errorf("missing generated artifact %s", path)
@@ -148,6 +160,39 @@ func TestWriteBundleRejectsSymlinkDirectory(t *testing.T) {
 	}
 	if err := WriteBundle(link, map[string][]byte{"x": []byte("x")}); err == nil {
 		t.Fatal("WriteBundle accepted a symlink output directory")
+	}
+}
+
+func TestWriteBundleReplacesChildSymlinkWithoutFollowingIt(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlink permission behavior")
+	}
+	root := t.TempDir()
+	directory := filepath.Join(root, "bundle")
+	outside := filepath.Join(root, "outside")
+	if err := os.MkdirAll(directory, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(outside, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(directory, "schema")); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteBundle(directory, map[string][]byte{
+		"schema/full.graphql": []byte("type Query { ok: Boolean }\n"),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(outside, "full.graphql")); !os.IsNotExist(err) {
+		t.Fatalf("write escaped through child symlink: %v", err)
+	}
+	info, err := os.Lstat(filepath.Join(directory, "schema"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		t.Fatalf("installed schema path = %v", info.Mode())
 	}
 }
 

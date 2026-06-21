@@ -7,10 +7,17 @@ import (
 	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
+	"github.com/aneviaro/stratz-mcp/internal/domain/heroconstants"
 	"github.com/aneviaro/stratz-mcp/internal/domain/leaguelive"
+	"github.com/aneviaro/stratz-mcp/internal/domain/playermatch"
 )
 
-func registerLeagueLiveHandlers(handlers map[string]ToolHandler, options Options, service *leaguelive.Service) {
+func registerLeagueLiveHandlers(
+	handlers map[string]ToolHandler,
+	options Options,
+	service *leaguelive.Service,
+	heroes *heroconstants.Service,
+) {
 	if handlers["stratz_get_league"] == nil {
 		handlers["stratz_get_league"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
@@ -52,7 +59,7 @@ func registerLeagueLiveHandlers(handlers map[string]ToolHandler, options Options
 	if handlers["stratz_list_live_matches"] == nil {
 		handlers["stratz_list_live_matches"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
-			filters, err := decodeLiveFilters(object)
+			filters, err := decodeLiveFilters(ctx, object, heroes)
 			if err != nil {
 				return nil, err
 			}
@@ -98,7 +105,11 @@ func decodeLeagueMatchFilters(input map[string]any) (leaguelive.LeagueMatchFilte
 	return filters, nil
 }
 
-func decodeLiveFilters(input map[string]any) (leaguelive.LiveFilters, error) {
+func decodeLiveFilters(
+	ctx context.Context,
+	input map[string]any,
+	heroes *heroconstants.Service,
+) (leaguelive.LiveFilters, error) {
 	var filters leaguelive.LiveFilters
 	if value, ok := input["limit"]; ok {
 		number, valid := rawInteger(value)
@@ -120,8 +131,23 @@ func decodeLiveFilters(input map[string]any) (leaguelive.LiveFilters, error) {
 			*destination = &number
 		}
 	}
+	if value, ok := input["player_id"].(string); ok {
+		identifier, err := playermatch.NormalizePlayerID(value)
+		if err != nil {
+			return filters, playerMatchExecutionError(err)
+		}
+		number := int64(identifier.AccountID)
+		filters.PlayerID = &number
+	}
+	if value, ok := input["hero"]; ok {
+		number, err := heroes.ResolveHeroID(ctx, value)
+		if err != nil {
+			return filters, heroConstantsExecutionError(err)
+		}
+		filters.HeroID = &number
+	}
 	for key, destination := range map[string]**int64{
-		"player_id": &filters.PlayerID, "team_id": &filters.TeamID, "league_id": &filters.LeagueID, "hero": &filters.HeroID,
+		"team_id": &filters.TeamID, "league_id": &filters.LeagueID,
 	} {
 		if value, ok := input[key]; ok {
 			number, valid := identifierInteger(value)

@@ -47,6 +47,7 @@ type Store struct {
 	busyTimeout time.Duration
 	writeWG     sync.WaitGroup
 	closeOnce   sync.Once
+	closing     bool
 }
 
 func Open(options Options) (*Store, error) {
@@ -222,10 +223,16 @@ func (store *Store) Lookup(
 }
 
 func (store *Store) PutAsync(entry Entry) {
-	if store == nil || store.Status() != StatusHealthy {
+	if store == nil {
+		return
+	}
+	store.mu.Lock()
+	if store.closing || store.status != StatusHealthy || store.db == nil {
+		store.mu.Unlock()
 		return
 	}
 	store.writeWG.Add(1)
+	store.mu.Unlock()
 	go func() {
 		defer store.writeWG.Done()
 		ctx, cancel := context.WithTimeout(context.Background(), defaultAsyncWriteLimit)
@@ -443,6 +450,9 @@ func (store *Store) Close() error {
 	}
 	var err error
 	store.closeOnce.Do(func() {
+		store.mu.Lock()
+		store.closing = true
+		store.mu.Unlock()
 		store.writeWG.Wait()
 		store.mu.Lock()
 		defer store.mu.Unlock()

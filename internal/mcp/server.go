@@ -18,6 +18,7 @@ import (
 	graphqlpolicy "github.com/aneviaro/stratz-mcp/internal/graphql/policy"
 	"github.com/aneviaro/stratz-mcp/internal/prompts"
 	"github.com/aneviaro/stratz-mcp/internal/resources"
+	"github.com/aneviaro/stratz-mcp/internal/schema"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 	sdk "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -34,6 +35,8 @@ type Options struct {
 	SchemaVersion   string
 	SchemaDirectory string
 	CacheStatus     cache.Status
+	Cache           *cache.Store
+	CacheNamespace  string
 	Config          config.Config
 	Executor        stratz.Executor
 	CursorToken     string
@@ -68,23 +71,49 @@ func New(options Options) (*Server, error) {
 		handlers[name] = handler
 	}
 	if handlers["stratz_execute_graphql"] == nil {
-		rawPolicy, err := graphqlpolicy.New(graphqlpolicy.Options{
-			Limits:             options.Config.Limits,
-			AllowIntrospection: options.Config.Features.RuntimeIntrospection,
-		})
-		if err != nil {
-			return nil, err
+		manifest, manifestErr := schema.LoadManifest(options.SchemaDirectory)
+		if manifestErr != nil {
+			handlers["stratz_execute_graphql"] = func(context.Context, any) (any, error) {
+				return nil, &ExecutionError{
+					Code:      contracts.ErrorCodeQueryOperationNotAllowed,
+					Message:   "Raw GraphQL requires local schema metadata; run stratz-mcp schema pull",
+					Details:   map[string]any{},
+					Retryable: false,
+				}
+			}
+		} else {
+			schemaPolicy, policyErr := graphqlpolicy.FromManifest(manifest)
+			if policyErr != nil {
+				return nil, policyErr
+			}
+			rawPolicy, err := graphqlpolicy.New(graphqlpolicy.Options{
+				Limits:             options.Config.Limits,
+				AllowIntrospection: options.Config.Features.RuntimeIntrospection,
+				Schema:             schemaPolicy,
+			})
+			if err != nil {
+				return nil, err
+			}
+			rawService, err := rawgraphql.NewRawService(rawgraphql.RawOptions{
+				Policy:              rawPolicy,
+				Executor:            options.Executor,
+				MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
+				DefaultCacheTTL:     options.Config.Cache.RawTTL,
+			})
+			if err != nil {
+				return nil, err
+			}
+			handlers["stratz_execute_graphql"] = rawGraphQLHandler(options, rawService)
 		}
-		rawService, err := rawgraphql.NewRawService(rawgraphql.RawOptions{
-			Policy:              rawPolicy,
-			Executor:            options.Executor,
-			MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
-			DefaultCacheTTL:     options.Config.Cache.RawTTL,
-		})
-		if err != nil {
-			return nil, err
-		}
-		handlers["stratz_execute_graphql"] = rawGraphQLHandler(options, rawService)
+	}
+	heroConstantsService, err := heroconstants.New(heroconstants.Options{
+		Executor:            options.Executor,
+		MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
+		MaxBatchSize:        options.Config.Limits.MaxBatchSize,
+		Now:                 options.Now,
+	})
+	if err != nil {
+		return nil, err
 	}
 	if options.CursorToken != "" {
 		playerMatchService, err := playermatch.New(playermatch.Options{
@@ -92,12 +121,13 @@ func New(options Options) (*Server, error) {
 			Token:               options.CursorToken,
 			SchemaVersion:       options.SchemaVersion,
 			MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
+			MaxBatchSize:        options.Config.Limits.MaxBatchSize,
 			Now:                 options.Now,
 		})
 		if err != nil {
 			return nil, err
 		}
-		registerPlayerMatchHandlers(handlers, options, playerMatchService)
+		registerPlayerMatchHandlers(handlers, options, playerMatchService, heroConstantsService)
 		leagueLiveService, err := leaguelive.New(leaguelive.Options{
 			Executor:            options.Executor,
 			Token:               options.CursorToken,
@@ -108,15 +138,7 @@ func New(options Options) (*Server, error) {
 		if err != nil {
 			return nil, err
 		}
-		registerLeagueLiveHandlers(handlers, options, leagueLiveService)
-	}
-	heroConstantsService, err := heroconstants.New(heroconstants.Options{
-		Executor:            options.Executor,
-		MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
-		Now:                 options.Now,
-	})
-	if err != nil {
-		return nil, err
+		registerLeagueLiveHandlers(handlers, options, leagueLiveService, heroConstantsService)
 	}
 	registerHeroConstantsHandlers(handlers, options, heroConstantsService)
 	handlers["stratz_server_info"] = serverInfoHandler(options)
@@ -148,6 +170,10 @@ func New(options Options) (*Server, error) {
 		if err != nil {
 			return nil, err
 		}
+		handler := handlers[definition.Name]
+		if specification, ok := cacheSpecifications[definition.Name]; ok {
+			handler = cachedToolHandler(options, definition.Name, specification, handler)
+		}
 		server.AddTool(
 			&sdk.Tool{
 				Name:         definition.Name,
@@ -155,7 +181,7 @@ func New(options Options) (*Server, error) {
 				InputSchema:  json.RawMessage(inputSchema),
 				OutputSchema: json.RawMessage(outputSchema),
 			},
-			toolAdapter(definition.Name, handlers[definition.Name]),
+			toolAdapter(definition.Name, handler),
 		)
 	}
 	resources.New(options.SchemaDirectory).Register(server)
