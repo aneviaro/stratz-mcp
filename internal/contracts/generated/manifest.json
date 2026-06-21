@@ -1,5 +1,5 @@
 {
-  "contract_version": "1.0.0-draft.2",
+  "contract_version": "1.0.0-draft.3",
   "mcp_protocol_version": "2025-11-25",
   "schema_draft": "https://json-schema.org/draft/2020-12/schema",
   "tool_count": 15,

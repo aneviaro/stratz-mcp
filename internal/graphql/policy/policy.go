@@ -12,6 +12,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/formatter"
 	"github.com/vektah/gqlparser/v2/parser"
+	"github.com/vektah/gqlparser/v2/validator"
 )
 
 var allowedRoots = stringSet(contracts.RawGraphQLAllowedRootFields())
@@ -90,6 +91,7 @@ type Options struct {
 	Limits             config.LimitsConfig
 	AllowIntrospection bool
 	Schema             SchemaPolicy
+	GraphQLSchema      *ast.Schema
 }
 
 // Policy validates raw GraphQL requests.
@@ -97,6 +99,7 @@ type Policy struct {
 	limits             config.LimitsConfig
 	allowIntrospection bool
 	schema             SchemaPolicy
+	graphqlSchema      *ast.Schema
 }
 
 // New creates a bounded raw-query policy.
@@ -129,6 +132,7 @@ func New(options Options) (*Policy, error) {
 		limits:             limits,
 		allowIntrospection: options.AllowIntrospection,
 		schema:             schema,
+		graphqlSchema:      options.GraphQLSchema,
 	}, nil
 }
 
@@ -172,6 +176,20 @@ func (policy *Policy) Analyze(request Request) (*Analysis, error) {
 	operation, err := selectOperation(document, request.OperationName)
 	if err != nil {
 		return nil, err
+	}
+	if policy.graphqlSchema != nil {
+		if validationErrors := validator.Validate(policy.graphqlSchema, document); len(validationErrors) > 0 {
+			return nil, invalid("GraphQL document is not valid for the local STRATZ schema")
+		}
+		coerced, variableErr := validator.VariableValues(
+			policy.graphqlSchema,
+			operation,
+			variables,
+		)
+		if variableErr != nil {
+			return nil, invalid("GraphQL variables are not valid for the selected operation")
+		}
+		variables = coerced
 	}
 	if operation.Operation != ast.Query {
 		return nil, policyError(

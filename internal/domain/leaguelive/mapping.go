@@ -54,9 +54,13 @@ func mapSummary(source *upstreamMatch) contracts.MatchSummary {
 		value := strconv.FormatInt(*source.LeagueID, 10)
 		leagueID = &value
 	}
-	status := "unparsed"
-	if source.ParsedDateTime != nil || source.StatsDateTime != nil {
+	status := "pending"
+	if source.ParsedDateTime != nil {
 		status = "parsed"
+	} else if source.StatsDateTime != nil {
+		status = "partial"
+	} else if source.DurationSeconds != nil {
+		status = "unavailable"
 	}
 	return contracts.MatchSummary{
 		MatchID:         contracts.MatchID(strconv.FormatInt(source.ID, 10)),
@@ -83,7 +87,7 @@ func mapLive(source *upstreamLiveMatch, now time.Time) contracts.LiveMatch {
 		SpectatorCount:  nonNegative(source.SpectatorCount),
 		RadiantTeamName: cleanPointer(source.RadiantTeamName, 256),
 		DireTeamName:    cleanPointer(source.DireTeamName, 256),
-		Players:         make([]contracts.MatchPlayer, 0, len(source.Players)),
+		Players:         make([]contracts.LiveMatchPlayer, 0, len(source.Players)),
 	}
 	if source.League != nil {
 		league := mapLeague(source.League, now)
@@ -99,9 +103,14 @@ func mapLive(source *upstreamLiveMatch, now time.Time) contracts.LiveMatch {
 		if player.IsRadiant {
 			team = "radiant"
 		}
-		result.Players = append(result.Players, contracts.MatchPlayer{
+		var heroID *int64
+		if player.HeroID > 0 {
+			value := player.HeroID
+			heroID = &value
+		}
+		result.Players = append(result.Players, contracts.LiveMatchPlayer{
 			AccountID: account,
-			HeroID:    maxZero(player.HeroID),
+			HeroID:    heroID,
 			Team:      team,
 			Position:  maxZero(player.PlayerSlot),
 			Kills:     maxZero(player.Kills),
@@ -109,7 +118,7 @@ func mapLive(source *upstreamLiveMatch, now time.Time) contracts.LiveMatch {
 			Assists:   maxZero(player.Assists),
 			Networth:  nonNegative(player.Networth),
 			Level:     nonNegative(player.Level),
-			Won:       false,
+			Won:       nil,
 		})
 	}
 	return result

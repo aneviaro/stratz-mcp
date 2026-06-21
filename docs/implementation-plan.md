@@ -224,20 +224,23 @@ The dependency-ordered milestones are implemented locally. Automated checks cove
 - [x] Generate notices, SPDX/CycloneDX SBOMs, signatures, and provenance.
 - [x] Add `SECURITY.md`, dependency-update policy, and release procedures.
 - [x] Complete installation, configuration, tool, resource, prompt, skill, cache, and troubleshooting documentation.
-- [ ] Execute and record installed-client native/Docker interoperability checks in Codex and Claude. (Native protocol profiles pass; local Docker was unavailable and CI coverage is required.)
+- [x] Configure automated native protocol smoke checks for Codex and Claude profiles.
+- [x] Configure automated Docker protocol smoke checks for Codex and Claude profiles.
+- [ ] Execute and record native installed-client acceptance in Codex and Claude.
+- [ ] Execute and record Docker installed-client acceptance in Codex and Claude.
 - [x] Require the STRATZ clearance gate before public publishing jobs run.
 
 **Verification:** Native and Docker stdio smoke tests pass in Codex and Claude. All target binaries and multi-architecture images build. Secret, vulnerability, and license scans pass. Artifacts include verifiable checksums, SBOMs, signatures, and attestations. Publishing remains disabled until the STRATZ clearance gate passes.
 
 ## Release-candidate acceptance test
 
-**Status:** Pending Docker-daemon and installed-client execution in the protected release environment.
+**Status:** Automated native protocol checks pass locally. Docker protocol jobs are configured in CI; protected-environment results and native/Docker installed-client acceptance remain pending. See [the interoperability record](interoperability.md).
 
 Start both native and Docker servers, discover all tools/resources/prompts, exercise representative success and error calls, validate every result against the generated schemas, check cache persistence and purge behavior, verify cursor integrity, and confirm no secret appears in stdout, stderr, SQLite, fixtures, or artifacts.
 
 ## Assumptions
 
 - No fetched STRATZ schema or constants are committed before redistribution clearance.
-- Public contracts remain frozen at `1.0.0-draft.2`; infeasible fields require an explicit contract revision.
+- Public contracts are frozen at `1.0.0-draft.3`; infeasible fields require another explicit contract revision.
 - HTTP transport, mutations, subscriptions, telemetry, hosted operation, and subjective coaching remain outside v1.
 - SDK selection is based on the official Go SDK compatibility table and v1.6.1 API documentation.

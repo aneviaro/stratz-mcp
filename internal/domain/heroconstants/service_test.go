@@ -167,7 +167,7 @@ func TestHeroStatisticsBucketsRatesRelationsAndRankUnavailable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(rankResult.Warnings) != 1 || rankResult.Data.WinRate != nil || rankResult.Data.SampleSize != 0 {
+	if len(rankResult.Warnings) != 1 || rankResult.Data.WinRate != nil || rankResult.Data.SampleSize != 40 {
 		t.Fatalf("rank result = %#v", rankResult)
 	}
 }
@@ -209,6 +209,51 @@ func TestStatisticsBucketBoundariesAndOperations(t *testing.T) {
 		if bucket != test.bucket || operation != test.operation || effective.From.After(from) || effective.To.Before(now) {
 			t.Fatalf("%d days: bucket=%q operation=%q range=%#v", test.days, bucket, operation, effective)
 		}
+	}
+}
+
+func TestStatisticsRejectsRoundedRangeBeyondMaximum(t *testing.T) {
+	end := time.Date(2026, 12, 30, 12, 0, 0, 0, time.UTC)
+	start := end.AddDate(0, 0, -365)
+	_, _, err := translateRange(end, &start, &end)
+	if err == nil || err.Code != contracts.ErrorCodeInvalidArgument {
+		t.Fatalf("error = %#v", err)
+	}
+}
+
+func TestCleanTruncatesAtRuneBoundary(t *testing.T) {
+	if got := clean("żółw", 3); got != "żół" {
+		t.Fatalf("cleaned value = %q", got)
+	}
+}
+
+func TestHeroServiceMapsUpstreamAndProtocolFailures(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		response *stratz.Response
+		err      error
+		want     contracts.ErrorCode
+	}{
+		{
+			name: "upstream",
+			err: &stratz.Error{
+				Code: contracts.ErrorCodeAuthenticationFailed, Message: "auth",
+				Details: map[string]any{},
+			},
+			want: contracts.ErrorCodeAuthenticationFailed,
+		},
+		{name: "nil response", want: contracts.ErrorCodeUpstreamProtocolError},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			service := mustService(t, &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+				return test.response, test.err
+			}})
+			_, err := service.GetHero(context.Background(), json.Number("1"))
+			var domainErr *Error
+			if !errors.As(err, &domainErr) || domainErr.Code != test.want {
+				t.Fatalf("error = %#v", err)
+			}
+		})
 	}
 }
 

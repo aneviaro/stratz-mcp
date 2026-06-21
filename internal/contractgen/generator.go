@@ -24,7 +24,7 @@ import (
 
 const (
 	contractRegistryPath = "docs/tool-contracts.json"
-	expectedContract     = "1.0.0-draft.2"
+	expectedContract     = "1.0.0-draft.3"
 	expectedProtocol     = "2025-11-25"
 	draft202012          = "https://json-schema.org/draft/2020-12/schema"
 	referenceCreatedDate = "2026-06-19"
@@ -1093,8 +1093,79 @@ func renderReference(reg registry, names []string) []byte {
 		description := strings.ReplaceAll(tool.Description, "|", "\\|")
 		fmt.Fprintf(&builder, "| `%s` | %s | %s |\n", name, description, requiredText)
 	}
-	builder.WriteString("\nDereferenced input and output schemas, validating examples, and JSON-RPC fixtures are embedded from `internal/contracts/generated`.\n")
+	builder.WriteString("\n## Tool details\n\n")
+	for _, name := range names {
+		tool := reg.Tools[name]
+		fmt.Fprintf(&builder, "### `%s`\n\n%s\n\n", name, tool.Description)
+		input, _ := tool.InputSchema.(map[string]any)
+		properties, _ := input["properties"].(map[string]any)
+		required := stringSet(input["required"])
+		if len(properties) == 0 {
+			builder.WriteString("Inputs: none.\n\n")
+		} else {
+			builder.WriteString("| Input | Required | Type and constraints |\n")
+			builder.WriteString("|---|---:|---|\n")
+			for _, field := range sortedMapKeys(properties) {
+				_, isRequired := required[field]
+				fmt.Fprintf(
+					&builder,
+					"| `%s` | %t | %s |\n",
+					field,
+					isRequired,
+					schemaSummary(properties[field]),
+				)
+			}
+			builder.WriteString("\n")
+		}
+		fmt.Fprintf(
+			&builder,
+			"Artifacts: [input schema](../internal/contracts/generated/schemas/%s.input.json), [output schema](../internal/contracts/generated/schemas/%s.output.json), [examples](../internal/contracts/generated/examples/%s.input.json), and [JSON-RPC fixture](../internal/contracts/generated/protocol/%s.json).\n\n",
+			name,
+			name,
+			name,
+			name,
+		)
+	}
+	builder.WriteString("All outputs use the generated success/error envelope. The linked output schemas are authoritative for payload shapes, bounds, and tool-specific error details.\n")
 	return []byte(builder.String())
+}
+
+func sortedMapKeys(values map[string]any) []string {
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func schemaSummary(value any) string {
+	node, ok := value.(map[string]any)
+	if !ok {
+		return "See schema."
+	}
+	parts := []string{}
+	if reference, ok := node["$ref"].(string); ok {
+		parts = append(parts, "`"+strings.TrimPrefix(reference, "#/$defs/")+"`")
+	} else if types := schemaTypes(node); len(types) > 0 {
+		parts = append(parts, "`"+strings.Join(types, " | ")+"`")
+	}
+	if values, ok := node["enum"].([]any); ok {
+		quoted := make([]string, 0, len(values))
+		for _, value := range values {
+			quoted = append(quoted, fmt.Sprintf("`%v`", value))
+		}
+		parts = append(parts, "one of "+strings.Join(quoted, ", "))
+	}
+	for _, keyword := range []string{"default", "minimum", "maximum", "minLength", "maxLength", "minItems", "maxItems"} {
+		if value, exists := node[keyword]; exists {
+			parts = append(parts, fmt.Sprintf("%s `%v`", keyword, value))
+		}
+	}
+	if len(parts) == 0 {
+		return "See schema."
+	}
+	return strings.Join(parts, "; ")
 }
 
 func requiredFields(schema any) []string {

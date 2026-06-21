@@ -2,7 +2,7 @@
 
 package contracts
 
-const ContractVersion = "1.0.0-draft.2"
+const ContractVersion = "1.0.0-draft.3"
 const MCPProtocolVersion = "2025-11-25"
 const SchemaDraft = "https://json-schema.org/draft/2020-12/schema"
 
@@ -173,15 +173,28 @@ type League struct {
 }
 
 type LiveMatch struct {
-	DireTeamName    *string          `json:"dire_team_name"`
-	DurationSeconds *int64           `json:"duration_seconds"`
-	GameModeID      *int64           `json:"game_mode_id"`
-	League          *League          `json:"league"`
-	MatchID         MatchID          `json:"match_id"`
-	Players         []MatchPlayer    `json:"players"`
-	RadiantTeamName *string          `json:"radiant_team_name"`
-	SpectatorCount  *int64           `json:"spectator_count"`
-	StartedAt       NullableDateTime `json:"started_at"`
+	DireTeamName    *string           `json:"dire_team_name"`
+	DurationSeconds *int64            `json:"duration_seconds"`
+	GameModeID      *int64            `json:"game_mode_id"`
+	League          *League           `json:"league"`
+	MatchID         MatchID           `json:"match_id"`
+	Players         []LiveMatchPlayer `json:"players"`
+	RadiantTeamName *string           `json:"radiant_team_name"`
+	SpectatorCount  *int64            `json:"spectator_count"`
+	StartedAt       NullableDateTime  `json:"started_at"`
+}
+
+type LiveMatchPlayer struct {
+	AccountID *string `json:"account_id"`
+	Assists   int64   `json:"assists"`
+	Deaths    int64   `json:"deaths"`
+	HeroID    *int64  `json:"hero_id"`
+	Kills     int64   `json:"kills"`
+	Level     *int64  `json:"level"`
+	Networth  *int64  `json:"networth"`
+	Position  int64   `json:"position"`
+	Team      string  `json:"team"`
+	Won       *bool   `json:"won"`
 }
 
 type Match struct {

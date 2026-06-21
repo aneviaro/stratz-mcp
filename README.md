@@ -10,7 +10,9 @@ Public images and archives are not published while clearance is blocked. After c
 make build
 ```
 
-After clearance, signed native archives and the multi-architecture image `ghcr.io/aneviaro/stratz-mcp` are the supported distribution channels. Go 1.25 or newer is required for source builds.
+The executable is written to `./dist/stratz-mcp`. Source builds require Go 1.25 or newer, Make, and Git.
+
+After clearance, signed native archives and the multi-architecture image `ghcr.io/aneviaro/stratz-mcp` are the supported distribution channels.
 
 ## Configure
 
@@ -18,8 +20,8 @@ Set exactly one credential source:
 
 ```sh
 export STRATZ_API_TOKEN='...'
-./stratz-mcp doctor
-./stratz-mcp serve
+./dist/stratz-mcp doctor
+./dist/stratz-mcp serve
 ```
 
 Alternatively use `--token-file`, or an explicit `--env-file`. Configuration precedence is CLI, environment, explicit YAML, defaults. Run `stratz-mcp help` for global options. Tokens are never accepted in YAML.
@@ -58,6 +60,17 @@ docker run --rm -i --read-only -e STRATZ_API_TOKEN -v stratz-cache:/cache IMAGE 
 ```
 
 Replace `IMAGE` with the approved release image after clearance.
+
+To avoid an environment secret, mount a token file read-only:
+
+```sh
+docker run --rm -i --read-only \
+  -v "$HOME/.config/stratz/token:/run/secrets/stratz-token:ro" \
+  -v stratz-cache:/cache \
+  IMAGE --token-file /run/secrets/stratz-token serve
+```
+
+Do not also set `STRATZ_API_TOKEN`.
 
 ## MCP capabilities
 

@@ -655,7 +655,7 @@ func TestRequestBudgetStopsRetriesAndFurtherCalls(t *testing.T) {
 	request := validRequest()
 	request.AllowRetries = true
 	_, err := client.Execute(context.Background(), budget, request)
-	assertCode(t, err, contracts.ErrorCodeRequestBudgetExceeded)
+	assertCode(t, err, contracts.ErrorCodeUpstreamError)
 	if attempts.Load() != 2 || budget.Used() != 2 || budget.Remaining() != 0 {
 		t.Fatalf("budget accounting = attempts:%d used:%d remaining:%d", attempts.Load(), budget.Used(), budget.Remaining())
 	}

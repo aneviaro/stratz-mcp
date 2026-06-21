@@ -366,6 +366,81 @@ func TestPutAsyncDoesNotRegisterAfterCloseStarts(t *testing.T) {
 	store.PutAsync(entry)
 }
 
+func TestCloseFlushesAcceptedAsyncWrite(t *testing.T) {
+	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+	store := openTestStore(t, nowPointer(&now), func(cfg *config.Config) {})
+	key, classification := testKey(t, store, "token-a", "heroes", ClassPublicReference)
+	blocker, err := store.db.BeginTx(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.PutAsync(Entry{
+		Key:            key,
+		Classification: classification,
+		Payload:        []byte(`{"hero_id":1}`),
+	})
+	deadline := time.Now().Add(time.Second)
+	for len(store.writeSlots) == 0 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	closed := make(chan error, 1)
+	go func() { closed <- store.Close() }()
+	select {
+	case err := <-closed:
+		t.Fatalf("close returned before accepted write completed: %v", err)
+	case <-time.After(20 * time.Millisecond):
+	}
+	if err := blocker.Rollback(); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-closed; err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := config.Defaults(filepath.Dir(filepath.Dir(store.path)))
+	cfg.Cache.Directory = filepath.Dir(store.path)
+	reopened, err := Open(Options{Config: cfg.Cache, Features: cfg.Features, Now: nowPointer(&now)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reopened.Close()
+	result, err := reopened.Lookup(context.Background(), LookupRequest{Key: key})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Status != LookupHit {
+		t.Fatalf("lookup status = %q, want hit", result.Status)
+	}
+}
+
+func TestLookupDegradesOnCorruptEntryPayload(t *testing.T) {
+	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+	store := openTestStore(t, nowPointer(&now), func(cfg *config.Config) {})
+	defer store.Close()
+	key, classification := testKey(t, store, "token-a", "heroes", ClassPublicReference)
+	if err := store.Put(context.Background(), Entry{
+		Key:            key,
+		Classification: classification,
+		Payload:        []byte(`{"hero_id":1}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.db.ExecContext(
+		context.Background(),
+		`UPDATE cache_entries SET compression = 'zstd', payload = x'00', logical_size_bytes = ?`,
+		store.maxPayloadBytes+1,
+	); err != nil {
+		t.Fatal(err)
+	}
+	result, err := store.Lookup(context.Background(), LookupRequest{Key: key})
+	if err == nil {
+		t.Fatal("expected corrupt-entry error")
+	}
+	if result.Status != LookupDisabled || store.Status() != StatusDegraded {
+		t.Fatalf("result = %#v status = %q", result, store.Status())
+	}
+}
+
 func TestOpenRejectsSymlinkAndAppliesPermissions(t *testing.T) {
 	directory := t.TempDir()
 	cfg := config.Defaults(directory)

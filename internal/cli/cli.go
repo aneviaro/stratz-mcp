@@ -168,28 +168,23 @@ func runSchemaPull(
 		fmt.Fprintln(stderr, "stratz-mcp: schema pull requires a configured cache directory")
 		return 2
 	}
-	logger, err := observability.Logger(stderr, loaded.Config.Logging, credential.Token)
-	if err != nil {
-		fmt.Fprintf(stderr, "stratz-mcp: configure logging: %v\n", err)
-		return 2
+	executor := dependencies.Executor
+	if executor == nil {
+		var err error
+		executor, err = stratz.New(
+			credential,
+			info.Normalized().Version,
+			loaded.Config.Limits,
+		)
+		if err != nil {
+			fmt.Fprintf(stderr, "stratz-mcp: construct STRATZ client: %v\n", err)
+			return 2
+		}
 	}
-	runtime, err := app.NewRuntime(app.RuntimeOptions{
-		Build:      info,
-		Config:     loaded.Config,
-		Credential: credential,
-		Logger:     logger,
-		Executor:   dependencies.Executor,
-		Now:        dependencies.Now,
-	})
-	if err != nil {
-		fmt.Fprintf(stderr, "stratz-mcp: runtime initialization error: %v\n", err)
-		return 2
-	}
-	defer runtime.Close()
 	directory := filepath.Join(loaded.Config.Cache.Directory, "schema")
 	manifest, err := schemalifecycle.Pull(
 		dependencies.Context,
-		runtime.Executor(),
+		executor,
 		directory,
 	)
 	if err != nil {

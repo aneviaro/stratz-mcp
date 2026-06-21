@@ -13,6 +13,18 @@ type metadataSchemaPolicy struct {
 	metadata schema.ValidationMetadata
 }
 
+var fixedListMaximums = map[string]int{
+	"match.players":             10,
+	"live.matches.players":      10,
+	"match.fights.participants": 10,
+}
+
+var cardinalityArguments = map[string][]string{
+	"matches": {"ids"},
+	"players": {"steamAccountIds"},
+	"teams":   {"teamIds"},
+}
+
 // FromManifest builds demand-control rules from authenticated schema metadata.
 func FromManifest(manifest schema.Manifest) (SchemaPolicy, error) {
 	if strings.TrimSpace(manifest.Validation.QueryType) == "" ||
@@ -43,7 +55,9 @@ func (policy metadataSchemaPolicy) Field(path []string, field *ast.Field) FieldR
 	switch {
 	case reference.ListDepth > 0:
 		rule.Kind = FieldList
-		rule.PageSizeArguments = policy.pageSizeArguments(reference)
+		pathText := strings.Join(path, ".")
+		rule.FixedMaximum = fixedListMaximums[pathText]
+		rule.PageSizeArguments = policy.pageSizeArguments(pathText, reference)
 	case len(policy.metadata.Fields[typeName]) > 0:
 		rule.Kind = FieldObject
 	default:
@@ -61,12 +75,11 @@ func (policy metadataSchemaPolicy) Field(path []string, field *ast.Field) FieldR
 	return rule
 }
 
-func (policy metadataSchemaPolicy) pageSizeArguments(reference schema.Ref) []string {
-	var result []string
+func (policy metadataSchemaPolicy) pageSizeArguments(path string, reference schema.Ref) []string {
+	result := append([]string(nil), cardinalityArguments[path]...)
 	for name, argument := range reference.Arguments {
 		lower := strings.ToLower(name)
-		if argument.ListDepth > 0 ||
-			lower == "take" || lower == "first" || lower == "limit" {
+		if lower == "take" || lower == "first" || lower == "limit" {
 			result = append(result, name)
 			continue
 		}

@@ -189,24 +189,27 @@ func (service *Service) GetHeroStats(ctx context.Context, filters StatsFilters) 
 		return nil, notFound("Hero statistics were not found", map[string]any{"hero_id": heroID})
 	}
 	warnings := []string{}
-	if filters.RankBracket != nil && (envelope.HeroStats.RankDataAvailable == nil || !*envelope.HeroStats.RankDataAvailable) {
+	rankDataUnavailable := filters.RankBracket != nil &&
+		(envelope.HeroStats.RankDataAvailable == nil || !*envelope.HeroStats.RankDataAvailable)
+	if rankDataUnavailable {
 		warnings = append(warnings, "Rank-bracket redistribution data is unavailable; rates are omitted to avoid mixing populations")
-		envelope.HeroStats.MatchCount = 0
-		envelope.HeroStats.PickCount = 0
-		envelope.HeroStats.WinCount = 0
-		envelope.HeroStats.BanCount = 0
-		envelope.HeroStats.PopulationMatchCount = 0
-		envelope.HeroStats.Roles = nil
-		envelope.HeroStats.Lanes = nil
-		envelope.HeroStats.Matchups = nil
-		envelope.HeroStats.Synergies = nil
 	}
 	raw := rawData(response.Data)
 	if constantsResponse != nil {
 		raw = map[string]any{"constants": rawData(constantsResponse.Data), "statistics": raw}
 	}
+	data := mapStats(envelope.HeroStats, filters)
+	if rankDataUnavailable {
+		data.PickRate = nil
+		data.WinRate = nil
+		data.BanRate = nil
+		data.Roles = []contracts.HeroBreakdown{}
+		data.Lanes = []contracts.HeroBreakdown{}
+		data.Matchups = []contracts.HeroRelation{}
+		data.Synergies = []contracts.HeroRelation{}
+	}
 	return &Result[contracts.StratzGetHeroStatsData]{
-		Data:           mapStats(envelope.HeroStats, filters),
+		Data:           data,
 		Raw:            raw,
 		RateLimits:     response.RateLimits,
 		Warnings:       warnings,
@@ -492,18 +495,24 @@ func translateRange(now time.Time, from, to *time.Time) (string, DateRange, *Err
 	if !start.Before(end) {
 		return "", DateRange{}, invalid("Hero statistics range must have from before to", nil)
 	}
-	if end.Sub(start) > 366*24*time.Hour {
-		return "", DateRange{}, invalid("Hero statistics range cannot exceed 366 days", nil)
-	}
 	days := end.Sub(start).Hours() / 24
+	var bucket string
+	var effective DateRange
 	switch {
 	case days <= 31:
-		return "day", DateRange{From: dayFloor(start), To: dayCeil(end)}, nil
+		bucket = "day"
+		effective = DateRange{From: dayFloor(start), To: dayCeil(end)}
 	case days <= 180:
-		return "week", DateRange{From: weekFloor(start), To: weekCeil(end)}, nil
+		bucket = "week"
+		effective = DateRange{From: weekFloor(start), To: weekCeil(end)}
 	default:
-		return "month", DateRange{From: monthFloor(start), To: monthCeil(end)}, nil
+		bucket = "month"
+		effective = DateRange{From: monthFloor(start), To: monthCeil(end)}
 	}
+	if effective.To.Sub(effective.From) > 366*24*time.Hour {
+		return "", DateRange{}, invalid("Hero statistics effective range cannot exceed 366 days", nil)
+	}
+	return bucket, effective, nil
 }
 
 func statisticsOperation(bucket string) (string, string) {
@@ -636,8 +645,9 @@ func clean(value string, maximum int) string {
 		}
 		return r
 	}, strings.TrimSpace(value))
-	if len(value) > maximum {
-		value = value[:maximum]
+	runes := []rune(value)
+	if len(runes) > maximum {
+		value = string(runes[:maximum])
 	}
 	return value
 }

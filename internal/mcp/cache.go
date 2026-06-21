@@ -17,7 +17,7 @@ type cacheSpecification struct {
 
 var cacheSpecifications = map[string]cacheSpecification{
 	"stratz_get_player":          {domain: "players", class: cache.ClassProfileSensitive},
-	"stratz_list_player_matches": {domain: "matches", class: cache.ClassPublicRecent},
+	"stratz_list_player_matches": {domain: "matches", class: cache.ClassProfileSensitive},
 	"stratz_batch_get_players":   {domain: "players", class: cache.ClassProfileSensitive},
 	"stratz_get_match":           {domain: "matches", class: cache.ClassPublicRecent},
 	"stratz_batch_get_matches":   {domain: "matches", class: cache.ClassPublicRecent},

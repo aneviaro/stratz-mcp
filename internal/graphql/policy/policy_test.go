@@ -9,6 +9,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/config"
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
 	"github.com/aneviaro/stratz-mcp/internal/schema"
+	"github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -348,6 +349,57 @@ func TestManifestSchemaPolicyRejectsUnboundedNestedLists(t *testing.T) {
 		Query: `query { match(id: 1) { timeline { time } } }`,
 	})
 	assertPolicyCode(t, err, contracts.ErrorCodeQueryListLimitRequired)
+}
+
+func TestManifestSchemaPolicyDoesNotTreatFilterListsAsPageBounds(t *testing.T) {
+	manifest := schema.Manifest{
+		Validation: schema.ValidationMetadata{
+			QueryType: "Query",
+			Fields: map[string]map[string]schema.Ref{
+				"Query": {
+					"heroStats": {
+						Type:      "[HeroStats!]!",
+						ListDepth: 1,
+						Arguments: map[string]schema.Ref{
+							"heroIds": {Type: "[Long!]!", ListDepth: 1},
+						},
+					},
+				},
+				"HeroStats": {"heroId": {Type: "Long!"}},
+			},
+		},
+	}
+	schemaPolicy, err := FromManifest(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checker := mustPolicy(t, Options{Limits: testLimits(), Schema: schemaPolicy})
+	_, err = checker.Analyze(Request{
+		Query: `query { heroStats(heroIds: [1]) { heroId } }`,
+	})
+	assertPolicyCode(t, err, contracts.ErrorCodeQueryListLimitRequired)
+}
+
+func TestGraphQLSchemaValidationRejectsInvalidDocumentsAndVariables(t *testing.T) {
+	graphqlSchema := gqlparser.MustLoadSchema(&ast.Source{Input: `
+		type Query { match(id: Int!): Match }
+		type Match { id: Int! }
+	`})
+	checker := mustPolicy(t, Options{
+		Limits:        testLimits(),
+		GraphQLSchema: graphqlSchema,
+	})
+	for _, request := range []Request{
+		{Query: `query { match(id: 1) { unknown } }`},
+		{Query: `query Match($id: Int!) { match(id: $id) { id } }`},
+		{
+			Query:     `query Match($id: Int!) { match(id: $id) { id } }`,
+			Variables: map[string]any{"id": "not-a-number"},
+		},
+	} {
+		_, err := checker.Analyze(request)
+		assertPolicyCode(t, err, contracts.ErrorCodeInvalidArgument)
+	}
 }
 
 func TestDefaultListPolicyAndCacheClassification(t *testing.T) {

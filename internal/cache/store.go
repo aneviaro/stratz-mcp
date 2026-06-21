@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -24,30 +25,35 @@ const (
 	compressionThreshold   = 4 << 10
 	defaultBusyTimeout     = 5 * time.Second
 	defaultAsyncWriteLimit = 10 * time.Second
+	defaultMaxPayloadBytes = 5 << 20
+	maxPendingWrites       = 16
 )
 
 type Options struct {
-	Config      config.CacheConfig
-	Features    config.FeaturesConfig
-	Logger      *slog.Logger
-	Now         func() time.Time
-	BusyTimeout time.Duration
+	Config          config.CacheConfig
+	Features        config.FeaturesConfig
+	Logger          *slog.Logger
+	Now             func() time.Time
+	BusyTimeout     time.Duration
+	MaxPayloadBytes int64
 }
 
 type Store struct {
-	mu          sync.RWMutex
-	db          *sql.DB
-	path        string
-	now         func() time.Time
-	logger      *slog.Logger
-	cacheConfig config.CacheConfig
-	features    config.FeaturesConfig
-	status      Status
-	reason      string
-	busyTimeout time.Duration
-	writeWG     sync.WaitGroup
-	closeOnce   sync.Once
-	closing     bool
+	mu              sync.RWMutex
+	db              *sql.DB
+	path            string
+	now             func() time.Time
+	logger          *slog.Logger
+	cacheConfig     config.CacheConfig
+	features        config.FeaturesConfig
+	status          Status
+	reason          string
+	busyTimeout     time.Duration
+	maxPayloadBytes int64
+	writeWG         sync.WaitGroup
+	writeSlots      chan struct{}
+	closeOnce       sync.Once
+	closing         bool
 }
 
 func Open(options Options) (*Store, error) {
@@ -76,6 +82,9 @@ func Open(options Options) (*Store, error) {
 	if options.BusyTimeout <= 0 {
 		options.BusyTimeout = defaultBusyTimeout
 	}
+	if options.MaxPayloadBytes <= 0 {
+		options.MaxPayloadBytes = defaultMaxPayloadBytes
+	}
 	if err := ensureDirectory(directory); err != nil {
 		return nil, err
 	}
@@ -90,14 +99,16 @@ func Open(options Options) (*Store, error) {
 	database.SetMaxOpenConns(1)
 	database.SetMaxIdleConns(1)
 	store := &Store{
-		db:          database,
-		path:        path,
-		now:         now,
-		logger:      logger,
-		cacheConfig: options.Config,
-		features:    options.Features,
-		status:      StatusHealthy,
-		busyTimeout: options.BusyTimeout,
+		db:              database,
+		path:            path,
+		now:             now,
+		logger:          logger,
+		cacheConfig:     options.Config,
+		features:        options.Features,
+		status:          StatusHealthy,
+		busyTimeout:     options.BusyTimeout,
+		maxPayloadBytes: options.MaxPayloadBytes,
+		writeSlots:      make(chan struct{}, maxPendingWrites),
 	}
 	if err := store.initialize(context.Background()); err != nil {
 		_ = database.Close()
@@ -161,7 +172,7 @@ func (store *Store) Lookup(
 
 	row := store.db.QueryRowContext(
 		ctx,
-		`SELECT payload, compression, created_at_unix_ms, expires_at_unix_ms, stale_until_unix_ms
+		`SELECT payload, compression, logical_size_bytes, created_at_unix_ms, expires_at_unix_ms, stale_until_unix_ms
 		FROM cache_entries
 		WHERE namespace = ? AND domain = ? AND cache_key = ?`,
 		request.Key.Namespace,
@@ -171,6 +182,7 @@ func (store *Store) Lookup(
 	var (
 		payload      []byte
 		compression  string
+		logicalSize  int64
 		createdAtMS  int64
 		expiresAtMS  int64
 		staleUntilMS int64
@@ -178,6 +190,7 @@ func (store *Store) Lookup(
 	if err := row.Scan(
 		&payload,
 		&compression,
+		&logicalSize,
 		&createdAtMS,
 		&expiresAtMS,
 		&staleUntilMS,
@@ -202,7 +215,7 @@ func (store *Store) Lookup(
 	default:
 		return result, nil
 	}
-	decoded, err := decodePayload(payload, compression)
+	decoded, err := decodePayload(payload, compression, logicalSize, store.maxPayloadBytes)
 	if err != nil {
 		return LookupResult{Status: LookupDisabled}, store.fail(err, "decode cache entry")
 	}
@@ -231,10 +244,18 @@ func (store *Store) PutAsync(entry Entry) {
 		store.mu.Unlock()
 		return
 	}
+	select {
+	case store.writeSlots <- struct{}{}:
+	default:
+		store.mu.Unlock()
+		store.logger.Warn("cache write dropped because the pending-write limit was reached")
+		return
+	}
 	store.writeWG.Add(1)
 	store.mu.Unlock()
 	go func() {
 		defer store.writeWG.Done()
+		defer func() { <-store.writeSlots }()
 		ctx, cancel := context.WithTimeout(context.Background(), defaultAsyncWriteLimit)
 		defer cancel()
 		err := store.Put(ctx, entry)
@@ -452,12 +473,14 @@ func (store *Store) Close() error {
 	store.closeOnce.Do(func() {
 		store.mu.Lock()
 		store.closing = true
+		store.mu.Unlock()
+		store.writeWG.Wait()
+		store.mu.Lock()
 		if store.status == StatusHealthy {
 			store.status = StatusDisabled
 			store.reason = "cache is closed"
 		}
 		store.mu.Unlock()
-		store.writeWG.Wait()
 		if store.db != nil {
 			err = store.db.Close()
 		}
@@ -625,17 +648,34 @@ func encodePayload(payload []byte) ([]byte, string, error) {
 	return encoder.EncodeAll(payload, nil), "zstd", nil
 }
 
-func decodePayload(payload []byte, compression string) ([]byte, error) {
+func decodePayload(payload []byte, compression string, logicalSize, maximum int64) ([]byte, error) {
+	if logicalSize < 0 || logicalSize > maximum {
+		return nil, fmt.Errorf("cache logical payload size %d exceeds limit %d", logicalSize, maximum)
+	}
 	switch compression {
 	case "", "none":
+		if int64(len(payload)) != logicalSize {
+			return nil, fmt.Errorf("cache logical payload size mismatch")
+		}
 		return append([]byte(nil), payload...), nil
 	case "zstd":
-		decoder, err := zstd.NewReader(nil)
+		decoder, err := zstd.NewReader(
+			bytes.NewReader(payload),
+			zstd.WithDecoderMaxMemory(uint64(maximum)),
+			zstd.WithDecoderMaxWindow(uint64(maximum)),
+		)
 		if err != nil {
 			return nil, err
 		}
 		defer decoder.Close()
-		return decoder.DecodeAll(payload, nil)
+		decoded, err := io.ReadAll(io.LimitReader(decoder, maximum+1))
+		if err != nil {
+			return nil, err
+		}
+		if int64(len(decoded)) != logicalSize {
+			return nil, fmt.Errorf("cache logical payload size mismatch")
+		}
+		return decoded, nil
 	default:
 		return nil, fmt.Errorf("unknown cache compression %q", compression)
 	}

@@ -49,6 +49,88 @@ cache:
 	}
 }
 
+func TestLoadAppliesPublicEnvironmentSettings(t *testing.T) {
+	directory := t.TempDir()
+	loaded, err := Load(LoadOptions{
+		Environ: []string{
+			"STRATZ_CACHE_DIR=" + filepath.Join(directory, "cache"),
+			"STRATZ_LOG_LEVEL=info",
+			"STRATZ_LOG_FORMAT=json",
+			"STRATZ_DEFAULT_PLAYER_IDENTIFIER=123",
+			"STRATZ_CACHE_ENABLED=false",
+			"STRATZ_RUNTIME_INTROSPECTION=true",
+			"STRATZ_RAW_CACHE=false",
+			"STRATZ_MAX_RESPONSE_BYTES=1024",
+			"STRATZ_MAX_QUERY_DOCUMENT_BYTES=2048",
+			"STRATZ_MAX_QUERY_VARIABLES_BYTES=4096",
+			"STRATZ_MAX_INDIVIDUAL_STRING_BYTES=512",
+			"STRATZ_CACHE_MAX_SIZE_BYTES=8192",
+			"STRATZ_MAX_QUERY_VARIABLES_DEPTH=3",
+			"STRATZ_MAX_QUERY_VARIABLES_NODES=4",
+			"STRATZ_MAX_QUERY_DEPTH=5",
+			"STRATZ_MAX_QUERY_ALIASES=6",
+			"STRATZ_MAX_QUERY_FIELDS=7",
+			"STRATZ_MAX_QUERY_TOP_LEVEL_FIELDS=8",
+			"STRATZ_MAX_QUERY_COMPLEXITY=9",
+			"STRATZ_MAX_LIST_PAGE_SIZE=10",
+			"STRATZ_MAX_NESTED_LIST_DEPTH=1",
+			"STRATZ_MAX_GRAPHQL_OPERATIONS=1",
+			"STRATZ_REQUEST_BUDGET=2",
+			"STRATZ_MAX_BATCH_SIZE=3",
+			"STRATZ_UPSTREAM_TIMEOUT=30s",
+			"STRATZ_CACHE_PUBLIC_REFERENCE_TTL=1h",
+			"STRATZ_CACHE_PUBLIC_REFERENCE_STALE=2h",
+			"STRATZ_CACHE_PUBLIC_HISTORICAL_TTL=3h",
+			"STRATZ_CACHE_PUBLIC_HISTORICAL_STALE=4h",
+			"STRATZ_CACHE_PROFILE_SENSITIVE_TTL=5m",
+			"STRATZ_CACHE_PROFILE_SENSITIVE_STALE=6m",
+			"STRATZ_CACHE_PUBLIC_RECENT_TTL=7m",
+			"STRATZ_CACHE_PUBLIC_RECENT_STALE=8m",
+			"STRATZ_CACHE_PUBLIC_LIVE_TTL=9s",
+			"STRATZ_CACHE_PUBLIC_LIVE_STALE=10s",
+			"STRATZ_CACHE_RAW_TTL=11m",
+		},
+		UserCacheDir: func() (string, error) { return directory, nil },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := loaded.Config
+	if cfg.Limits.MaxResponseBytes != 1024 ||
+		cfg.Limits.MaxQueryDocumentBytes != 2048 ||
+		cfg.Limits.MaxQueryVariablesBytes != 4096 ||
+		cfg.Limits.MaxIndividualStringSize != 512 ||
+		cfg.Limits.MaxUpstreamRequests != 2 ||
+		cfg.Limits.UpstreamTimeout != 30*time.Second ||
+		cfg.Cache.MaxSizeBytes != 8192 ||
+		cfg.Cache.PublicHistoricalTTL != 3*time.Hour ||
+		cfg.Cache.PublicLiveTTL != 9*time.Second ||
+		cfg.Logging.Level != "info" ||
+		cfg.Logging.Format != "json" ||
+		!cfg.Features.RuntimeIntrospection ||
+		cfg.DefaultPlayerIdentifier != "123" {
+		t.Fatalf("environment configuration was not applied: %#v", cfg)
+	}
+}
+
+func TestLoadRejectsInvalidEnvironmentValues(t *testing.T) {
+	for _, environment := range []string{
+		"STRATZ_CACHE_ENABLED=maybe",
+		"STRATZ_MAX_QUERY_DEPTH=not-an-integer",
+		"STRATZ_UPSTREAM_TIMEOUT=tomorrow",
+	} {
+		t.Run(environment, func(t *testing.T) {
+			_, err := Load(LoadOptions{
+				Environ:      []string{environment},
+				UserCacheDir: func() (string, error) { return t.TempDir(), nil },
+			})
+			if err == nil {
+				t.Fatal("invalid environment value was accepted")
+			}
+		})
+	}
+}
+
 func TestLoadRejectsUnknownYAMLKeys(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
 	if err := os.WriteFile(path, []byte("logging:\n  leve1: debug\n"), 0o600); err != nil {

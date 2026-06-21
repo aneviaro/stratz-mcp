@@ -66,10 +66,11 @@ func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 		executor = client
 	}
 	cacheStore, err := cache.Open(cache.Options{
-		Config:   options.Config.Cache,
-		Features: options.Config.Features,
-		Logger:   options.Logger,
-		Now:      options.Now,
+		Config:          options.Config.Cache,
+		Features:        options.Config.Features,
+		Logger:          options.Logger,
+		Now:             options.Now,
+		MaxPayloadBytes: options.Config.Limits.MaxResponseBytes,
 	})
 	if err != nil {
 		if options.Logger != nil {

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/aneviaro/stratz-mcp/docs/tool-contracts.json",
-  "contractVersion": "1.0.0-draft.2",
+  "contractVersion": "1.0.0-draft.3",
   "mcpProtocolVersion": "2025-11-25",
   "description": "Canonical machine-readable MCP tool contract registry. Build tooling dereferences shared definitions before publishing each MCP Tool.inputSchema and Tool.outputSchema.",
   "rawGraphqlPolicy": {
@@ -435,6 +435,64 @@
         },
         "won": {
           "type": "boolean"
+        }
+      },
+      "required": [
+        "account_id",
+        "hero_id",
+        "team",
+        "position",
+        "kills",
+        "deaths",
+        "assists",
+        "networth",
+        "level",
+        "won"
+      ],
+      "additionalProperties": false
+    },
+    "liveMatchPlayer": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{1,10}$"
+        },
+        "hero_id": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "team": {
+          "type": "string",
+          "enum": ["radiant", "dire"]
+        },
+        "position": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "kills": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "deaths": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "assists": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "networth": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "level": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "won": {
+          "type": ["boolean", "null"]
         }
       },
       "required": [
@@ -953,7 +1011,7 @@
           "type": "array",
           "maxItems": 10,
           "items": {
-            "$ref": "#/$defs/matchPlayer"
+            "$ref": "#/$defs/liveMatchPlayer"
           }
         }
       },
@@ -1652,7 +1710,7 @@
           },
           "status": {
             "type": "string",
-            "maxLength": 64
+            "enum": ["live", "ongoing", "completed", "ended", "upcoming", "future"]
           },
           "tier": {
             "type": "string",

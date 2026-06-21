@@ -2,6 +2,7 @@ package pagination
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 )
@@ -64,6 +65,57 @@ func TestScanFiltersAcrossPagesAndResumesWithoutEmbeddingItems(t *testing.T) {
 	}
 	if second.HasMore || second.Next != nil {
 		t.Fatalf("second continuation = %#v", second.Next)
+	}
+}
+
+func TestScanRejectsInvalidOptionsAndPropagatesCancellationAndErrors(t *testing.T) {
+	sentinel := errors.New("fetch failed")
+	tests := []struct {
+		name    string
+		ctx     context.Context
+		options ScanOptions[int, int]
+		want    error
+	}{
+		{name: "limit", ctx: context.Background(), options: ScanOptions[int, int]{MaxPages: 1, Fetch: func(context.Context, *int) (Page[int, int], error) { return Page[int, int]{}, nil }}, want: errors.New("scan limit must be positive")},
+		{name: "pages", ctx: context.Background(), options: ScanOptions[int, int]{Limit: 1, Fetch: func(context.Context, *int) (Page[int, int], error) { return Page[int, int]{}, nil }}, want: errors.New("scan max pages must be positive")},
+		{name: "fetch", ctx: context.Background(), options: ScanOptions[int, int]{Limit: 1, MaxPages: 1}, want: errors.New("scan fetch function is required")},
+		{name: "callback error", ctx: context.Background(), options: ScanOptions[int, int]{Limit: 1, MaxPages: 1, Fetch: func(context.Context, *int) (Page[int, int], error) { return Page[int, int]{}, sentinel }}, want: sentinel},
+	}
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	tests = append(tests, struct {
+		name    string
+		ctx     context.Context
+		options ScanOptions[int, int]
+		want    error
+	}{
+		name: "canceled", ctx: canceled,
+		options: ScanOptions[int, int]{Limit: 1, MaxPages: 1, Fetch: func(context.Context, *int) (Page[int, int], error) {
+			t.Fatal("fetch called for canceled context")
+			return Page[int, int]{}, nil
+		}},
+		want: context.Canceled,
+	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := Scan(test.ctx, test.options)
+			if err == nil || err.Error() != test.want.Error() {
+				t.Fatalf("error = %v, want %v", err, test.want)
+			}
+		})
+	}
+}
+
+func TestScanRequiresAdvanceForPartialPage(t *testing.T) {
+	_, err := Scan(context.Background(), ScanOptions[int, int]{
+		Limit: 1, MaxPages: 1,
+		Fetch: func(context.Context, *int) (Page[int, int], error) {
+			next := 2
+			return Page[int, int]{Items: []int{1, 2}, Next: &next, HasMore: true}, nil
+		},
+	})
+	if err == nil || err.Error() != "scan advance function is required for partial pages" {
+		t.Fatalf("error = %v", err)
 	}
 }
 
