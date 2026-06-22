@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -324,6 +325,9 @@ func TestExecuteMapsCuratedPartialToPartialError(t *testing.T) {
 	if !upstreamErr.Retryable {
 		t.Fatal("temporary GraphQL partial error should be retryable")
 	}
+	if !reflect.DeepEqual(upstreamErr.Details["graphql_messages"], []string{"temporary"}) {
+		t.Fatalf("graphql_messages = %#v", upstreamErr.Details["graphql_messages"])
+	}
 }
 
 func TestExecuteHTTPAndGraphQLErrorMappings(t *testing.T) {
@@ -381,6 +385,106 @@ func TestExecuteHTTPAndGraphQLErrorMappings(t *testing.T) {
 				t.Fatalf("response or token leaked through error: %v", upstreamErr)
 			}
 		})
+	}
+}
+
+func TestExecutePreservesGraphQLDetailsForCuratedBadRequest(t *testing.T) {
+	server := graphqlServer(t, http.StatusBadRequest, `{
+		"errors":[
+			{"message":"unknown field","extensions":{"code":"FIELDS_ON_CORRECT_TYPE"}},
+			{"message":"duplicate","extensions":{"code":"FIELDS_ON_CORRECT_TYPE"}},
+			{"message":"unsafe","extensions":{"code":"not safe!"}}
+		]
+	}`)
+	defer server.Close()
+
+	client := testClient(t, clientOptions{endpoint: server.URL})
+	_, err := client.Execute(context.Background(), mustBudget(t, 1), validRequest())
+	upstreamErr := assertCode(t, err, contracts.ErrorCodeUpstreamProtocolError)
+
+	codes, ok := upstreamErr.Details["graphql_codes"].([]string)
+	if !ok {
+		t.Fatalf("graphql_codes = %#v, want []string", upstreamErr.Details["graphql_codes"])
+	}
+	if !reflect.DeepEqual(codes, []string{"FIELDS_ON_CORRECT_TYPE"}) {
+		t.Fatalf("graphql_codes = %#v, want sanitized unique codes", codes)
+	}
+	messages, ok := upstreamErr.Details["graphql_messages"].([]string)
+	if !ok {
+		t.Fatalf("graphql_messages = %#v, want []string", upstreamErr.Details["graphql_messages"])
+	}
+	if !reflect.DeepEqual(messages, []string{"unknown field", "duplicate", "unsafe"}) {
+		t.Fatalf("graphql_messages = %#v, want ordered unique messages", messages)
+	}
+	if strings.Contains(upstreamErr.Error(), "unknown field") {
+		t.Fatalf("stable top-level error message changed: %v", upstreamErr)
+	}
+}
+
+func TestExecuteExposesGraphQLMessagesAcrossHTTPErrorMappings(t *testing.T) {
+	tests := []struct {
+		name   string
+		status int
+		mode   Mode
+		code   contracts.ErrorCode
+	}{
+		{name: "raw bad request", status: http.StatusBadRequest, mode: ModeRaw, code: contracts.ErrorCodeInvalidArgument},
+		{name: "curated bad request", status: http.StatusBadRequest, mode: ModeCurated, code: contracts.ErrorCodeUpstreamProtocolError},
+		{name: "authentication", status: http.StatusUnauthorized, mode: ModeCurated, code: contracts.ErrorCodeAuthenticationFailed},
+		{name: "server error", status: http.StatusServiceUnavailable, mode: ModeCurated, code: contracts.ErrorCodeUpstreamError},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			server := graphqlServer(t, test.status, `{
+				"errors":[
+					{"message":" first diagnosis ","extensions":{"code":"FIXTURE"}},
+					{"message":"second diagnosis","extensions":{"code":"FIXTURE"}}
+				]
+			}`)
+			defer server.Close()
+
+			client := testClient(t, clientOptions{endpoint: server.URL})
+			request := validRequest()
+			request.Mode = test.mode
+			_, err := client.Execute(context.Background(), mustBudget(t, 1), request)
+			upstreamErr := assertCode(t, err, test.code)
+			if !reflect.DeepEqual(
+				upstreamErr.Details["graphql_messages"],
+				[]string{"first diagnosis", "second diagnosis"},
+			) {
+				t.Fatalf("graphql_messages = %#v", upstreamErr.Details["graphql_messages"])
+			}
+		})
+	}
+}
+
+func TestGraphQLMessagesAreBounded(t *testing.T) {
+	longMessage := strings.Repeat("界", 2049)
+	graphqlErrors := []GraphQLError{
+		{Message: " first "},
+		{Message: "   "},
+		{Message: "first"},
+		{Message: longMessage},
+	}
+	for index := 0; index < 20; index++ {
+		graphqlErrors = append(graphqlErrors, GraphQLError{
+			Message: fmt.Sprintf("message-%02d", index),
+		})
+	}
+
+	messages := graphqlMessages(graphqlErrors)
+	if len(messages) != 16 {
+		t.Fatalf("message count = %d, want 16", len(messages))
+	}
+	if messages[0] != "first" {
+		t.Fatalf("first message = %q", messages[0])
+	}
+	if len([]rune(messages[1])) != 2048 {
+		t.Fatalf("bounded message length = %d, want 2048", len([]rune(messages[1])))
+	}
+	if messages[2] != "message-00" || messages[15] != "message-13" {
+		t.Fatalf("message order = %#v", messages)
 	}
 }
 

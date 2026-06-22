@@ -75,6 +75,9 @@ func classifyHTTPError(
 	retryAfter := retryAt(response.Header, rates, now)
 	envelope, graphQLErr := decodeGraphQL(body)
 	hasGraphQL := graphQLErr == nil && len(envelope.graphqlErrors) > 0
+	if hasGraphQL {
+		addGraphQLErrorDetails(details, envelope.graphqlErrors)
+	}
 
 	switch response.StatusCode {
 	case http.StatusUnauthorized:
