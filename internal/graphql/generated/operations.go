@@ -1114,15 +1114,11 @@ func (v *PlayerFieldsIdentityPlayerIdentityType) GetName() *string { return v.Na
 
 // PlayerFieldsRanksPlayerRankType includes the requested fields of the GraphQL type PlayerRankType.
 type PlayerFieldsRanksPlayerRankType struct {
-	Rank            *int `json:"rank"`
-	LeaderboardRank *int `json:"leaderboardRank"`
+	Rank *int `json:"rank"`
 }
 
 // GetRank returns PlayerFieldsRanksPlayerRankType.Rank, and is useful for accessing the field via an interface.
 func (v *PlayerFieldsRanksPlayerRankType) GetRank() *int { return v.Rank }
-
-// GetLeaderboardRank returns PlayerFieldsRanksPlayerRankType.LeaderboardRank, and is useful for accessing the field via an interface.
-func (v *PlayerFieldsRanksPlayerRankType) GetLeaderboardRank() *int { return v.LeaderboardRank }
 
 // PlayerFieldsSteamAccountSteamAccountType includes the requested fields of the GraphQL type SteamAccountType.
 type PlayerFieldsSteamAccountSteamAccountType struct {
@@ -5479,7 +5475,6 @@ fragment PlayerFields on PlayerType {
 	lastMatchDate
 	ranks {
 		rank
-		leaderboardRank
 	}
 }
 `
@@ -5531,7 +5526,6 @@ fragment PlayerFields on PlayerType {
 	lastMatchDate
 	ranks {
 		rank
-		leaderboardRank
 	}
 }
 `

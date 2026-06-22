@@ -188,7 +188,6 @@ type PlayerIdentityType {
 
 type PlayerRankType {
   rank: Int
-  leaderboardRank: Int
 }
 
 input PlayerMatchesRequestType {

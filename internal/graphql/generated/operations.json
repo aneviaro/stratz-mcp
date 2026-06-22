@@ -57,12 +57,12 @@
     },
     {
       "operationName": "StratzGetPlayer",
-      "query": "\nquery StratzGetPlayer ($steamAccountId: Long!) {\n\tplayer(steamAccountId: $steamAccountId) {\n\t\t... PlayerFields\n\t}\n}\nfragment PlayerFields on PlayerType {\n\tsteamAccountId\n\tsteamAccount {\n\t\tid\n\t\tname\n\t\tavatar\n\t}\n\tidentity {\n\t\tname\n\t}\n\tmatchCount\n\twinCount\n\tlastMatchDate\n\tranks {\n\t\trank\n\t\tleaderboardRank\n\t}\n}\n",
+      "query": "\nquery StratzGetPlayer ($steamAccountId: Long!) {\n\tplayer(steamAccountId: $steamAccountId) {\n\t\t... PlayerFields\n\t}\n}\nfragment PlayerFields on PlayerType {\n\tsteamAccountId\n\tsteamAccount {\n\t\tid\n\t\tname\n\t\tavatar\n\t}\n\tidentity {\n\t\tname\n\t}\n\tmatchCount\n\twinCount\n\tlastMatchDate\n\tranks {\n\t\trank\n\t}\n}\n",
       "sourceLocation": "internal/graphql/operations/player.graphql"
     },
     {
       "operationName": "StratzGetPlayers",
-      "query": "\nquery StratzGetPlayers ($steamAccountIds: [Long!]!) {\n\tplayers(steamAccountIds: $steamAccountIds) {\n\t\t... PlayerFields\n\t}\n}\nfragment PlayerFields on PlayerType {\n\tsteamAccountId\n\tsteamAccount {\n\t\tid\n\t\tname\n\t\tavatar\n\t}\n\tidentity {\n\t\tname\n\t}\n\tmatchCount\n\twinCount\n\tlastMatchDate\n\tranks {\n\t\trank\n\t\tleaderboardRank\n\t}\n}\n",
+      "query": "\nquery StratzGetPlayers ($steamAccountIds: [Long!]!) {\n\tplayers(steamAccountIds: $steamAccountIds) {\n\t\t... PlayerFields\n\t}\n}\nfragment PlayerFields on PlayerType {\n\tsteamAccountId\n\tsteamAccount {\n\t\tid\n\t\tname\n\t\tavatar\n\t}\n\tidentity {\n\t\tname\n\t}\n\tmatchCount\n\twinCount\n\tlastMatchDate\n\tranks {\n\t\trank\n\t}\n}\n",
       "sourceLocation": "internal/graphql/operations/player.graphql"
     },
     {

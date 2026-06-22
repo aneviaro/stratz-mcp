@@ -13,7 +13,6 @@ fragment PlayerFields on PlayerType {
   lastMatchDate
   ranks {
     rank
-    leaderboardRank
   }
 }
 
