@@ -14,6 +14,8 @@ build:
 	mkdir -p dist
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o dist/stratz-mcp ./cmd/stratz-mcp
 
+check: export PAGER := cat
+check: export GIT_PAGER := cat
 check: verify check-format vet test check-generated check-restricted check-policies verify-build-info
 
 check-format:
