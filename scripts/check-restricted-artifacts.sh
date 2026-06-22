@@ -13,12 +13,12 @@ if [[ -n "$violations" ]]; then
   exit 1
 fi
 
-if git grep -l 'Generated from authenticated STRATZ introspection' -- '*.graphql' '*.json' 2>/dev/null; then
+if git --no-pager grep -l 'Generated from authenticated STRATZ introspection' -- '*.graphql' '*.json' 2>/dev/null; then
   echo "tracked files contain restricted authenticated STRATZ schema data" >&2
   exit 1
 fi
 
-if git grep -l '"source": "authenticated STRATZ GraphQL introspection"' -- '*.json' 2>/dev/null; then
+if git --no-pager grep -l '"source": "authenticated STRATZ GraphQL introspection"' -- '*.json' 2>/dev/null; then
   echo "tracked JSON contains restricted authenticated STRATZ schema data" >&2
   exit 1
 fi
