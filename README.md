@@ -30,12 +30,26 @@ Common environment variables include `STRATZ_CACHE_ENABLED`, `STRATZ_CACHE_DIR`,
 
 ## Connect an MCP client
 
+The `command` value must be the absolute path to the built executable, not the
+repository directory. For example, if this repository is at
+`/Users/alex/Documents/stratz-mcp`, use
+`/Users/alex/Documents/stratz-mcp/dist/stratz-mcp`.
+
+The examples below forward `STRATZ_API_TOKEN` from the MCP client's environment.
+Export it before starting the client from that same shell:
+
+```sh
+export STRATZ_API_TOKEN='...'
+codex
+```
+
 Codex native configuration in `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.stratz]
-command = "/absolute/path/to/stratz-mcp"
+command = "/Users/alex/Documents/stratz-mcp/dist/stratz-mcp"
 args = ["serve"]
+# Forward the existing variable; this does not set its value.
 env_vars = ["STRATZ_API_TOKEN"]
 ```
 
@@ -45,13 +59,30 @@ Claude native configuration in `.mcp.json`:
 {
   "mcpServers": {
     "stratz": {
-      "command": "/absolute/path/to/stratz-mcp",
+      "command": "/Users/alex/Documents/stratz-mcp/dist/stratz-mcp",
       "args": ["serve"],
       "env": {"STRATZ_API_TOKEN": "${STRATZ_API_TOKEN}"}
     }
   }
 }
 ```
+
+If the client does not inherit your shell environment, store the token in a
+private dotenv file and pass its absolute path explicitly:
+
+```dotenv
+STRATZ_API_TOKEN=...
+```
+
+```toml
+[mcp_servers.stratz]
+command = "/Users/alex/Documents/stratz-mcp/dist/stratz-mcp"
+args = ["serve", "--env-file", "/absolute/path/to/.env"]
+```
+
+Do not commit the dotenv file. Use only one credential source: either forward
+`STRATZ_API_TOKEN` or pass `--env-file`, not both. Restart the MCP client after
+changing its configuration or environment.
 
 For Docker, use `docker` as the command and arguments equivalent to:
 
