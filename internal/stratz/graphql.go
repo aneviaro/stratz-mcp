@@ -65,9 +65,7 @@ func classifyGraphQLError(
 	details := map[string]any{
 		"http_status": status,
 	}
-	if len(codes) > 0 {
-		details["graphql_codes"] = codes
-	}
+	addGraphQLErrorDetails(details, envelope.graphqlErrors)
 	if requestID != "" {
 		details["request_id"] = requestID
 	}
@@ -117,6 +115,15 @@ func classifyGraphQLError(
 	}
 }
 
+func addGraphQLErrorDetails(details map[string]any, graphqlErrors []GraphQLError) {
+	if codes := graphqlCodes(graphqlErrors); len(codes) > 0 {
+		details["graphql_codes"] = codes
+	}
+	if messages := graphqlMessages(graphqlErrors); len(messages) > 0 {
+		details["graphql_messages"] = messages
+	}
+}
+
 func graphqlCodes(graphqlErrors []GraphQLError) []string {
 	seen := make(map[string]struct{})
 	codes := make([]string, 0, len(graphqlErrors))
@@ -143,6 +150,30 @@ func graphqlCodes(graphqlErrors []GraphQLError) []string {
 		}
 	}
 	return codes
+}
+
+func graphqlMessages(graphqlErrors []GraphQLError) []string {
+	seen := make(map[string]struct{})
+	messages := make([]string, 0, len(graphqlErrors))
+	for _, graphqlErr := range graphqlErrors {
+		message := strings.TrimSpace(graphqlErr.Message)
+		if message == "" {
+			continue
+		}
+		runes := []rune(message)
+		if len(runes) > 2048 {
+			message = string(runes[:2048])
+		}
+		if _, exists := seen[message]; exists {
+			continue
+		}
+		seen[message] = struct{}{}
+		messages = append(messages, message)
+		if len(messages) == 16 {
+			return messages
+		}
+	}
+	return messages
 }
 
 func stringValues(value any) []string {
