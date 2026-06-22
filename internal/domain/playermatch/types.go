@@ -48,8 +48,7 @@ type upstreamPlayer struct {
 	LastMatchDate *int64 `json:"lastMatchDate"`
 	IsPrivate     bool   `json:"isPrivate"`
 	Ranks         []struct {
-		Rank            *int64 `json:"rank"`
-		LeaderboardRank *int64 `json:"leaderboardRank"`
+		Rank *int64 `json:"rank"`
 	} `json:"ranks"`
 }
 

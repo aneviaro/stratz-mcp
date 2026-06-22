@@ -43,8 +43,7 @@ func mapPlayer(source *upstreamPlayer) contracts.Player {
 			LeaderboardRank *int64 `json:"leaderboard_rank"`
 			RankTier        *int64 `json:"rank_tier"`
 		}{
-			RankTier:        nonNegative(source.Ranks[0].Rank),
-			LeaderboardRank: positive(source.Ranks[0].LeaderboardRank),
+			RankTier: nonNegative(source.Ranks[0].Rank),
 		}
 	}
 	return player
