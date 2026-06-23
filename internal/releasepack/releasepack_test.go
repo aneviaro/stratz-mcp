@@ -32,6 +32,7 @@ func TestReleaseSurface(t *testing.T) {
 		"scripts/interop-smoke.sh",
 		"docs/release.md",
 		"docs/interoperability.md",
+		"docs/public-repo-import.md",
 	}
 	for _, name := range required {
 		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
@@ -159,6 +160,90 @@ func TestWorkflowPublicSurfaceMatchesCanonicalRegistry(t *testing.T) {
 		if !strings.Contains(string(installationData), wantInstallationEntry) {
 			t.Fatalf("docs/skills-installation.md missing %q", wantInstallationEntry)
 		}
+	}
+}
+
+func TestPublicDocumentationIsSanitizedForPublicImport(t *testing.T) {
+	root := filepath.Join("..", "..")
+	cases := []struct {
+		path             string
+		requiredSnippets []string
+	}{
+		{
+			path: "README.md",
+			requiredSnippets: []string{
+				"git clone <public-source-remote> stratz-mcp",
+				"make public-readiness",
+				"make verify-public-surface",
+				"/path/to/stratz-mcp/dist/stratz-mcp",
+				"Public images and archives are not published while clearance is blocked.",
+				"only after clearance",
+			},
+		},
+		{
+			path: "docs/development.md",
+			requiredSnippets: []string{
+				"make public-readiness",
+				"make verify-public-surface",
+				"docker build --build-arg TARGETARCH=amd64 -t stratz-mcp:test .",
+				"public-repo-import.md",
+				"go run ./cmd/release-clearance-check",
+			},
+		},
+		{
+			path: "docs/release.md",
+			requiredSnippets: []string{
+				"make public-readiness",
+				"make verify-public-surface",
+				"public-repo-import.md",
+				"interoperability.md",
+				"Public publishing is disabled until `go run ./cmd/release-clearance-check` succeeds against `docs/release-clearance.json`.",
+				"Source can be imported after the checks above pass, but public tags, archives, and container images stay blocked until the clearance check succeeds.",
+			},
+		},
+		{
+			path: "docs/interoperability.md",
+			requiredSnippets: []string{
+				"CLIENT_PROFILE=codex ./scripts/interop-smoke.sh native dist/stratz-mcp",
+				"CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test",
+				"Draft 2020-12 schema publication",
+			},
+		},
+		{
+			path: "docs/resources-prompts-skills.md",
+			requiredSnippets: []string{
+				"make verify-public-surface",
+				"portable skills under `skills/`",
+				"restricted STRATZ-derived artifacts",
+			},
+		},
+		{
+			path: "docs/public-repo-import.md",
+			requiredSnippets: []string{
+				"single initial commit",
+				"make public-readiness",
+				"make verify-public-surface",
+				"make check",
+				"docker build --build-arg TARGETARCH=amd64 -t stratz-mcp:test .",
+				"git archive --format=tar HEAD",
+				"Do not create release tags or publish packages or images until the clearance check succeeds",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.path, func(t *testing.T) {
+			text := readFile(t, filepath.Join(root, filepath.FromSlash(tc.path)))
+			assertNoPrivateSurfaceContent(t, tc.path, text)
+			assertNoUnsafeTokenExamples(t, tc.path, text)
+			assertContainsAll(t, tc.path, text, tc.requiredSnippets)
+		})
+	}
+
+	readme := readFile(t, filepath.Join(root, "README.md"))
+	if strings.Contains(readme, "ghcr.io/aneviaro/stratz-mcp:v") {
+		t.Fatal("README.md must not imply that a published image tag already exists while clearance is blocked")
 	}
 }
 
@@ -412,15 +497,49 @@ func promptArgumentsMatch(got []promptcatalog.Argument, want []workflowgen.Argum
 
 func assertNoPrivateSurfaceContent(t *testing.T, path string, text string) {
 	t.Helper()
-	for _, forbidden := range []string{
-		"/Users/alex",
-		"/Users/",
-		".ralphex",
-		"docs/plans",
-		"docs/implementation-plan.md",
+	for _, pattern := range []*regexp.Regexp{
+		regexp.MustCompile(`/Users/[A-Za-z0-9._-]+/`),
+		regexp.MustCompile(`/home/[A-Za-z0-9._-]+/`),
+		regexp.MustCompile(`(?i)[A-Z]:\\Users\\[^\\]+\\`),
 	} {
+		if match := pattern.FindString(text); match != "" {
+			t.Fatalf("%s contains machine-local home path %q", path, match)
+		}
+	}
+	for _, forbidden := range []string{".ralphex", "docs/plans", "docs/implementation-plan.md"} {
 		if strings.Contains(text, forbidden) {
-			t.Fatalf("%s contains private/local path %q", path, forbidden)
+			t.Fatalf("%s contains private/local reference %q", path, forbidden)
+		}
+	}
+}
+
+func assertNoUnsafeTokenExamples(t *testing.T, path string, text string) {
+	t.Helper()
+	shellAssignment := regexp.MustCompile(`STRATZ_API_TOKEN\s*=`)
+	jsonAssignment := regexp.MustCompile(`"STRATZ_API_TOKEN"\s*:`)
+	for _, line := range strings.Split(text, "\n") {
+		if !strings.Contains(line, "STRATZ_API_TOKEN") {
+			continue
+		}
+		trimmed := strings.TrimSpace(line)
+		if !shellAssignment.MatchString(trimmed) && !jsonAssignment.MatchString(trimmed) {
+			continue
+		}
+		if strings.Contains(trimmed, "STRATZ_API_TOKEN='...'") ||
+			strings.Contains(trimmed, `STRATZ_API_TOKEN="..."`) ||
+			strings.Contains(trimmed, "STRATZ_API_TOKEN=...") ||
+			strings.Contains(trimmed, `"STRATZ_API_TOKEN": "${STRATZ_API_TOKEN}"`) {
+			continue
+		}
+		t.Fatalf("%s contains a non-placeholder STRATZ_API_TOKEN example: %q", path, trimmed)
+	}
+}
+
+func assertContainsAll(t *testing.T, path string, text string, snippets []string) {
+	t.Helper()
+	for _, snippet := range snippets {
+		if !strings.Contains(text, snippet) {
+			t.Fatalf("%s does not contain required snippet %q", path, snippet)
 		}
 	}
 }

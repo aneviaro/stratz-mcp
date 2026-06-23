@@ -1,11 +1,26 @@
-# Interoperability record
+# Interoperability checks
 
-Date: 2026-06-19
+Treat interoperability status as current only when the repeatable smoke commands below pass against the working tree being reviewed.
 
-Automated fixtures:
+## Native stdio smoke
 
-- Codex profile, native stdio: passed on 2026-06-19. `scripts/interop-smoke.sh` validated initialization, tool/resource/prompt discovery, `stratz_server_info`, JSON-RPC-only stdout, and credential non-disclosure.
-- Claude profile, native stdio: passed on 2026-06-19 with a distinct client identity.
-- Codex and Claude Docker profiles: local execution skipped on 2026-06-19 because the Docker daemon was unavailable. The required CI job is configured to run both profiles against a non-root, read-only scratch image; its protected-environment result still needs to be recorded.
+```sh
+make build
+CLIENT_PROFILE=codex ./scripts/interop-smoke.sh native dist/stratz-mcp
+CLIENT_PROFILE=claude ./scripts/interop-smoke.sh native dist/stratz-mcp
+```
 
-These are deterministic protocol compatibility checks, not claims that a locally installed proprietary client UI was controlled in this repository environment. Real-client native and Docker checks are required in the protected release environment before approval.
+## Docker stdio smoke
+
+```sh
+mkdir -p dist/image/cache
+touch dist/image/cache/.keep
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o dist/image/stratz-mcp-linux-amd64 ./cmd/stratz-mcp
+docker build --build-arg TARGETARCH=amd64 -t stratz-mcp:test .
+CLIENT_PROFILE=codex ./scripts/interop-smoke.sh docker stratz-mcp:test
+CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test
+```
+
+These checks validate initialization, exact tool/resource/prompt discovery, `stratz_server_info`, Draft 2020-12 schema publication, JSON-RPC-only stdout, and credential non-disclosure.
+
+They are deterministic protocol compatibility checks, not claims that a locally installed proprietary client UI was controlled in this repository environment. Real installed-client native and Docker checks remain a protected release-environment responsibility before approval.

@@ -4,15 +4,19 @@ Unofficial, local-only MCP server for bounded access to the STRATZ GraphQL API. 
 
 ## Install
 
-Public images and archives are not published while clearance is blocked. After clearance, Docker is the recommended installation and signed native archives are the alternative. During the hold, developers can build from source:
+Public images and archives are not published while clearance is blocked. Build from a source checkout:
 
 ```sh
+git clone <public-source-remote> stratz-mcp
+cd stratz-mcp
 make build
 ```
 
 The executable is written to `./dist/stratz-mcp`. Source builds require Go 1.25 or newer, Make, and Git.
 
-After clearance, signed native archives and the multi-architecture image `ghcr.io/aneviaro/stratz-mcp` are the supported distribution channels.
+After clearance, signed native archives and the multi-architecture image `ghcr.io/aneviaro/stratz-mcp` become the supported distribution channels.
+
+Before copying the source tree into a public repository, run `make public-readiness` and `make verify-public-surface`. The clean-history import flow is documented in [docs/public-repo-import.md](docs/public-repo-import.md).
 
 ## Configure
 
@@ -31,9 +35,8 @@ Common environment variables include `STRATZ_CACHE_ENABLED`, `STRATZ_CACHE_DIR`,
 ## Connect an MCP client
 
 The `command` value must be the absolute path to the built executable, not the
-repository directory. For example, if this repository is at
-`/Users/alex/Documents/stratz-mcp`, use
-`/Users/alex/Documents/stratz-mcp/dist/stratz-mcp`.
+repository directory. For example, if the repository is checked out at
+`/path/to/stratz-mcp`, use `/path/to/stratz-mcp/dist/stratz-mcp`.
 
 The examples below forward `STRATZ_API_TOKEN` from the MCP client's environment.
 Export it before starting the client from that same shell:
@@ -47,7 +50,7 @@ Codex native configuration in `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.stratz]
-command = "/Users/alex/Documents/stratz-mcp/dist/stratz-mcp"
+command = "/path/to/stratz-mcp/dist/stratz-mcp"
 args = ["serve"]
 # Forward the existing variable; this does not set its value.
 env_vars = ["STRATZ_API_TOKEN"]
@@ -59,7 +62,7 @@ Claude native configuration in `.mcp.json`:
 {
   "mcpServers": {
     "stratz": {
-      "command": "/Users/alex/Documents/stratz-mcp/dist/stratz-mcp",
+      "command": "/path/to/stratz-mcp/dist/stratz-mcp",
       "args": ["serve"],
       "env": {"STRATZ_API_TOKEN": "${STRATZ_API_TOKEN}"}
     }
@@ -76,7 +79,7 @@ STRATZ_API_TOKEN=...
 
 ```toml
 [mcp_servers.stratz]
-command = "/Users/alex/Documents/stratz-mcp/dist/stratz-mcp"
+command = "/path/to/stratz-mcp/dist/stratz-mcp"
 args = ["serve", "--env-file", "/absolute/path/to/.env"]
 ```
 
@@ -90,7 +93,7 @@ For Docker, use `docker` as the command and arguments equivalent to:
 docker run --rm -i --read-only -e STRATZ_API_TOKEN -v stratz-cache:/cache IMAGE serve
 ```
 
-Replace `IMAGE` with the approved release image after clearance.
+Replace `IMAGE` with the approved release image, such as `ghcr.io/aneviaro/stratz-mcp:<version>`, only after clearance.
 
 To avoid an environment secret, mount a token file read-only:
 
@@ -118,14 +121,16 @@ All MCP traffic is stdio. Stdout is reserved for JSON-RPC; diagnostics go to std
 
 ## Docker
 
-The release image runs as UID/GID 65532 with a read-only root filesystem and `/cache` as its only persistent writable volume:
+After clearance, the release image will run as UID/GID 65532 with a read-only root filesystem and `/cache` as its only persistent writable volume:
 
 ```sh
 docker run --rm -i --read-only \
   -e STRATZ_API_TOKEN \
   -v stratz-cache:/cache \
-  ghcr.io/aneviaro/stratz-mcp:v1.0.0 serve
+  IMAGE serve
 ```
+
+Replace `IMAGE` with `ghcr.io/aneviaro/stratz-mcp:<version>` only after clearance.
 
 ## Security and status
 
