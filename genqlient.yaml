@@ -8,3 +8,5 @@ optional: pointer
 bindings:
   Long:
     type: int64
+  Short:
+    type: int

@@ -1,6 +1,9 @@
 package leaguelive
 
 import (
+	"bytes"
+	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
@@ -76,26 +79,26 @@ type upstreamLeague struct {
 }
 
 type upstreamMatch struct {
-	ID              int64   `json:"id"`
-	StartDateTime   *int64  `json:"startDateTime"`
-	DurationSeconds *int64  `json:"durationSeconds"`
-	DidRadiantWin   *bool   `json:"didRadiantWin"`
-	RadiantKills    *int64  `json:"radiantKills"`
-	DireKills       *int64  `json:"direKills"`
-	GameModeID      *int64  `json:"gameModeId"`
-	LobbyTypeID     *int64  `json:"lobbyTypeId"`
-	RegionID        *int64  `json:"regionId"`
-	LeagueID        *int64  `json:"leagueId"`
-	GameVersionID   *string `json:"gameVersionId"`
-	ParsedDateTime  *int64  `json:"parsedDateTime"`
-	StatsDateTime   *int64  `json:"statsDateTime"`
+	ID              int64             `json:"id"`
+	StartDateTime   *int64            `json:"startDateTime"`
+	DurationSeconds *int64            `json:"durationSeconds"`
+	DidRadiantWin   *bool             `json:"didRadiantWin"`
+	RadiantKills    upstreamKillCount `json:"radiantKills"`
+	DireKills       upstreamKillCount `json:"direKills"`
+	GameModeID      upstreamEnumID    `json:"gameModeId"`
+	LobbyTypeID     upstreamEnumID    `json:"lobbyTypeId"`
+	RegionID        *int64            `json:"regionId"`
+	LeagueID        *int64            `json:"leagueId"`
+	GameVersionID   upstreamString    `json:"gameVersionId"`
+	ParsedDateTime  *int64            `json:"parsedDateTime"`
+	StatsDateTime   *int64            `json:"statsDateTime"`
 }
 
 type upstreamLiveMatch struct {
 	ID              int64                `json:"id"`
 	StartDateTime   *int64               `json:"startDateTime"`
 	GameTime        *int64               `json:"gameTime"`
-	GameModeID      *int64               `json:"gameModeId"`
+	GameModeID      upstreamEnumID       `json:"gameModeId"`
 	SpectatorCount  *int64               `json:"spectatorCount"`
 	RadiantTeamID   *int64               `json:"radiantTeamId"`
 	DireTeamID      *int64               `json:"direTeamId"`
@@ -103,6 +106,79 @@ type upstreamLiveMatch struct {
 	DireTeamName    *string              `json:"direTeamName"`
 	League          *upstreamLeague      `json:"league"`
 	Players         []upstreamLivePlayer `json:"players"`
+}
+
+type upstreamKillCount struct {
+	Value *int64
+}
+
+func (value *upstreamKillCount) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		value.Value = nil
+		return nil
+	}
+	var direct int64
+	if err := json.Unmarshal(data, &direct); err == nil {
+		value.Value = &direct
+		return nil
+	}
+	var events []int64
+	if err := json.Unmarshal(data, &events); err != nil {
+		return err
+	}
+	count := int64(len(events))
+	value.Value = &count
+	return nil
+}
+
+type upstreamString struct {
+	Value *string
+}
+
+func (value *upstreamString) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		value.Value = nil
+		return nil
+	}
+	var text string
+	if err := json.Unmarshal(data, &text); err == nil {
+		value.Value = &text
+		return nil
+	}
+	var number json.Number
+	if err := json.Unmarshal(data, &number); err != nil {
+		return err
+	}
+	text = number.String()
+	if _, err := strconv.ParseInt(text, 10, 64); err != nil {
+		return err
+	}
+	value.Value = &text
+	return nil
+}
+
+type upstreamEnumID struct {
+	Number *int64
+	Name   string
+}
+
+func (value *upstreamEnumID) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		value.Number = nil
+		value.Name = ""
+		return nil
+	}
+	var number int64
+	if err := json.Unmarshal(data, &number); err == nil {
+		value.Number = &number
+		value.Name = ""
+		return nil
+	}
+	if err := json.Unmarshal(data, &value.Name); err != nil {
+		return err
+	}
+	value.Number = nil
+	return nil
 }
 
 type upstreamLivePlayer struct {

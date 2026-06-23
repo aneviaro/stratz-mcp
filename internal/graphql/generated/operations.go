@@ -9,231 +9,6 @@ import (
 	"github.com/Khan/genqlient/graphql"
 )
 
-// ConstantFields includes the GraphQL fields of ConstantType requested by the fragment ConstantFields.
-type ConstantFields struct {
-	Id            string                                       `json:"id"`
-	Name          string                                       `json:"name"`
-	LocalizedName *string                                      `json:"localizedName"`
-	Metadata      []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
-}
-
-// GetId returns ConstantFields.Id, and is useful for accessing the field via an interface.
-func (v *ConstantFields) GetId() string { return v.Id }
-
-// GetName returns ConstantFields.Name, and is useful for accessing the field via an interface.
-func (v *ConstantFields) GetName() string { return v.Name }
-
-// GetLocalizedName returns ConstantFields.LocalizedName, and is useful for accessing the field via an interface.
-func (v *ConstantFields) GetLocalizedName() *string { return v.LocalizedName }
-
-// GetMetadata returns ConstantFields.Metadata, and is useful for accessing the field via an interface.
-func (v *ConstantFields) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
-	return v.Metadata
-}
-
-// ConstantFieldsMetadataConstantMetadataType includes the requested fields of the GraphQL type ConstantMetadataType.
-type ConstantFieldsMetadataConstantMetadataType struct {
-	Key   string  `json:"key"`
-	Value *string `json:"value"`
-}
-
-// GetKey returns ConstantFieldsMetadataConstantMetadataType.Key, and is useful for accessing the field via an interface.
-func (v *ConstantFieldsMetadataConstantMetadataType) GetKey() string { return v.Key }
-
-// GetValue returns ConstantFieldsMetadataConstantMetadataType.Value, and is useful for accessing the field via an interface.
-func (v *ConstantFieldsMetadataConstantMetadataType) GetValue() *string { return v.Value }
-
-// HeroStatsFields includes the GraphQL fields of HeroStatsType requested by the fragment HeroStatsFields.
-type HeroStatsFields struct {
-	HeroId               int                                             `json:"heroId"`
-	MatchCount           int                                             `json:"matchCount"`
-	PickCount            int                                             `json:"pickCount"`
-	WinCount             int                                             `json:"winCount"`
-	BanCount             int                                             `json:"banCount"`
-	PopulationMatchCount int                                             `json:"populationMatchCount"`
-	RankDataAvailable    *bool                                           `json:"rankDataAvailable"`
-	Roles                []HeroStatsFieldsRolesHeroStatsBreakdownType    `json:"roles"`
-	Lanes                []HeroStatsFieldsLanesHeroStatsBreakdownType    `json:"lanes"`
-	Matchups             []HeroStatsFieldsMatchupsHeroStatsRelationType  `json:"matchups"`
-	Synergies            []HeroStatsFieldsSynergiesHeroStatsRelationType `json:"synergies"`
-}
-
-// GetHeroId returns HeroStatsFields.HeroId, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetHeroId() int { return v.HeroId }
-
-// GetMatchCount returns HeroStatsFields.MatchCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetMatchCount() int { return v.MatchCount }
-
-// GetPickCount returns HeroStatsFields.PickCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetPickCount() int { return v.PickCount }
-
-// GetWinCount returns HeroStatsFields.WinCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetWinCount() int { return v.WinCount }
-
-// GetBanCount returns HeroStatsFields.BanCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetBanCount() int { return v.BanCount }
-
-// GetPopulationMatchCount returns HeroStatsFields.PopulationMatchCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetPopulationMatchCount() int { return v.PopulationMatchCount }
-
-// GetRankDataAvailable returns HeroStatsFields.RankDataAvailable, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetRankDataAvailable() *bool { return v.RankDataAvailable }
-
-// GetRoles returns HeroStatsFields.Roles, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetRoles() []HeroStatsFieldsRolesHeroStatsBreakdownType { return v.Roles }
-
-// GetLanes returns HeroStatsFields.Lanes, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetLanes() []HeroStatsFieldsLanesHeroStatsBreakdownType { return v.Lanes }
-
-// GetMatchups returns HeroStatsFields.Matchups, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetMatchups() []HeroStatsFieldsMatchupsHeroStatsRelationType {
-	return v.Matchups
-}
-
-// GetSynergies returns HeroStatsFields.Synergies, and is useful for accessing the field via an interface.
-func (v *HeroStatsFields) GetSynergies() []HeroStatsFieldsSynergiesHeroStatsRelationType {
-	return v.Synergies
-}
-
-// HeroStatsFieldsLanesHeroStatsBreakdownType includes the requested fields of the GraphQL type HeroStatsBreakdownType.
-type HeroStatsFieldsLanesHeroStatsBreakdownType struct {
-	Name                 string `json:"name"`
-	MatchCount           int    `json:"matchCount"`
-	PickCount            int    `json:"pickCount"`
-	WinCount             int    `json:"winCount"`
-	PopulationMatchCount int    `json:"populationMatchCount"`
-}
-
-// GetName returns HeroStatsFieldsLanesHeroStatsBreakdownType.Name, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsLanesHeroStatsBreakdownType) GetName() string { return v.Name }
-
-// GetMatchCount returns HeroStatsFieldsLanesHeroStatsBreakdownType.MatchCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsLanesHeroStatsBreakdownType) GetMatchCount() int { return v.MatchCount }
-
-// GetPickCount returns HeroStatsFieldsLanesHeroStatsBreakdownType.PickCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsLanesHeroStatsBreakdownType) GetPickCount() int { return v.PickCount }
-
-// GetWinCount returns HeroStatsFieldsLanesHeroStatsBreakdownType.WinCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsLanesHeroStatsBreakdownType) GetWinCount() int { return v.WinCount }
-
-// GetPopulationMatchCount returns HeroStatsFieldsLanesHeroStatsBreakdownType.PopulationMatchCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsLanesHeroStatsBreakdownType) GetPopulationMatchCount() int {
-	return v.PopulationMatchCount
-}
-
-// HeroStatsFieldsMatchupsHeroStatsRelationType includes the requested fields of the GraphQL type HeroStatsRelationType.
-type HeroStatsFieldsMatchupsHeroStatsRelationType struct {
-	HeroId          int      `json:"heroId"`
-	MatchCount      int      `json:"matchCount"`
-	WinCount        int      `json:"winCount"`
-	ExpectedWinRate *float64 `json:"expectedWinRate"`
-}
-
-// GetHeroId returns HeroStatsFieldsMatchupsHeroStatsRelationType.HeroId, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsMatchupsHeroStatsRelationType) GetHeroId() int { return v.HeroId }
-
-// GetMatchCount returns HeroStatsFieldsMatchupsHeroStatsRelationType.MatchCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsMatchupsHeroStatsRelationType) GetMatchCount() int { return v.MatchCount }
-
-// GetWinCount returns HeroStatsFieldsMatchupsHeroStatsRelationType.WinCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsMatchupsHeroStatsRelationType) GetWinCount() int { return v.WinCount }
-
-// GetExpectedWinRate returns HeroStatsFieldsMatchupsHeroStatsRelationType.ExpectedWinRate, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsMatchupsHeroStatsRelationType) GetExpectedWinRate() *float64 {
-	return v.ExpectedWinRate
-}
-
-// HeroStatsFieldsRolesHeroStatsBreakdownType includes the requested fields of the GraphQL type HeroStatsBreakdownType.
-type HeroStatsFieldsRolesHeroStatsBreakdownType struct {
-	Name                 string `json:"name"`
-	MatchCount           int    `json:"matchCount"`
-	PickCount            int    `json:"pickCount"`
-	WinCount             int    `json:"winCount"`
-	PopulationMatchCount int    `json:"populationMatchCount"`
-}
-
-// GetName returns HeroStatsFieldsRolesHeroStatsBreakdownType.Name, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsRolesHeroStatsBreakdownType) GetName() string { return v.Name }
-
-// GetMatchCount returns HeroStatsFieldsRolesHeroStatsBreakdownType.MatchCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsRolesHeroStatsBreakdownType) GetMatchCount() int { return v.MatchCount }
-
-// GetPickCount returns HeroStatsFieldsRolesHeroStatsBreakdownType.PickCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsRolesHeroStatsBreakdownType) GetPickCount() int { return v.PickCount }
-
-// GetWinCount returns HeroStatsFieldsRolesHeroStatsBreakdownType.WinCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsRolesHeroStatsBreakdownType) GetWinCount() int { return v.WinCount }
-
-// GetPopulationMatchCount returns HeroStatsFieldsRolesHeroStatsBreakdownType.PopulationMatchCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsRolesHeroStatsBreakdownType) GetPopulationMatchCount() int {
-	return v.PopulationMatchCount
-}
-
-// HeroStatsFieldsSynergiesHeroStatsRelationType includes the requested fields of the GraphQL type HeroStatsRelationType.
-type HeroStatsFieldsSynergiesHeroStatsRelationType struct {
-	HeroId          int      `json:"heroId"`
-	MatchCount      int      `json:"matchCount"`
-	WinCount        int      `json:"winCount"`
-	ExpectedWinRate *float64 `json:"expectedWinRate"`
-}
-
-// GetHeroId returns HeroStatsFieldsSynergiesHeroStatsRelationType.HeroId, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsSynergiesHeroStatsRelationType) GetHeroId() int { return v.HeroId }
-
-// GetMatchCount returns HeroStatsFieldsSynergiesHeroStatsRelationType.MatchCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsSynergiesHeroStatsRelationType) GetMatchCount() int { return v.MatchCount }
-
-// GetWinCount returns HeroStatsFieldsSynergiesHeroStatsRelationType.WinCount, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsSynergiesHeroStatsRelationType) GetWinCount() int { return v.WinCount }
-
-// GetExpectedWinRate returns HeroStatsFieldsSynergiesHeroStatsRelationType.ExpectedWinRate, and is useful for accessing the field via an interface.
-func (v *HeroStatsFieldsSynergiesHeroStatsRelationType) GetExpectedWinRate() *float64 {
-	return v.ExpectedWinRate
-}
-
-type HeroStatsRequestType struct {
-	HeroId           int     `json:"heroId"`
-	Bucket           string  `json:"bucket"`
-	StartDateTime    int64   `json:"startDateTime"`
-	EndDateTime      int64   `json:"endDateTime"`
-	GameVersionId    *string `json:"gameVersionId"`
-	RankBracket      *string `json:"rankBracket"`
-	Role             *string `json:"role"`
-	Lane             *string `json:"lane"`
-	IncludeMatchups  bool    `json:"includeMatchups"`
-	IncludeSynergies bool    `json:"includeSynergies"`
-}
-
-// GetHeroId returns HeroStatsRequestType.HeroId, and is useful for accessing the field via an interface.
-func (v *HeroStatsRequestType) GetHeroId() int { return v.HeroId }
-
-// GetBucket returns HeroStatsRequestType.Bucket, and is useful for accessing the field via an interface.
-func (v *HeroStatsRequestType) GetBucket() string { return v.Bucket }
-
-// GetStartDateTime returns HeroStatsRequestType.StartDateTime, and is useful for accessing the field via an interface.
-func (v *HeroStatsRequestType) GetStartDateTime() int64 { return v.StartDateTime }
-
-// GetEndDateTime returns HeroStatsRequestType.EndDateTime, and is useful for accessing the field via an interface.
-func (v *HeroStatsRequestType) GetEndDateTime() int64 { return v.EndDateTime }
-
-// GetGameVersionId returns HeroStatsRequestType.GameVersionId, and is useful for accessing the field via an interface.
-func (v *HeroStatsRequestType) GetGameVersionId() *string { return v.GameVersionId }
-
-// GetRankBracket returns HeroStatsRequestType.RankBracket, and is useful for accessing the field via an interface.
-func (v *HeroStatsRequestType) GetRankBracket() *string { return v.RankBracket }
-
-// GetRole returns HeroStatsRequestType.Role, and is useful for accessing the field via an interface.
-func (v *HeroStatsRequestType) GetRole() *string { return v.Role }
-
-// GetLane returns HeroStatsRequestType.Lane, and is useful for accessing the field via an interface.
-func (v *HeroStatsRequestType) GetLane() *string { return v.Lane }
-
-// GetIncludeMatchups returns HeroStatsRequestType.IncludeMatchups, and is useful for accessing the field via an interface.
-func (v *HeroStatsRequestType) GetIncludeMatchups() bool { return v.IncludeMatchups }
-
-// GetIncludeSynergies returns HeroStatsRequestType.IncludeSynergies, and is useful for accessing the field via an interface.
-func (v *HeroStatsRequestType) GetIncludeSynergies() bool { return v.IncludeSynergies }
-
 // LeagueFields includes the GraphQL fields of LeagueType requested by the fragment LeagueFields.
 type LeagueFields struct {
 	Id            int     `json:"id"`
@@ -243,9 +18,6 @@ type LeagueFields struct {
 	Tier          *string `json:"tier"`
 	StartDateTime *int64  `json:"startDateTime"`
 	EndDateTime   *int64  `json:"endDateTime"`
-	IsFuture      *bool   `json:"isFuture"`
-	IsEnded       *bool   `json:"isEnded"`
-	IsLive        *bool   `json:"isLive"`
 }
 
 // GetId returns LeagueFields.Id, and is useful for accessing the field via an interface.
@@ -268,15 +40,6 @@ func (v *LeagueFields) GetStartDateTime() *int64 { return v.StartDateTime }
 
 // GetEndDateTime returns LeagueFields.EndDateTime, and is useful for accessing the field via an interface.
 func (v *LeagueFields) GetEndDateTime() *int64 { return v.EndDateTime }
-
-// GetIsFuture returns LeagueFields.IsFuture, and is useful for accessing the field via an interface.
-func (v *LeagueFields) GetIsFuture() *bool { return v.IsFuture }
-
-// GetIsEnded returns LeagueFields.IsEnded, and is useful for accessing the field via an interface.
-func (v *LeagueFields) GetIsEnded() *bool { return v.IsEnded }
-
-// GetIsLive returns LeagueFields.IsLive, and is useful for accessing the field via an interface.
-func (v *LeagueFields) GetIsLive() *bool { return v.IsLive }
 
 type LeagueMatchesRequestType struct {
 	StartDateTime  *int64   `json:"startDateTime"`
@@ -343,29 +106,17 @@ func (v *LeagueRequestType) GetSkip() int { return v.Skip }
 // MatchFullFields includes the GraphQL fields of MatchType requested by the fragment MatchFullFields.
 type MatchFullFields struct {
 	MatchStandardFields `json:"-"`
-	Fights              []MatchFullFieldsFightsMatchFightType    `json:"fights"`
-	Economy             []MatchFullFieldsEconomyMatchEconomyType `json:"economy"`
+	PlaybackData        *MatchFullFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
 }
 
-// GetFights returns MatchFullFields.Fights, and is useful for accessing the field via an interface.
-func (v *MatchFullFields) GetFights() []MatchFullFieldsFightsMatchFightType { return v.Fights }
-
-// GetEconomy returns MatchFullFields.Economy, and is useful for accessing the field via an interface.
-func (v *MatchFullFields) GetEconomy() []MatchFullFieldsEconomyMatchEconomyType { return v.Economy }
+// GetPlaybackData returns MatchFullFields.PlaybackData, and is useful for accessing the field via an interface.
+func (v *MatchFullFields) GetPlaybackData() *MatchFullFieldsPlaybackDataMatchPlaybackDataType {
+	return v.PlaybackData
+}
 
 // GetPlayers returns MatchFullFields.Players, and is useful for accessing the field via an interface.
 func (v *MatchFullFields) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
 	return v.MatchStandardFields.Players
-}
-
-// GetObjectives returns MatchFullFields.Objectives, and is useful for accessing the field via an interface.
-func (v *MatchFullFields) GetObjectives() []MatchStandardFieldsObjectivesMatchEventType {
-	return v.MatchStandardFields.Objectives
-}
-
-// GetTimeline returns MatchFullFields.Timeline, and is useful for accessing the field via an interface.
-func (v *MatchFullFields) GetTimeline() []MatchStandardFieldsTimelineMatchEventType {
-	return v.MatchStandardFields.Timeline
 }
 
 // GetId returns MatchFullFields.Id, and is useful for accessing the field via an interface.
@@ -457,15 +208,9 @@ func (v *MatchFullFields) UnmarshalJSON(b []byte) error {
 }
 
 type __premarshalMatchFullFields struct {
-	Fights []MatchFullFieldsFightsMatchFightType `json:"fights"`
-
-	Economy []MatchFullFieldsEconomyMatchEconomyType `json:"economy"`
+	PlaybackData *MatchFullFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
 
 	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
-
-	Objectives []MatchStandardFieldsObjectivesMatchEventType `json:"objectives"`
-
-	Timeline []MatchStandardFieldsTimelineMatchEventType `json:"timeline"`
 
 	Id int64 `json:"id"`
 
@@ -505,11 +250,8 @@ func (v *MatchFullFields) MarshalJSON() ([]byte, error) {
 func (v *MatchFullFields) __premarshalJSON() (*__premarshalMatchFullFields, error) {
 	var retval __premarshalMatchFullFields
 
-	retval.Fights = v.Fights
-	retval.Economy = v.Economy
+	retval.PlaybackData = v.PlaybackData
 	retval.Players = v.MatchStandardFields.Players
-	retval.Objectives = v.MatchStandardFields.Objectives
-	retval.Timeline = v.MatchStandardFields.Timeline
 	retval.Id = v.MatchStandardFields.MatchSummaryFields.Id
 	retval.StartDateTime = v.MatchStandardFields.MatchSummaryFields.StartDateTime
 	retval.DurationSeconds = v.MatchStandardFields.MatchSummaryFields.DurationSeconds
@@ -526,96 +268,70 @@ func (v *MatchFullFields) __premarshalJSON() (*__premarshalMatchFullFields, erro
 	return &retval, nil
 }
 
-// MatchFullFieldsEconomyMatchEconomyType includes the requested fields of the GraphQL type MatchEconomyType.
-type MatchFullFieldsEconomyMatchEconomyType struct {
-	Time              int  `json:"time"`
-	RadiantNetworth   *int `json:"radiantNetworth"`
-	DireNetworth      *int `json:"direNetworth"`
-	RadiantExperience *int `json:"radiantExperience"`
-	DireExperience    *int `json:"direExperience"`
+// MatchFullFieldsPlaybackDataMatchPlaybackDataType includes the requested fields of the GraphQL type MatchPlaybackDataType.
+type MatchFullFieldsPlaybackDataMatchPlaybackDataType struct {
+	RuneEvents []MatchFullFieldsPlaybackDataMatchPlaybackDataTypeRuneEventsMatchPlaybackDataRuneEventType `json:"runeEvents"`
+	WardEvents []MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType `json:"wardEvents"`
 }
 
-// GetTime returns MatchFullFieldsEconomyMatchEconomyType.Time, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsEconomyMatchEconomyType) GetTime() int { return v.Time }
-
-// GetRadiantNetworth returns MatchFullFieldsEconomyMatchEconomyType.RadiantNetworth, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsEconomyMatchEconomyType) GetRadiantNetworth() *int { return v.RadiantNetworth }
-
-// GetDireNetworth returns MatchFullFieldsEconomyMatchEconomyType.DireNetworth, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsEconomyMatchEconomyType) GetDireNetworth() *int { return v.DireNetworth }
-
-// GetRadiantExperience returns MatchFullFieldsEconomyMatchEconomyType.RadiantExperience, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsEconomyMatchEconomyType) GetRadiantExperience() *int {
-	return v.RadiantExperience
+// GetRuneEvents returns MatchFullFieldsPlaybackDataMatchPlaybackDataType.RuneEvents, and is useful for accessing the field via an interface.
+func (v *MatchFullFieldsPlaybackDataMatchPlaybackDataType) GetRuneEvents() []MatchFullFieldsPlaybackDataMatchPlaybackDataTypeRuneEventsMatchPlaybackDataRuneEventType {
+	return v.RuneEvents
 }
 
-// GetDireExperience returns MatchFullFieldsEconomyMatchEconomyType.DireExperience, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsEconomyMatchEconomyType) GetDireExperience() *int { return v.DireExperience }
-
-// MatchFullFieldsFightsMatchFightType includes the requested fields of the GraphQL type MatchFightType.
-type MatchFullFieldsFightsMatchFightType struct {
-	StartTime            int                                                                        `json:"startTime"`
-	EndTime              int                                                                        `json:"endTime"`
-	RadiantKills         int                                                                        `json:"radiantKills"`
-	DireKills            int                                                                        `json:"direKills"`
-	RadiantNetworthDelta *int                                                                       `json:"radiantNetworthDelta"`
-	Participants         []MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType `json:"participants"`
+// GetWardEvents returns MatchFullFieldsPlaybackDataMatchPlaybackDataType.WardEvents, and is useful for accessing the field via an interface.
+func (v *MatchFullFieldsPlaybackDataMatchPlaybackDataType) GetWardEvents() []MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType {
+	return v.WardEvents
 }
 
-// GetStartTime returns MatchFullFieldsFightsMatchFightType.StartTime, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightType) GetStartTime() int { return v.StartTime }
-
-// GetEndTime returns MatchFullFieldsFightsMatchFightType.EndTime, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightType) GetEndTime() int { return v.EndTime }
-
-// GetRadiantKills returns MatchFullFieldsFightsMatchFightType.RadiantKills, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightType) GetRadiantKills() int { return v.RadiantKills }
-
-// GetDireKills returns MatchFullFieldsFightsMatchFightType.DireKills, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightType) GetDireKills() int { return v.DireKills }
-
-// GetRadiantNetworthDelta returns MatchFullFieldsFightsMatchFightType.RadiantNetworthDelta, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightType) GetRadiantNetworthDelta() *int {
-	return v.RadiantNetworthDelta
+// MatchFullFieldsPlaybackDataMatchPlaybackDataTypeRuneEventsMatchPlaybackDataRuneEventType includes the requested fields of the GraphQL type MatchPlaybackDataRuneEventType.
+type MatchFullFieldsPlaybackDataMatchPlaybackDataTypeRuneEventsMatchPlaybackDataRuneEventType struct {
+	Time   int `json:"time"`
+	Action int `json:"action"`
+	Rune   int `json:"rune"`
 }
 
-// GetParticipants returns MatchFullFieldsFightsMatchFightType.Participants, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightType) GetParticipants() []MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType {
-	return v.Participants
+// GetTime returns MatchFullFieldsPlaybackDataMatchPlaybackDataTypeRuneEventsMatchPlaybackDataRuneEventType.Time, and is useful for accessing the field via an interface.
+func (v *MatchFullFieldsPlaybackDataMatchPlaybackDataTypeRuneEventsMatchPlaybackDataRuneEventType) GetTime() int {
+	return v.Time
 }
 
-// MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType includes the requested fields of the GraphQL type MatchFightParticipantType.
-type MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType struct {
-	SteamAccountId *int64 `json:"steamAccountId"`
-	HeroId         int    `json:"heroId"`
-	IsRadiant      bool   `json:"isRadiant"`
-	Kills          int    `json:"kills"`
-	Deaths         int    `json:"deaths"`
+// GetAction returns MatchFullFieldsPlaybackDataMatchPlaybackDataTypeRuneEventsMatchPlaybackDataRuneEventType.Action, and is useful for accessing the field via an interface.
+func (v *MatchFullFieldsPlaybackDataMatchPlaybackDataTypeRuneEventsMatchPlaybackDataRuneEventType) GetAction() int {
+	return v.Action
 }
 
-// GetSteamAccountId returns MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType.SteamAccountId, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType) GetSteamAccountId() *int64 {
-	return v.SteamAccountId
+// GetRune returns MatchFullFieldsPlaybackDataMatchPlaybackDataTypeRuneEventsMatchPlaybackDataRuneEventType.Rune, and is useful for accessing the field via an interface.
+func (v *MatchFullFieldsPlaybackDataMatchPlaybackDataTypeRuneEventsMatchPlaybackDataRuneEventType) GetRune() int {
+	return v.Rune
 }
 
-// GetHeroId returns MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType.HeroId, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType) GetHeroId() int {
-	return v.HeroId
+// MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType includes the requested fields of the GraphQL type MatchPlaybackDataWardEventType.
+type MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType struct {
+	Time       int     `json:"time"`
+	Action     *string `json:"action"`
+	WardType   *string `json:"wardType"`
+	FromPlayer *int    `json:"fromPlayer"`
 }
 
-// GetIsRadiant returns MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType.IsRadiant, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType) GetIsRadiant() bool {
-	return v.IsRadiant
+// GetTime returns MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType.Time, and is useful for accessing the field via an interface.
+func (v *MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType) GetTime() int {
+	return v.Time
 }
 
-// GetKills returns MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType.Kills, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType) GetKills() int {
-	return v.Kills
+// GetAction returns MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType.Action, and is useful for accessing the field via an interface.
+func (v *MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType) GetAction() *string {
+	return v.Action
 }
 
-// GetDeaths returns MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType.Deaths, and is useful for accessing the field via an interface.
-func (v *MatchFullFieldsFightsMatchFightTypeParticipantsMatchFightParticipantType) GetDeaths() int {
-	return v.Deaths
+// GetWardType returns MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType.WardType, and is useful for accessing the field via an interface.
+func (v *MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType) GetWardType() *string {
+	return v.WardType
+}
+
+// GetFromPlayer returns MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType.FromPlayer, and is useful for accessing the field via an interface.
+func (v *MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlaybackDataWardEventType) GetFromPlayer() *int {
+	return v.FromPlayer
 }
 
 type MatchLiveRequestType struct {
@@ -689,12 +405,35 @@ func (v *MatchPlayerFields) GetNetworth() *int { return v.Networth }
 // GetLevel returns MatchPlayerFields.Level, and is useful for accessing the field via an interface.
 func (v *MatchPlayerFields) GetLevel() *int { return v.Level }
 
+type MatchPlayerPositionType string
+
+const (
+	MatchPlayerPositionTypeAll       MatchPlayerPositionType = "ALL"
+	MatchPlayerPositionTypeFiltered  MatchPlayerPositionType = "FILTERED"
+	MatchPlayerPositionTypePosition1 MatchPlayerPositionType = "POSITION_1"
+	MatchPlayerPositionTypePosition2 MatchPlayerPositionType = "POSITION_2"
+	MatchPlayerPositionTypePosition3 MatchPlayerPositionType = "POSITION_3"
+	MatchPlayerPositionTypePosition4 MatchPlayerPositionType = "POSITION_4"
+	MatchPlayerPositionTypePosition5 MatchPlayerPositionType = "POSITION_5"
+	MatchPlayerPositionTypeUnknown   MatchPlayerPositionType = "UNKNOWN"
+)
+
+var AllMatchPlayerPositionType = []MatchPlayerPositionType{
+	MatchPlayerPositionTypeAll,
+	MatchPlayerPositionTypeFiltered,
+	MatchPlayerPositionTypePosition1,
+	MatchPlayerPositionTypePosition2,
+	MatchPlayerPositionTypePosition3,
+	MatchPlayerPositionTypePosition4,
+	MatchPlayerPositionTypePosition5,
+	MatchPlayerPositionTypeUnknown,
+}
+
 // MatchStandardFields includes the GraphQL fields of MatchType requested by the fragment MatchStandardFields.
 type MatchStandardFields struct {
 	MatchSummaryFields `json:"-"`
-	Players            []MatchStandardFieldsPlayersMatchPlayerType   `json:"players"`
-	Objectives         []MatchStandardFieldsObjectivesMatchEventType `json:"objectives"`
-	Timeline           []MatchStandardFieldsTimelineMatchEventType   `json:"timeline"`
+	Players            []MatchStandardFieldsPlayersMatchPlayerType           `json:"players"`
+	PlaybackData       *MatchStandardFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
 }
 
 // GetPlayers returns MatchStandardFields.Players, and is useful for accessing the field via an interface.
@@ -702,14 +441,9 @@ func (v *MatchStandardFields) GetPlayers() []MatchStandardFieldsPlayersMatchPlay
 	return v.Players
 }
 
-// GetObjectives returns MatchStandardFields.Objectives, and is useful for accessing the field via an interface.
-func (v *MatchStandardFields) GetObjectives() []MatchStandardFieldsObjectivesMatchEventType {
-	return v.Objectives
-}
-
-// GetTimeline returns MatchStandardFields.Timeline, and is useful for accessing the field via an interface.
-func (v *MatchStandardFields) GetTimeline() []MatchStandardFieldsTimelineMatchEventType {
-	return v.Timeline
+// GetPlaybackData returns MatchStandardFields.PlaybackData, and is useful for accessing the field via an interface.
+func (v *MatchStandardFields) GetPlaybackData() *MatchStandardFieldsPlaybackDataMatchPlaybackDataType {
+	return v.PlaybackData
 }
 
 // GetId returns MatchStandardFields.Id, and is useful for accessing the field via an interface.
@@ -779,9 +513,7 @@ func (v *MatchStandardFields) UnmarshalJSON(b []byte) error {
 type __premarshalMatchStandardFields struct {
 	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
 
-	Objectives []MatchStandardFieldsObjectivesMatchEventType `json:"objectives"`
-
-	Timeline []MatchStandardFieldsTimelineMatchEventType `json:"timeline"`
+	PlaybackData *MatchStandardFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
 
 	Id int64 `json:"id"`
 
@@ -822,8 +554,7 @@ func (v *MatchStandardFields) __premarshalJSON() (*__premarshalMatchStandardFiel
 	var retval __premarshalMatchStandardFields
 
 	retval.Players = v.Players
-	retval.Objectives = v.Objectives
-	retval.Timeline = v.Timeline
+	retval.PlaybackData = v.PlaybackData
 	retval.Id = v.MatchSummaryFields.Id
 	retval.StartDateTime = v.MatchSummaryFields.StartDateTime
 	retval.DurationSeconds = v.MatchSummaryFields.DurationSeconds
@@ -840,35 +571,87 @@ func (v *MatchStandardFields) __premarshalJSON() (*__premarshalMatchStandardFiel
 	return &retval, nil
 }
 
-// MatchStandardFieldsObjectivesMatchEventType includes the requested fields of the GraphQL type MatchEventType.
-type MatchStandardFieldsObjectivesMatchEventType struct {
-	Time           int     `json:"time"`
-	Type           string  `json:"type"`
-	IsRadiant      *bool   `json:"isRadiant"`
-	SteamAccountId *int64  `json:"steamAccountId"`
-	HeroId         *int    `json:"heroId"`
-	Value          *string `json:"value"`
+// MatchStandardFieldsPlaybackDataMatchPlaybackDataType includes the requested fields of the GraphQL type MatchPlaybackDataType.
+type MatchStandardFieldsPlaybackDataMatchPlaybackDataType struct {
+	BuildingEvents   []MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType     `json:"buildingEvents"`
+	RoshanEvents     []MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeRoshanEventsMatchPlaybackDataRoshanEventType         `json:"roshanEvents"`
+	TowerDeathEvents []MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeTowerDeathEventsMatchPlaybackDataTowerDeathEventType `json:"towerDeathEvents"`
 }
 
-// GetTime returns MatchStandardFieldsObjectivesMatchEventType.Time, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsObjectivesMatchEventType) GetTime() int { return v.Time }
-
-// GetType returns MatchStandardFieldsObjectivesMatchEventType.Type, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsObjectivesMatchEventType) GetType() string { return v.Type }
-
-// GetIsRadiant returns MatchStandardFieldsObjectivesMatchEventType.IsRadiant, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsObjectivesMatchEventType) GetIsRadiant() *bool { return v.IsRadiant }
-
-// GetSteamAccountId returns MatchStandardFieldsObjectivesMatchEventType.SteamAccountId, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsObjectivesMatchEventType) GetSteamAccountId() *int64 {
-	return v.SteamAccountId
+// GetBuildingEvents returns MatchStandardFieldsPlaybackDataMatchPlaybackDataType.BuildingEvents, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataType) GetBuildingEvents() []MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType {
+	return v.BuildingEvents
 }
 
-// GetHeroId returns MatchStandardFieldsObjectivesMatchEventType.HeroId, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsObjectivesMatchEventType) GetHeroId() *int { return v.HeroId }
+// GetRoshanEvents returns MatchStandardFieldsPlaybackDataMatchPlaybackDataType.RoshanEvents, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataType) GetRoshanEvents() []MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeRoshanEventsMatchPlaybackDataRoshanEventType {
+	return v.RoshanEvents
+}
 
-// GetValue returns MatchStandardFieldsObjectivesMatchEventType.Value, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsObjectivesMatchEventType) GetValue() *string { return v.Value }
+// GetTowerDeathEvents returns MatchStandardFieldsPlaybackDataMatchPlaybackDataType.TowerDeathEvents, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataType) GetTowerDeathEvents() []MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeTowerDeathEventsMatchPlaybackDataTowerDeathEventType {
+	return v.TowerDeathEvents
+}
+
+// MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType includes the requested fields of the GraphQL type MatchPlaybackDataBuildingEventType.
+type MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType struct {
+	Time      int     `json:"time"`
+	Type      *string `json:"type"`
+	IsRadiant *bool   `json:"isRadiant"`
+	NpcId     *int    `json:"npcId"`
+}
+
+// GetTime returns MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType.Time, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType) GetTime() int {
+	return v.Time
+}
+
+// GetType returns MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType.Type, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType) GetType() *string {
+	return v.Type
+}
+
+// GetIsRadiant returns MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType.IsRadiant, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType) GetIsRadiant() *bool {
+	return v.IsRadiant
+}
+
+// GetNpcId returns MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType.NpcId, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeBuildingEventsMatchPlaybackDataBuildingEventType) GetNpcId() *int {
+	return v.NpcId
+}
+
+// MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeRoshanEventsMatchPlaybackDataRoshanEventType includes the requested fields of the GraphQL type MatchPlaybackDataRoshanEventType.
+type MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeRoshanEventsMatchPlaybackDataRoshanEventType struct {
+	Time int `json:"time"`
+}
+
+// GetTime returns MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeRoshanEventsMatchPlaybackDataRoshanEventType.Time, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeRoshanEventsMatchPlaybackDataRoshanEventType) GetTime() int {
+	return v.Time
+}
+
+// MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeTowerDeathEventsMatchPlaybackDataTowerDeathEventType includes the requested fields of the GraphQL type MatchPlaybackDataTowerDeathEventType.
+type MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeTowerDeathEventsMatchPlaybackDataTowerDeathEventType struct {
+	Time    int `json:"time"`
+	Radiant int `json:"radiant"`
+	Dire    int `json:"dire"`
+}
+
+// GetTime returns MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeTowerDeathEventsMatchPlaybackDataTowerDeathEventType.Time, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeTowerDeathEventsMatchPlaybackDataTowerDeathEventType) GetTime() int {
+	return v.Time
+}
+
+// GetRadiant returns MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeTowerDeathEventsMatchPlaybackDataTowerDeathEventType.Radiant, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeTowerDeathEventsMatchPlaybackDataTowerDeathEventType) GetRadiant() int {
+	return v.Radiant
+}
+
+// GetDire returns MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeTowerDeathEventsMatchPlaybackDataTowerDeathEventType.Dire, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlaybackDataMatchPlaybackDataTypeTowerDeathEventsMatchPlaybackDataTowerDeathEventType) GetDire() int {
+	return v.Dire
+}
 
 // MatchStandardFieldsPlayersMatchPlayerType includes the requested fields of the GraphQL type MatchPlayerType.
 type MatchStandardFieldsPlayersMatchPlayerType struct {
@@ -983,36 +766,6 @@ func (v *MatchStandardFieldsPlayersMatchPlayerType) __premarshalJSON() (*__prema
 	retval.Level = v.MatchPlayerFields.Level
 	return &retval, nil
 }
-
-// MatchStandardFieldsTimelineMatchEventType includes the requested fields of the GraphQL type MatchEventType.
-type MatchStandardFieldsTimelineMatchEventType struct {
-	Time           int     `json:"time"`
-	Type           string  `json:"type"`
-	IsRadiant      *bool   `json:"isRadiant"`
-	SteamAccountId *int64  `json:"steamAccountId"`
-	HeroId         *int    `json:"heroId"`
-	Value          *string `json:"value"`
-}
-
-// GetTime returns MatchStandardFieldsTimelineMatchEventType.Time, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsTimelineMatchEventType) GetTime() int { return v.Time }
-
-// GetType returns MatchStandardFieldsTimelineMatchEventType.Type, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsTimelineMatchEventType) GetType() string { return v.Type }
-
-// GetIsRadiant returns MatchStandardFieldsTimelineMatchEventType.IsRadiant, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsTimelineMatchEventType) GetIsRadiant() *bool { return v.IsRadiant }
-
-// GetSteamAccountId returns MatchStandardFieldsTimelineMatchEventType.SteamAccountId, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsTimelineMatchEventType) GetSteamAccountId() *int64 {
-	return v.SteamAccountId
-}
-
-// GetHeroId returns MatchStandardFieldsTimelineMatchEventType.HeroId, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsTimelineMatchEventType) GetHeroId() *int { return v.HeroId }
-
-// GetValue returns MatchStandardFieldsTimelineMatchEventType.Value, and is useful for accessing the field via an interface.
-func (v *MatchStandardFieldsTimelineMatchEventType) GetValue() *string { return v.Value }
 
 // MatchSummaryFields includes the GraphQL fields of MatchType requested by the fragment MatchSummaryFields.
 type MatchSummaryFields struct {
@@ -1179,913 +932,353 @@ func (v *PlayerMatchesRequestType) GetTake() int { return v.Take }
 // GetSkip returns PlayerMatchesRequestType.Skip, and is useful for accessing the field via an interface.
 func (v *PlayerMatchesRequestType) GetSkip() int { return v.Skip }
 
-// StratzGetConstantsConstantsConstantsType includes the requested fields of the GraphQL type ConstantsType.
-type StratzGetConstantsConstantsConstantsType struct {
-	Heroes    []StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType `json:"heroes"`
-	Items     []StratzGetConstantsConstantsConstantsTypeItemsConstantType      `json:"items"`
-	Abilities []StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType  `json:"abilities"`
-	GameModes []StratzGetConstantsConstantsConstantsTypeGameModesConstantType  `json:"gameModes"`
-	Regions   []StratzGetConstantsConstantsConstantsTypeRegionsConstantType    `json:"regions"`
-	Ranks     []StratzGetConstantsConstantsConstantsTypeRanksConstantType      `json:"ranks"`
+type RankBracket string
+
+const (
+	RankBracketAncient      RankBracket = "ANCIENT"
+	RankBracketArchon       RankBracket = "ARCHON"
+	RankBracketCrusader     RankBracket = "CRUSADER"
+	RankBracketDivine       RankBracket = "DIVINE"
+	RankBracketGuardian     RankBracket = "GUARDIAN"
+	RankBracketHerald       RankBracket = "HERALD"
+	RankBracketImmortal     RankBracket = "IMMORTAL"
+	RankBracketLegend       RankBracket = "LEGEND"
+	RankBracketUncalibrated RankBracket = "UNCALIBRATED"
+)
+
+var AllRankBracket = []RankBracket{
+	RankBracketAncient,
+	RankBracketArchon,
+	RankBracketCrusader,
+	RankBracketDivine,
+	RankBracketGuardian,
+	RankBracketHerald,
+	RankBracketImmortal,
+	RankBracketLegend,
+	RankBracketUncalibrated,
 }
 
-// GetHeroes returns StratzGetConstantsConstantsConstantsType.Heroes, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsType) GetHeroes() []StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType {
+// StratzGetConstantsConstantsConstantQuery includes the requested fields of the GraphQL type ConstantQuery.
+type StratzGetConstantsConstantsConstantQuery struct {
+	Heroes    []StratzGetConstantsConstantsConstantQueryHeroesHeroType        `json:"heroes"`
+	Items     []StratzGetConstantsConstantsConstantQueryItemsItemType         `json:"items"`
+	Abilities []StratzGetConstantsConstantsConstantQueryAbilitiesAbilityType  `json:"abilities"`
+	GameModes []StratzGetConstantsConstantsConstantQueryGameModesGameModeType `json:"gameModes"`
+	Regions   []StratzGetConstantsConstantsConstantQueryRegionsRegionType     `json:"regions"`
+}
+
+// GetHeroes returns StratzGetConstantsConstantsConstantQuery.Heroes, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQuery) GetHeroes() []StratzGetConstantsConstantsConstantQueryHeroesHeroType {
 	return v.Heroes
 }
 
-// GetItems returns StratzGetConstantsConstantsConstantsType.Items, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsType) GetItems() []StratzGetConstantsConstantsConstantsTypeItemsConstantType {
+// GetItems returns StratzGetConstantsConstantsConstantQuery.Items, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQuery) GetItems() []StratzGetConstantsConstantsConstantQueryItemsItemType {
 	return v.Items
 }
 
-// GetAbilities returns StratzGetConstantsConstantsConstantsType.Abilities, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsType) GetAbilities() []StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType {
+// GetAbilities returns StratzGetConstantsConstantsConstantQuery.Abilities, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQuery) GetAbilities() []StratzGetConstantsConstantsConstantQueryAbilitiesAbilityType {
 	return v.Abilities
 }
 
-// GetGameModes returns StratzGetConstantsConstantsConstantsType.GameModes, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsType) GetGameModes() []StratzGetConstantsConstantsConstantsTypeGameModesConstantType {
+// GetGameModes returns StratzGetConstantsConstantsConstantQuery.GameModes, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQuery) GetGameModes() []StratzGetConstantsConstantsConstantQueryGameModesGameModeType {
 	return v.GameModes
 }
 
-// GetRegions returns StratzGetConstantsConstantsConstantsType.Regions, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsType) GetRegions() []StratzGetConstantsConstantsConstantsTypeRegionsConstantType {
+// GetRegions returns StratzGetConstantsConstantsConstantQuery.Regions, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQuery) GetRegions() []StratzGetConstantsConstantsConstantQueryRegionsRegionType {
 	return v.Regions
 }
 
-// GetRanks returns StratzGetConstantsConstantsConstantsType.Ranks, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsType) GetRanks() []StratzGetConstantsConstantsConstantsTypeRanksConstantType {
-	return v.Ranks
+// StratzGetConstantsConstantsConstantQueryAbilitiesAbilityType includes the requested fields of the GraphQL type AbilityType.
+type StratzGetConstantsConstantsConstantQueryAbilitiesAbilityType struct {
+	Id       *int                                                                                     `json:"id"`
+	Name     *string                                                                                  `json:"name"`
+	Language *StratzGetConstantsConstantsConstantQueryAbilitiesAbilityTypeLanguageAbilityLanguageType `json:"language"`
 }
 
-// StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType includes the requested fields of the GraphQL type ConstantType.
-type StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType struct {
-	ConstantFields `json:"-"`
-}
+// GetId returns StratzGetConstantsConstantsConstantQueryAbilitiesAbilityType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryAbilitiesAbilityType) GetId() *int { return v.Id }
 
-// GetId returns StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType.Id, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) GetId() string {
-	return v.ConstantFields.Id
-}
-
-// GetName returns StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType.Name, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) GetName() string {
-	return v.ConstantFields.Name
-}
-
-// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType.LocalizedName, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) GetLocalizedName() *string {
-	return v.ConstantFields.LocalizedName
-}
-
-// GetMetadata returns StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType.Metadata, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
-	return v.ConstantFields.Metadata
-}
-
-func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(
-		b, &v.ConstantFields)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type __premarshalStratzGetConstantsConstantsConstantsTypeAbilitiesConstantType struct {
-	Id string `json:"id"`
-
-	Name string `json:"name"`
-
-	LocalizedName *string `json:"localizedName"`
-
-	Metadata []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
-}
-
-func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *StratzGetConstantsConstantsConstantsTypeAbilitiesConstantType) __premarshalJSON() (*__premarshalStratzGetConstantsConstantsConstantsTypeAbilitiesConstantType, error) {
-	var retval __premarshalStratzGetConstantsConstantsConstantsTypeAbilitiesConstantType
-
-	retval.Id = v.ConstantFields.Id
-	retval.Name = v.ConstantFields.Name
-	retval.LocalizedName = v.ConstantFields.LocalizedName
-	retval.Metadata = v.ConstantFields.Metadata
-	return &retval, nil
-}
-
-// StratzGetConstantsConstantsConstantsTypeGameModesConstantType includes the requested fields of the GraphQL type ConstantType.
-type StratzGetConstantsConstantsConstantsTypeGameModesConstantType struct {
-	ConstantFields `json:"-"`
-}
-
-// GetId returns StratzGetConstantsConstantsConstantsTypeGameModesConstantType.Id, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) GetId() string {
-	return v.ConstantFields.Id
-}
-
-// GetName returns StratzGetConstantsConstantsConstantsTypeGameModesConstantType.Name, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) GetName() string {
-	return v.ConstantFields.Name
-}
-
-// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeGameModesConstantType.LocalizedName, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) GetLocalizedName() *string {
-	return v.ConstantFields.LocalizedName
-}
-
-// GetMetadata returns StratzGetConstantsConstantsConstantsTypeGameModesConstantType.Metadata, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
-	return v.ConstantFields.Metadata
-}
-
-func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*StratzGetConstantsConstantsConstantsTypeGameModesConstantType
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.StratzGetConstantsConstantsConstantsTypeGameModesConstantType = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(
-		b, &v.ConstantFields)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type __premarshalStratzGetConstantsConstantsConstantsTypeGameModesConstantType struct {
-	Id string `json:"id"`
-
-	Name string `json:"name"`
-
-	LocalizedName *string `json:"localizedName"`
-
-	Metadata []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
-}
-
-func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *StratzGetConstantsConstantsConstantsTypeGameModesConstantType) __premarshalJSON() (*__premarshalStratzGetConstantsConstantsConstantsTypeGameModesConstantType, error) {
-	var retval __premarshalStratzGetConstantsConstantsConstantsTypeGameModesConstantType
-
-	retval.Id = v.ConstantFields.Id
-	retval.Name = v.ConstantFields.Name
-	retval.LocalizedName = v.ConstantFields.LocalizedName
-	retval.Metadata = v.ConstantFields.Metadata
-	return &retval, nil
-}
-
-// StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType includes the requested fields of the GraphQL type HeroConstantType.
-type StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType struct {
-	Id               int      `json:"id"`
-	Name             string   `json:"name"`
-	LocalizedName    *string  `json:"localizedName"`
-	PrimaryAttribute *string  `json:"primaryAttribute"`
-	AttackType       *string  `json:"attackType"`
-	Roles            []string `json:"roles"`
-}
-
-// GetId returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.Id, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetId() int { return v.Id }
-
-// GetName returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.Name, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetName() string {
+// GetName returns StratzGetConstantsConstantsConstantQueryAbilitiesAbilityType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryAbilitiesAbilityType) GetName() *string {
 	return v.Name
 }
 
-// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.LocalizedName, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetLocalizedName() *string {
+// GetLanguage returns StratzGetConstantsConstantsConstantQueryAbilitiesAbilityType.Language, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryAbilitiesAbilityType) GetLanguage() *StratzGetConstantsConstantsConstantQueryAbilitiesAbilityTypeLanguageAbilityLanguageType {
+	return v.Language
+}
+
+// StratzGetConstantsConstantsConstantQueryAbilitiesAbilityTypeLanguageAbilityLanguageType includes the requested fields of the GraphQL type AbilityLanguageType.
+type StratzGetConstantsConstantsConstantQueryAbilitiesAbilityTypeLanguageAbilityLanguageType struct {
+	DisplayName *string `json:"displayName"`
+}
+
+// GetDisplayName returns StratzGetConstantsConstantsConstantQueryAbilitiesAbilityTypeLanguageAbilityLanguageType.DisplayName, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryAbilitiesAbilityTypeLanguageAbilityLanguageType) GetDisplayName() *string {
+	return v.DisplayName
+}
+
+// StratzGetConstantsConstantsConstantQueryGameModesGameModeType includes the requested fields of the GraphQL type GameModeType.
+type StratzGetConstantsConstantsConstantQueryGameModesGameModeType struct {
+	Id   *int    `json:"id"`
+	Name *string `json:"name"`
+}
+
+// GetId returns StratzGetConstantsConstantsConstantQueryGameModesGameModeType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryGameModesGameModeType) GetId() *int { return v.Id }
+
+// GetName returns StratzGetConstantsConstantsConstantQueryGameModesGameModeType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryGameModesGameModeType) GetName() *string {
+	return v.Name
+}
+
+// StratzGetConstantsConstantsConstantQueryHeroesHeroType includes the requested fields of the GraphQL type HeroType.
+type StratzGetConstantsConstantsConstantQueryHeroesHeroType struct {
+	Id            *int                                                                      `json:"id"`
+	Name          *string                                                                   `json:"name"`
+	LocalizedName *string                                                                   `json:"localizedName"`
+	Stats         *StratzGetConstantsConstantsConstantQueryHeroesHeroTypeStatsHeroStatType  `json:"stats"`
+	Roles         []StratzGetConstantsConstantsConstantQueryHeroesHeroTypeRolesHeroRoleType `json:"roles"`
+}
+
+// GetId returns StratzGetConstantsConstantsConstantQueryHeroesHeroType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryHeroesHeroType) GetId() *int { return v.Id }
+
+// GetName returns StratzGetConstantsConstantsConstantQueryHeroesHeroType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryHeroesHeroType) GetName() *string { return v.Name }
+
+// GetLocalizedName returns StratzGetConstantsConstantsConstantQueryHeroesHeroType.LocalizedName, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryHeroesHeroType) GetLocalizedName() *string {
 	return v.LocalizedName
 }
 
-// GetPrimaryAttribute returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.PrimaryAttribute, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetPrimaryAttribute() *string {
-	return v.PrimaryAttribute
+// GetStats returns StratzGetConstantsConstantsConstantQueryHeroesHeroType.Stats, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryHeroesHeroType) GetStats() *StratzGetConstantsConstantsConstantQueryHeroesHeroTypeStatsHeroStatType {
+	return v.Stats
 }
 
-// GetAttackType returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.AttackType, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetAttackType() *string {
-	return v.AttackType
-}
-
-// GetRoles returns StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType.Roles, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeHeroesHeroConstantType) GetRoles() []string {
+// GetRoles returns StratzGetConstantsConstantsConstantQueryHeroesHeroType.Roles, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryHeroesHeroType) GetRoles() []StratzGetConstantsConstantsConstantQueryHeroesHeroTypeRolesHeroRoleType {
 	return v.Roles
 }
 
-// StratzGetConstantsConstantsConstantsTypeItemsConstantType includes the requested fields of the GraphQL type ConstantType.
-type StratzGetConstantsConstantsConstantsTypeItemsConstantType struct {
-	ConstantFields `json:"-"`
+// StratzGetConstantsConstantsConstantQueryHeroesHeroTypeRolesHeroRoleType includes the requested fields of the GraphQL type HeroRoleType.
+type StratzGetConstantsConstantsConstantQueryHeroesHeroTypeRolesHeroRoleType struct {
+	RoleId *string `json:"roleId"`
 }
 
-// GetId returns StratzGetConstantsConstantsConstantsTypeItemsConstantType.Id, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) GetId() string {
-	return v.ConstantFields.Id
+// GetRoleId returns StratzGetConstantsConstantsConstantQueryHeroesHeroTypeRolesHeroRoleType.RoleId, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryHeroesHeroTypeRolesHeroRoleType) GetRoleId() *string {
+	return v.RoleId
 }
 
-// GetName returns StratzGetConstantsConstantsConstantsTypeItemsConstantType.Name, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) GetName() string {
-	return v.ConstantFields.Name
+// StratzGetConstantsConstantsConstantQueryHeroesHeroTypeStatsHeroStatType includes the requested fields of the GraphQL type HeroStatType.
+type StratzGetConstantsConstantsConstantQueryHeroesHeroTypeStatsHeroStatType struct {
+	PrimaryAttribute *string `json:"primaryAttribute"`
+	AttackType       *string `json:"attackType"`
 }
 
-// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeItemsConstantType.LocalizedName, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) GetLocalizedName() *string {
-	return v.ConstantFields.LocalizedName
+// GetPrimaryAttribute returns StratzGetConstantsConstantsConstantQueryHeroesHeroTypeStatsHeroStatType.PrimaryAttribute, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryHeroesHeroTypeStatsHeroStatType) GetPrimaryAttribute() *string {
+	return v.PrimaryAttribute
 }
 
-// GetMetadata returns StratzGetConstantsConstantsConstantsTypeItemsConstantType.Metadata, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
-	return v.ConstantFields.Metadata
+// GetAttackType returns StratzGetConstantsConstantsConstantQueryHeroesHeroTypeStatsHeroStatType.AttackType, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryHeroesHeroTypeStatsHeroStatType) GetAttackType() *string {
+	return v.AttackType
 }
 
-func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*StratzGetConstantsConstantsConstantsTypeItemsConstantType
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.StratzGetConstantsConstantsConstantsTypeItemsConstantType = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(
-		b, &v.ConstantFields)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type __premarshalStratzGetConstantsConstantsConstantsTypeItemsConstantType struct {
-	Id string `json:"id"`
-
-	Name string `json:"name"`
-
+// StratzGetConstantsConstantsConstantQueryItemsItemType includes the requested fields of the GraphQL type ItemType.
+type StratzGetConstantsConstantsConstantQueryItemsItemType struct {
+	Id            *int    `json:"id"`
+	Name          *string `json:"name"`
 	LocalizedName *string `json:"localizedName"`
-
-	Metadata []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
 }
 
-func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
+// GetId returns StratzGetConstantsConstantsConstantQueryItemsItemType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryItemsItemType) GetId() *int { return v.Id }
+
+// GetName returns StratzGetConstantsConstantsConstantQueryItemsItemType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryItemsItemType) GetName() *string { return v.Name }
+
+// GetLocalizedName returns StratzGetConstantsConstantsConstantQueryItemsItemType.LocalizedName, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryItemsItemType) GetLocalizedName() *string {
+	return v.LocalizedName
 }
 
-func (v *StratzGetConstantsConstantsConstantsTypeItemsConstantType) __premarshalJSON() (*__premarshalStratzGetConstantsConstantsConstantsTypeItemsConstantType, error) {
-	var retval __premarshalStratzGetConstantsConstantsConstantsTypeItemsConstantType
-
-	retval.Id = v.ConstantFields.Id
-	retval.Name = v.ConstantFields.Name
-	retval.LocalizedName = v.ConstantFields.LocalizedName
-	retval.Metadata = v.ConstantFields.Metadata
-	return &retval, nil
-}
-
-// StratzGetConstantsConstantsConstantsTypeRanksConstantType includes the requested fields of the GraphQL type ConstantType.
-type StratzGetConstantsConstantsConstantsTypeRanksConstantType struct {
-	ConstantFields `json:"-"`
-}
-
-// GetId returns StratzGetConstantsConstantsConstantsTypeRanksConstantType.Id, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) GetId() string {
-	return v.ConstantFields.Id
-}
-
-// GetName returns StratzGetConstantsConstantsConstantsTypeRanksConstantType.Name, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) GetName() string {
-	return v.ConstantFields.Name
-}
-
-// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeRanksConstantType.LocalizedName, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) GetLocalizedName() *string {
-	return v.ConstantFields.LocalizedName
-}
-
-// GetMetadata returns StratzGetConstantsConstantsConstantsTypeRanksConstantType.Metadata, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
-	return v.ConstantFields.Metadata
-}
-
-func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*StratzGetConstantsConstantsConstantsTypeRanksConstantType
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.StratzGetConstantsConstantsConstantsTypeRanksConstantType = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(
-		b, &v.ConstantFields)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type __premarshalStratzGetConstantsConstantsConstantsTypeRanksConstantType struct {
-	Id string `json:"id"`
-
-	Name string `json:"name"`
-
+// StratzGetConstantsConstantsConstantQueryRegionsRegionType includes the requested fields of the GraphQL type RegionType.
+type StratzGetConstantsConstantsConstantQueryRegionsRegionType struct {
+	Id            *int    `json:"id"`
+	Name          *string `json:"name"`
 	LocalizedName *string `json:"localizedName"`
-
-	Metadata []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
 }
 
-func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
+// GetId returns StratzGetConstantsConstantsConstantQueryRegionsRegionType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryRegionsRegionType) GetId() *int { return v.Id }
 
-func (v *StratzGetConstantsConstantsConstantsTypeRanksConstantType) __premarshalJSON() (*__premarshalStratzGetConstantsConstantsConstantsTypeRanksConstantType, error) {
-	var retval __premarshalStratzGetConstantsConstantsConstantsTypeRanksConstantType
+// GetName returns StratzGetConstantsConstantsConstantQueryRegionsRegionType.Name, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryRegionsRegionType) GetName() *string { return v.Name }
 
-	retval.Id = v.ConstantFields.Id
-	retval.Name = v.ConstantFields.Name
-	retval.LocalizedName = v.ConstantFields.LocalizedName
-	retval.Metadata = v.ConstantFields.Metadata
-	return &retval, nil
-}
-
-// StratzGetConstantsConstantsConstantsTypeRegionsConstantType includes the requested fields of the GraphQL type ConstantType.
-type StratzGetConstantsConstantsConstantsTypeRegionsConstantType struct {
-	ConstantFields `json:"-"`
-}
-
-// GetId returns StratzGetConstantsConstantsConstantsTypeRegionsConstantType.Id, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) GetId() string {
-	return v.ConstantFields.Id
-}
-
-// GetName returns StratzGetConstantsConstantsConstantsTypeRegionsConstantType.Name, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) GetName() string {
-	return v.ConstantFields.Name
-}
-
-// GetLocalizedName returns StratzGetConstantsConstantsConstantsTypeRegionsConstantType.LocalizedName, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) GetLocalizedName() *string {
-	return v.ConstantFields.LocalizedName
-}
-
-// GetMetadata returns StratzGetConstantsConstantsConstantsTypeRegionsConstantType.Metadata, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) GetMetadata() []ConstantFieldsMetadataConstantMetadataType {
-	return v.ConstantFields.Metadata
-}
-
-func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*StratzGetConstantsConstantsConstantsTypeRegionsConstantType
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.StratzGetConstantsConstantsConstantsTypeRegionsConstantType = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(
-		b, &v.ConstantFields)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type __premarshalStratzGetConstantsConstantsConstantsTypeRegionsConstantType struct {
-	Id string `json:"id"`
-
-	Name string `json:"name"`
-
-	LocalizedName *string `json:"localizedName"`
-
-	Metadata []ConstantFieldsMetadataConstantMetadataType `json:"metadata"`
-}
-
-func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *StratzGetConstantsConstantsConstantsTypeRegionsConstantType) __premarshalJSON() (*__premarshalStratzGetConstantsConstantsConstantsTypeRegionsConstantType, error) {
-	var retval __premarshalStratzGetConstantsConstantsConstantsTypeRegionsConstantType
-
-	retval.Id = v.ConstantFields.Id
-	retval.Name = v.ConstantFields.Name
-	retval.LocalizedName = v.ConstantFields.LocalizedName
-	retval.Metadata = v.ConstantFields.Metadata
-	return &retval, nil
+// GetLocalizedName returns StratzGetConstantsConstantsConstantQueryRegionsRegionType.LocalizedName, and is useful for accessing the field via an interface.
+func (v *StratzGetConstantsConstantsConstantQueryRegionsRegionType) GetLocalizedName() *string {
+	return v.LocalizedName
 }
 
 // StratzGetConstantsResponse is returned by StratzGetConstants on success.
 type StratzGetConstantsResponse struct {
-	Constants StratzGetConstantsConstantsConstantsType `json:"constants"`
+	Constants StratzGetConstantsConstantsConstantQuery `json:"constants"`
 }
 
 // GetConstants returns StratzGetConstantsResponse.Constants, and is useful for accessing the field via an interface.
-func (v *StratzGetConstantsResponse) GetConstants() StratzGetConstantsConstantsConstantsType {
+func (v *StratzGetConstantsResponse) GetConstants() StratzGetConstantsConstantsConstantQuery {
 	return v.Constants
 }
 
-// StratzGetHeroStatsDayHeroStatsHeroStatsType includes the requested fields of the GraphQL type HeroStatsType.
-type StratzGetHeroStatsDayHeroStatsHeroStatsType struct {
-	HeroStatsFields `json:"-"`
+// StratzGetHeroStatsDayHeroStatsHeroStatsQuery includes the requested fields of the GraphQL type HeroStatsQuery.
+type StratzGetHeroStatsDayHeroStatsHeroStatsQuery struct {
+	Stats []StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType `json:"stats"`
 }
 
-// GetHeroId returns StratzGetHeroStatsDayHeroStatsHeroStatsType.HeroId, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetHeroId() int {
-	return v.HeroStatsFields.HeroId
+// GetStats returns StratzGetHeroStatsDayHeroStatsHeroStatsQuery.Stats, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsQuery) GetStats() []StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType {
+	return v.Stats
 }
 
-// GetMatchCount returns StratzGetHeroStatsDayHeroStatsHeroStatsType.MatchCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetMatchCount() int {
-	return v.HeroStatsFields.MatchCount
+// StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType includes the requested fields of the GraphQL type HeroWinDayType.
+type StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType struct {
+	HeroId     int   `json:"heroId"`
+	MatchCount int   `json:"matchCount"`
+	WinCount   int   `json:"winCount"`
+	Period     int64 `json:"period"`
 }
 
-// GetPickCount returns StratzGetHeroStatsDayHeroStatsHeroStatsType.PickCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetPickCount() int {
-	return v.HeroStatsFields.PickCount
+// GetHeroId returns StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType) GetHeroId() int {
+	return v.HeroId
 }
 
-// GetWinCount returns StratzGetHeroStatsDayHeroStatsHeroStatsType.WinCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetWinCount() int {
-	return v.HeroStatsFields.WinCount
+// GetMatchCount returns StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType.MatchCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType) GetMatchCount() int {
+	return v.MatchCount
 }
 
-// GetBanCount returns StratzGetHeroStatsDayHeroStatsHeroStatsType.BanCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetBanCount() int {
-	return v.HeroStatsFields.BanCount
+// GetWinCount returns StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType.WinCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType) GetWinCount() int {
+	return v.WinCount
 }
 
-// GetPopulationMatchCount returns StratzGetHeroStatsDayHeroStatsHeroStatsType.PopulationMatchCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetPopulationMatchCount() int {
-	return v.HeroStatsFields.PopulationMatchCount
-}
-
-// GetRankDataAvailable returns StratzGetHeroStatsDayHeroStatsHeroStatsType.RankDataAvailable, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetRankDataAvailable() *bool {
-	return v.HeroStatsFields.RankDataAvailable
-}
-
-// GetRoles returns StratzGetHeroStatsDayHeroStatsHeroStatsType.Roles, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetRoles() []HeroStatsFieldsRolesHeroStatsBreakdownType {
-	return v.HeroStatsFields.Roles
-}
-
-// GetLanes returns StratzGetHeroStatsDayHeroStatsHeroStatsType.Lanes, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetLanes() []HeroStatsFieldsLanesHeroStatsBreakdownType {
-	return v.HeroStatsFields.Lanes
-}
-
-// GetMatchups returns StratzGetHeroStatsDayHeroStatsHeroStatsType.Matchups, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetMatchups() []HeroStatsFieldsMatchupsHeroStatsRelationType {
-	return v.HeroStatsFields.Matchups
-}
-
-// GetSynergies returns StratzGetHeroStatsDayHeroStatsHeroStatsType.Synergies, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) GetSynergies() []HeroStatsFieldsSynergiesHeroStatsRelationType {
-	return v.HeroStatsFields.Synergies
-}
-
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*StratzGetHeroStatsDayHeroStatsHeroStatsType
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.StratzGetHeroStatsDayHeroStatsHeroStatsType = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(
-		b, &v.HeroStatsFields)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type __premarshalStratzGetHeroStatsDayHeroStatsHeroStatsType struct {
-	HeroId int `json:"heroId"`
-
-	MatchCount int `json:"matchCount"`
-
-	PickCount int `json:"pickCount"`
-
-	WinCount int `json:"winCount"`
-
-	BanCount int `json:"banCount"`
-
-	PopulationMatchCount int `json:"populationMatchCount"`
-
-	RankDataAvailable *bool `json:"rankDataAvailable"`
-
-	Roles []HeroStatsFieldsRolesHeroStatsBreakdownType `json:"roles"`
-
-	Lanes []HeroStatsFieldsLanesHeroStatsBreakdownType `json:"lanes"`
-
-	Matchups []HeroStatsFieldsMatchupsHeroStatsRelationType `json:"matchups"`
-
-	Synergies []HeroStatsFieldsSynergiesHeroStatsRelationType `json:"synergies"`
-}
-
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *StratzGetHeroStatsDayHeroStatsHeroStatsType) __premarshalJSON() (*__premarshalStratzGetHeroStatsDayHeroStatsHeroStatsType, error) {
-	var retval __premarshalStratzGetHeroStatsDayHeroStatsHeroStatsType
-
-	retval.HeroId = v.HeroStatsFields.HeroId
-	retval.MatchCount = v.HeroStatsFields.MatchCount
-	retval.PickCount = v.HeroStatsFields.PickCount
-	retval.WinCount = v.HeroStatsFields.WinCount
-	retval.BanCount = v.HeroStatsFields.BanCount
-	retval.PopulationMatchCount = v.HeroStatsFields.PopulationMatchCount
-	retval.RankDataAvailable = v.HeroStatsFields.RankDataAvailable
-	retval.Roles = v.HeroStatsFields.Roles
-	retval.Lanes = v.HeroStatsFields.Lanes
-	retval.Matchups = v.HeroStatsFields.Matchups
-	retval.Synergies = v.HeroStatsFields.Synergies
-	return &retval, nil
+// GetPeriod returns StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType.Period, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsDayHeroStatsHeroStatsQueryStatsHeroWinDayType) GetPeriod() int64 {
+	return v.Period
 }
 
 // StratzGetHeroStatsDayResponse is returned by StratzGetHeroStatsDay on success.
 type StratzGetHeroStatsDayResponse struct {
-	HeroStats *StratzGetHeroStatsDayHeroStatsHeroStatsType `json:"heroStats"`
+	HeroStats StratzGetHeroStatsDayHeroStatsHeroStatsQuery `json:"heroStats"`
 }
 
 // GetHeroStats returns StratzGetHeroStatsDayResponse.HeroStats, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsDayResponse) GetHeroStats() *StratzGetHeroStatsDayHeroStatsHeroStatsType {
+func (v *StratzGetHeroStatsDayResponse) GetHeroStats() StratzGetHeroStatsDayHeroStatsHeroStatsQuery {
 	return v.HeroStats
 }
 
-// StratzGetHeroStatsMonthHeroStatsHeroStatsType includes the requested fields of the GraphQL type HeroStatsType.
-type StratzGetHeroStatsMonthHeroStatsHeroStatsType struct {
-	HeroStatsFields `json:"-"`
+// StratzGetHeroStatsMonthHeroStatsHeroStatsQuery includes the requested fields of the GraphQL type HeroStatsQuery.
+type StratzGetHeroStatsMonthHeroStatsHeroStatsQuery struct {
+	Stats []StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType `json:"stats"`
 }
 
-// GetHeroId returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.HeroId, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetHeroId() int {
-	return v.HeroStatsFields.HeroId
+// GetStats returns StratzGetHeroStatsMonthHeroStatsHeroStatsQuery.Stats, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsQuery) GetStats() []StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType {
+	return v.Stats
 }
 
-// GetMatchCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.MatchCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetMatchCount() int {
-	return v.HeroStatsFields.MatchCount
+// StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType includes the requested fields of the GraphQL type HeroWinMonthType.
+type StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType struct {
+	HeroId     int   `json:"heroId"`
+	MatchCount int   `json:"matchCount"`
+	WinCount   int   `json:"winCount"`
+	Period     int64 `json:"period"`
 }
 
-// GetPickCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.PickCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetPickCount() int {
-	return v.HeroStatsFields.PickCount
+// GetHeroId returns StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType) GetHeroId() int {
+	return v.HeroId
 }
 
-// GetWinCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.WinCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetWinCount() int {
-	return v.HeroStatsFields.WinCount
+// GetMatchCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType.MatchCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType) GetMatchCount() int {
+	return v.MatchCount
 }
 
-// GetBanCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.BanCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetBanCount() int {
-	return v.HeroStatsFields.BanCount
+// GetWinCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType.WinCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType) GetWinCount() int {
+	return v.WinCount
 }
 
-// GetPopulationMatchCount returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.PopulationMatchCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetPopulationMatchCount() int {
-	return v.HeroStatsFields.PopulationMatchCount
-}
-
-// GetRankDataAvailable returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.RankDataAvailable, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetRankDataAvailable() *bool {
-	return v.HeroStatsFields.RankDataAvailable
-}
-
-// GetRoles returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.Roles, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetRoles() []HeroStatsFieldsRolesHeroStatsBreakdownType {
-	return v.HeroStatsFields.Roles
-}
-
-// GetLanes returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.Lanes, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetLanes() []HeroStatsFieldsLanesHeroStatsBreakdownType {
-	return v.HeroStatsFields.Lanes
-}
-
-// GetMatchups returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.Matchups, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetMatchups() []HeroStatsFieldsMatchupsHeroStatsRelationType {
-	return v.HeroStatsFields.Matchups
-}
-
-// GetSynergies returns StratzGetHeroStatsMonthHeroStatsHeroStatsType.Synergies, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) GetSynergies() []HeroStatsFieldsSynergiesHeroStatsRelationType {
-	return v.HeroStatsFields.Synergies
-}
-
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*StratzGetHeroStatsMonthHeroStatsHeroStatsType
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.StratzGetHeroStatsMonthHeroStatsHeroStatsType = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(
-		b, &v.HeroStatsFields)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type __premarshalStratzGetHeroStatsMonthHeroStatsHeroStatsType struct {
-	HeroId int `json:"heroId"`
-
-	MatchCount int `json:"matchCount"`
-
-	PickCount int `json:"pickCount"`
-
-	WinCount int `json:"winCount"`
-
-	BanCount int `json:"banCount"`
-
-	PopulationMatchCount int `json:"populationMatchCount"`
-
-	RankDataAvailable *bool `json:"rankDataAvailable"`
-
-	Roles []HeroStatsFieldsRolesHeroStatsBreakdownType `json:"roles"`
-
-	Lanes []HeroStatsFieldsLanesHeroStatsBreakdownType `json:"lanes"`
-
-	Matchups []HeroStatsFieldsMatchupsHeroStatsRelationType `json:"matchups"`
-
-	Synergies []HeroStatsFieldsSynergiesHeroStatsRelationType `json:"synergies"`
-}
-
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsType) __premarshalJSON() (*__premarshalStratzGetHeroStatsMonthHeroStatsHeroStatsType, error) {
-	var retval __premarshalStratzGetHeroStatsMonthHeroStatsHeroStatsType
-
-	retval.HeroId = v.HeroStatsFields.HeroId
-	retval.MatchCount = v.HeroStatsFields.MatchCount
-	retval.PickCount = v.HeroStatsFields.PickCount
-	retval.WinCount = v.HeroStatsFields.WinCount
-	retval.BanCount = v.HeroStatsFields.BanCount
-	retval.PopulationMatchCount = v.HeroStatsFields.PopulationMatchCount
-	retval.RankDataAvailable = v.HeroStatsFields.RankDataAvailable
-	retval.Roles = v.HeroStatsFields.Roles
-	retval.Lanes = v.HeroStatsFields.Lanes
-	retval.Matchups = v.HeroStatsFields.Matchups
-	retval.Synergies = v.HeroStatsFields.Synergies
-	return &retval, nil
+// GetPeriod returns StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType.Period, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsMonthHeroStatsHeroStatsQueryStatsHeroWinMonthType) GetPeriod() int64 {
+	return v.Period
 }
 
 // StratzGetHeroStatsMonthResponse is returned by StratzGetHeroStatsMonth on success.
 type StratzGetHeroStatsMonthResponse struct {
-	HeroStats *StratzGetHeroStatsMonthHeroStatsHeroStatsType `json:"heroStats"`
+	HeroStats StratzGetHeroStatsMonthHeroStatsHeroStatsQuery `json:"heroStats"`
 }
 
 // GetHeroStats returns StratzGetHeroStatsMonthResponse.HeroStats, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsMonthResponse) GetHeroStats() *StratzGetHeroStatsMonthHeroStatsHeroStatsType {
+func (v *StratzGetHeroStatsMonthResponse) GetHeroStats() StratzGetHeroStatsMonthHeroStatsHeroStatsQuery {
 	return v.HeroStats
 }
 
-// StratzGetHeroStatsWeekHeroStatsHeroStatsType includes the requested fields of the GraphQL type HeroStatsType.
-type StratzGetHeroStatsWeekHeroStatsHeroStatsType struct {
-	HeroStatsFields `json:"-"`
+// StratzGetHeroStatsWeekHeroStatsHeroStatsQuery includes the requested fields of the GraphQL type HeroStatsQuery.
+type StratzGetHeroStatsWeekHeroStatsHeroStatsQuery struct {
+	Stats []StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType `json:"stats"`
 }
 
-// GetHeroId returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.HeroId, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetHeroId() int {
-	return v.HeroStatsFields.HeroId
+// GetStats returns StratzGetHeroStatsWeekHeroStatsHeroStatsQuery.Stats, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsQuery) GetStats() []StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType {
+	return v.Stats
 }
 
-// GetMatchCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.MatchCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetMatchCount() int {
-	return v.HeroStatsFields.MatchCount
+// StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType includes the requested fields of the GraphQL type HeroWinWeekType.
+type StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType struct {
+	HeroId     int   `json:"heroId"`
+	MatchCount int   `json:"matchCount"`
+	WinCount   int   `json:"winCount"`
+	Period     int64 `json:"period"`
 }
 
-// GetPickCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.PickCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetPickCount() int {
-	return v.HeroStatsFields.PickCount
+// GetHeroId returns StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType) GetHeroId() int {
+	return v.HeroId
 }
 
-// GetWinCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.WinCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetWinCount() int {
-	return v.HeroStatsFields.WinCount
+// GetMatchCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType.MatchCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType) GetMatchCount() int {
+	return v.MatchCount
 }
 
-// GetBanCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.BanCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetBanCount() int {
-	return v.HeroStatsFields.BanCount
+// GetWinCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType.WinCount, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType) GetWinCount() int {
+	return v.WinCount
 }
 
-// GetPopulationMatchCount returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.PopulationMatchCount, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetPopulationMatchCount() int {
-	return v.HeroStatsFields.PopulationMatchCount
-}
-
-// GetRankDataAvailable returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.RankDataAvailable, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetRankDataAvailable() *bool {
-	return v.HeroStatsFields.RankDataAvailable
-}
-
-// GetRoles returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.Roles, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetRoles() []HeroStatsFieldsRolesHeroStatsBreakdownType {
-	return v.HeroStatsFields.Roles
-}
-
-// GetLanes returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.Lanes, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetLanes() []HeroStatsFieldsLanesHeroStatsBreakdownType {
-	return v.HeroStatsFields.Lanes
-}
-
-// GetMatchups returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.Matchups, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetMatchups() []HeroStatsFieldsMatchupsHeroStatsRelationType {
-	return v.HeroStatsFields.Matchups
-}
-
-// GetSynergies returns StratzGetHeroStatsWeekHeroStatsHeroStatsType.Synergies, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) GetSynergies() []HeroStatsFieldsSynergiesHeroStatsRelationType {
-	return v.HeroStatsFields.Synergies
-}
-
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*StratzGetHeroStatsWeekHeroStatsHeroStatsType
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.StratzGetHeroStatsWeekHeroStatsHeroStatsType = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(
-		b, &v.HeroStatsFields)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type __premarshalStratzGetHeroStatsWeekHeroStatsHeroStatsType struct {
-	HeroId int `json:"heroId"`
-
-	MatchCount int `json:"matchCount"`
-
-	PickCount int `json:"pickCount"`
-
-	WinCount int `json:"winCount"`
-
-	BanCount int `json:"banCount"`
-
-	PopulationMatchCount int `json:"populationMatchCount"`
-
-	RankDataAvailable *bool `json:"rankDataAvailable"`
-
-	Roles []HeroStatsFieldsRolesHeroStatsBreakdownType `json:"roles"`
-
-	Lanes []HeroStatsFieldsLanesHeroStatsBreakdownType `json:"lanes"`
-
-	Matchups []HeroStatsFieldsMatchupsHeroStatsRelationType `json:"matchups"`
-
-	Synergies []HeroStatsFieldsSynergiesHeroStatsRelationType `json:"synergies"`
-}
-
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsType) __premarshalJSON() (*__premarshalStratzGetHeroStatsWeekHeroStatsHeroStatsType, error) {
-	var retval __premarshalStratzGetHeroStatsWeekHeroStatsHeroStatsType
-
-	retval.HeroId = v.HeroStatsFields.HeroId
-	retval.MatchCount = v.HeroStatsFields.MatchCount
-	retval.PickCount = v.HeroStatsFields.PickCount
-	retval.WinCount = v.HeroStatsFields.WinCount
-	retval.BanCount = v.HeroStatsFields.BanCount
-	retval.PopulationMatchCount = v.HeroStatsFields.PopulationMatchCount
-	retval.RankDataAvailable = v.HeroStatsFields.RankDataAvailable
-	retval.Roles = v.HeroStatsFields.Roles
-	retval.Lanes = v.HeroStatsFields.Lanes
-	retval.Matchups = v.HeroStatsFields.Matchups
-	retval.Synergies = v.HeroStatsFields.Synergies
-	return &retval, nil
+// GetPeriod returns StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType.Period, and is useful for accessing the field via an interface.
+func (v *StratzGetHeroStatsWeekHeroStatsHeroStatsQueryStatsHeroWinWeekType) GetPeriod() int64 {
+	return v.Period
 }
 
 // StratzGetHeroStatsWeekResponse is returned by StratzGetHeroStatsWeek on success.
 type StratzGetHeroStatsWeekResponse struct {
-	HeroStats *StratzGetHeroStatsWeekHeroStatsHeroStatsType `json:"heroStats"`
+	HeroStats StratzGetHeroStatsWeekHeroStatsHeroStatsQuery `json:"heroStats"`
 }
 
 // GetHeroStats returns StratzGetHeroStatsWeekResponse.HeroStats, and is useful for accessing the field via an interface.
-func (v *StratzGetHeroStatsWeekResponse) GetHeroStats() *StratzGetHeroStatsWeekHeroStatsHeroStatsType {
+func (v *StratzGetHeroStatsWeekResponse) GetHeroStats() StratzGetHeroStatsWeekHeroStatsHeroStatsQuery {
 	return v.HeroStats
 }
 
@@ -2116,15 +1309,6 @@ func (v *StratzGetLeagueLeagueLeagueType) GetStartDateTime() *int64 {
 
 // GetEndDateTime returns StratzGetLeagueLeagueLeagueType.EndDateTime, and is useful for accessing the field via an interface.
 func (v *StratzGetLeagueLeagueLeagueType) GetEndDateTime() *int64 { return v.LeagueFields.EndDateTime }
-
-// GetIsFuture returns StratzGetLeagueLeagueLeagueType.IsFuture, and is useful for accessing the field via an interface.
-func (v *StratzGetLeagueLeagueLeagueType) GetIsFuture() *bool { return v.LeagueFields.IsFuture }
-
-// GetIsEnded returns StratzGetLeagueLeagueLeagueType.IsEnded, and is useful for accessing the field via an interface.
-func (v *StratzGetLeagueLeagueLeagueType) GetIsEnded() *bool { return v.LeagueFields.IsEnded }
-
-// GetIsLive returns StratzGetLeagueLeagueLeagueType.IsLive, and is useful for accessing the field via an interface.
-func (v *StratzGetLeagueLeagueLeagueType) GetIsLive() *bool { return v.LeagueFields.IsLive }
 
 func (v *StratzGetLeagueLeagueLeagueType) UnmarshalJSON(b []byte) error {
 
@@ -2165,12 +1349,6 @@ type __premarshalStratzGetLeagueLeagueLeagueType struct {
 	StartDateTime *int64 `json:"startDateTime"`
 
 	EndDateTime *int64 `json:"endDateTime"`
-
-	IsFuture *bool `json:"isFuture"`
-
-	IsEnded *bool `json:"isEnded"`
-
-	IsLive *bool `json:"isLive"`
 }
 
 func (v *StratzGetLeagueLeagueLeagueType) MarshalJSON() ([]byte, error) {
@@ -2191,9 +1369,6 @@ func (v *StratzGetLeagueLeagueLeagueType) __premarshalJSON() (*__premarshalStrat
 	retval.Tier = v.LeagueFields.Tier
 	retval.StartDateTime = v.LeagueFields.StartDateTime
 	retval.EndDateTime = v.LeagueFields.EndDateTime
-	retval.IsFuture = v.LeagueFields.IsFuture
-	retval.IsEnded = v.LeagueFields.IsEnded
-	retval.IsLive = v.LeagueFields.IsLive
 	return &retval, nil
 }
 
@@ -2205,34 +1380,3156 @@ type StratzGetLeagueResponse struct {
 // GetLeague returns StratzGetLeagueResponse.League, and is useful for accessing the field via an interface.
 func (v *StratzGetLeagueResponse) GetLeague() *StratzGetLeagueLeagueLeagueType { return v.League }
 
+// StratzGetMatchBatchFullMatch0MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchFullMatch0MatchType struct {
+	MatchFullFields `json:"-"`
+}
+
+// GetPlaybackData returns StratzGetMatchBatchFullMatch0MatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetPlaybackData() *MatchFullFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchFullFields.PlaybackData
+}
+
+// GetPlayers returns StratzGetMatchBatchFullMatch0MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
+	return v.MatchFullFields.MatchStandardFields.Players
+}
+
+// GetId returns StratzGetMatchBatchFullMatch0MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetId() int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzGetMatchBatchFullMatch0MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetStartDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchFullMatch0MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetDurationSeconds() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchFullMatch0MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetDidRadiantWin() *bool {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchFullMatch0MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetRadiantKills() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchFullMatch0MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetDireKills() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchFullMatch0MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetGameModeId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchFullMatch0MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetLobbyTypeId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchFullMatch0MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetRegionId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchFullMatch0MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetLeagueId() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchFullMatch0MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetGameVersionId() *string {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchFullMatch0MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetParsedDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchFullMatch0MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch0MatchType) GetStatsDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchFullMatch0MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchFullMatch0MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchFullMatch0MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchFullFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchFullMatch0MatchType struct {
+	PlaybackData *MatchFullFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
+
+	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchFullMatch0MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchFullMatch0MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchFullMatch0MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchFullMatch0MatchType
+
+	retval.PlaybackData = v.MatchFullFields.PlaybackData
+	retval.Players = v.MatchFullFields.MatchStandardFields.Players
+	retval.Id = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchFullMatch1MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchFullMatch1MatchType struct {
+	MatchFullFields `json:"-"`
+}
+
+// GetPlaybackData returns StratzGetMatchBatchFullMatch1MatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetPlaybackData() *MatchFullFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchFullFields.PlaybackData
+}
+
+// GetPlayers returns StratzGetMatchBatchFullMatch1MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
+	return v.MatchFullFields.MatchStandardFields.Players
+}
+
+// GetId returns StratzGetMatchBatchFullMatch1MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetId() int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzGetMatchBatchFullMatch1MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetStartDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchFullMatch1MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetDurationSeconds() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchFullMatch1MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetDidRadiantWin() *bool {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchFullMatch1MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetRadiantKills() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchFullMatch1MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetDireKills() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchFullMatch1MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetGameModeId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchFullMatch1MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetLobbyTypeId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchFullMatch1MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetRegionId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchFullMatch1MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetLeagueId() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchFullMatch1MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetGameVersionId() *string {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchFullMatch1MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetParsedDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchFullMatch1MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch1MatchType) GetStatsDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchFullMatch1MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchFullMatch1MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchFullMatch1MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchFullFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchFullMatch1MatchType struct {
+	PlaybackData *MatchFullFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
+
+	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchFullMatch1MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchFullMatch1MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchFullMatch1MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchFullMatch1MatchType
+
+	retval.PlaybackData = v.MatchFullFields.PlaybackData
+	retval.Players = v.MatchFullFields.MatchStandardFields.Players
+	retval.Id = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchFullMatch2MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchFullMatch2MatchType struct {
+	MatchFullFields `json:"-"`
+}
+
+// GetPlaybackData returns StratzGetMatchBatchFullMatch2MatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetPlaybackData() *MatchFullFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchFullFields.PlaybackData
+}
+
+// GetPlayers returns StratzGetMatchBatchFullMatch2MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
+	return v.MatchFullFields.MatchStandardFields.Players
+}
+
+// GetId returns StratzGetMatchBatchFullMatch2MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetId() int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzGetMatchBatchFullMatch2MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetStartDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchFullMatch2MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetDurationSeconds() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchFullMatch2MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetDidRadiantWin() *bool {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchFullMatch2MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetRadiantKills() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchFullMatch2MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetDireKills() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchFullMatch2MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetGameModeId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchFullMatch2MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetLobbyTypeId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchFullMatch2MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetRegionId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchFullMatch2MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetLeagueId() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchFullMatch2MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetGameVersionId() *string {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchFullMatch2MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetParsedDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchFullMatch2MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch2MatchType) GetStatsDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchFullMatch2MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchFullMatch2MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchFullMatch2MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchFullFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchFullMatch2MatchType struct {
+	PlaybackData *MatchFullFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
+
+	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchFullMatch2MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchFullMatch2MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchFullMatch2MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchFullMatch2MatchType
+
+	retval.PlaybackData = v.MatchFullFields.PlaybackData
+	retval.Players = v.MatchFullFields.MatchStandardFields.Players
+	retval.Id = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchFullMatch3MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchFullMatch3MatchType struct {
+	MatchFullFields `json:"-"`
+}
+
+// GetPlaybackData returns StratzGetMatchBatchFullMatch3MatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetPlaybackData() *MatchFullFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchFullFields.PlaybackData
+}
+
+// GetPlayers returns StratzGetMatchBatchFullMatch3MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
+	return v.MatchFullFields.MatchStandardFields.Players
+}
+
+// GetId returns StratzGetMatchBatchFullMatch3MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetId() int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzGetMatchBatchFullMatch3MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetStartDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchFullMatch3MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetDurationSeconds() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchFullMatch3MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetDidRadiantWin() *bool {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchFullMatch3MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetRadiantKills() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchFullMatch3MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetDireKills() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchFullMatch3MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetGameModeId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchFullMatch3MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetLobbyTypeId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchFullMatch3MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetRegionId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchFullMatch3MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetLeagueId() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchFullMatch3MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetGameVersionId() *string {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchFullMatch3MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetParsedDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchFullMatch3MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch3MatchType) GetStatsDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchFullMatch3MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchFullMatch3MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchFullMatch3MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchFullFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchFullMatch3MatchType struct {
+	PlaybackData *MatchFullFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
+
+	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchFullMatch3MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchFullMatch3MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchFullMatch3MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchFullMatch3MatchType
+
+	retval.PlaybackData = v.MatchFullFields.PlaybackData
+	retval.Players = v.MatchFullFields.MatchStandardFields.Players
+	retval.Id = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchFullMatch4MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchFullMatch4MatchType struct {
+	MatchFullFields `json:"-"`
+}
+
+// GetPlaybackData returns StratzGetMatchBatchFullMatch4MatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetPlaybackData() *MatchFullFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchFullFields.PlaybackData
+}
+
+// GetPlayers returns StratzGetMatchBatchFullMatch4MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
+	return v.MatchFullFields.MatchStandardFields.Players
+}
+
+// GetId returns StratzGetMatchBatchFullMatch4MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetId() int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzGetMatchBatchFullMatch4MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetStartDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchFullMatch4MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetDurationSeconds() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchFullMatch4MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetDidRadiantWin() *bool {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchFullMatch4MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetRadiantKills() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchFullMatch4MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetDireKills() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchFullMatch4MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetGameModeId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchFullMatch4MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetLobbyTypeId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchFullMatch4MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetRegionId() *int {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchFullMatch4MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetLeagueId() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchFullMatch4MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetGameVersionId() *string {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchFullMatch4MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetParsedDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchFullMatch4MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullMatch4MatchType) GetStatsDateTime() *int64 {
+	return v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchFullMatch4MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchFullMatch4MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchFullMatch4MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchFullFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchFullMatch4MatchType struct {
+	PlaybackData *MatchFullFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
+
+	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchFullMatch4MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchFullMatch4MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchFullMatch4MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchFullMatch4MatchType
+
+	retval.PlaybackData = v.MatchFullFields.PlaybackData
+	retval.Players = v.MatchFullFields.MatchStandardFields.Players
+	retval.Id = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchFullResponse is returned by StratzGetMatchBatchFull on success.
+type StratzGetMatchBatchFullResponse struct {
+	Match0 *StratzGetMatchBatchFullMatch0MatchType `json:"match0"`
+	Match1 *StratzGetMatchBatchFullMatch1MatchType `json:"match1"`
+	Match2 *StratzGetMatchBatchFullMatch2MatchType `json:"match2"`
+	Match3 *StratzGetMatchBatchFullMatch3MatchType `json:"match3"`
+	Match4 *StratzGetMatchBatchFullMatch4MatchType `json:"match4"`
+}
+
+// GetMatch0 returns StratzGetMatchBatchFullResponse.Match0, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullResponse) GetMatch0() *StratzGetMatchBatchFullMatch0MatchType {
+	return v.Match0
+}
+
+// GetMatch1 returns StratzGetMatchBatchFullResponse.Match1, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullResponse) GetMatch1() *StratzGetMatchBatchFullMatch1MatchType {
+	return v.Match1
+}
+
+// GetMatch2 returns StratzGetMatchBatchFullResponse.Match2, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullResponse) GetMatch2() *StratzGetMatchBatchFullMatch2MatchType {
+	return v.Match2
+}
+
+// GetMatch3 returns StratzGetMatchBatchFullResponse.Match3, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullResponse) GetMatch3() *StratzGetMatchBatchFullMatch3MatchType {
+	return v.Match3
+}
+
+// GetMatch4 returns StratzGetMatchBatchFullResponse.Match4, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchFullResponse) GetMatch4() *StratzGetMatchBatchFullMatch4MatchType {
+	return v.Match4
+}
+
+// StratzGetMatchBatchStandardMatch0MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchStandardMatch0MatchType struct {
+	MatchStandardFields `json:"-"`
+}
+
+// GetPlayers returns StratzGetMatchBatchStandardMatch0MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
+	return v.MatchStandardFields.Players
+}
+
+// GetPlaybackData returns StratzGetMatchBatchStandardMatch0MatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetPlaybackData() *MatchStandardFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchStandardFields.PlaybackData
+}
+
+// GetId returns StratzGetMatchBatchStandardMatch0MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetId() int64 {
+	return v.MatchStandardFields.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzGetMatchBatchStandardMatch0MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetStartDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchStandardMatch0MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetDurationSeconds() *int {
+	return v.MatchStandardFields.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchStandardMatch0MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetDidRadiantWin() *bool {
+	return v.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchStandardMatch0MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetRadiantKills() *int {
+	return v.MatchStandardFields.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchStandardMatch0MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetDireKills() *int {
+	return v.MatchStandardFields.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchStandardMatch0MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetGameModeId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchStandardMatch0MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetLobbyTypeId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchStandardMatch0MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetRegionId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchStandardMatch0MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetLeagueId() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchStandardMatch0MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetGameVersionId() *string {
+	return v.MatchStandardFields.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchStandardMatch0MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetParsedDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchStandardMatch0MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch0MatchType) GetStatsDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchStandardMatch0MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchStandardMatch0MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchStandardMatch0MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchStandardFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchStandardMatch0MatchType struct {
+	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
+
+	PlaybackData *MatchStandardFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchStandardMatch0MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchStandardMatch0MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchStandardMatch0MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchStandardMatch0MatchType
+
+	retval.Players = v.MatchStandardFields.Players
+	retval.PlaybackData = v.MatchStandardFields.PlaybackData
+	retval.Id = v.MatchStandardFields.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchStandardFields.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchStandardFields.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchStandardFields.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchStandardFields.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchStandardFields.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchStandardFields.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchStandardFields.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchStandardFields.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchStandardFields.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchStandardMatch1MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchStandardMatch1MatchType struct {
+	MatchStandardFields `json:"-"`
+}
+
+// GetPlayers returns StratzGetMatchBatchStandardMatch1MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
+	return v.MatchStandardFields.Players
+}
+
+// GetPlaybackData returns StratzGetMatchBatchStandardMatch1MatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetPlaybackData() *MatchStandardFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchStandardFields.PlaybackData
+}
+
+// GetId returns StratzGetMatchBatchStandardMatch1MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetId() int64 {
+	return v.MatchStandardFields.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzGetMatchBatchStandardMatch1MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetStartDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchStandardMatch1MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetDurationSeconds() *int {
+	return v.MatchStandardFields.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchStandardMatch1MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetDidRadiantWin() *bool {
+	return v.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchStandardMatch1MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetRadiantKills() *int {
+	return v.MatchStandardFields.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchStandardMatch1MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetDireKills() *int {
+	return v.MatchStandardFields.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchStandardMatch1MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetGameModeId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchStandardMatch1MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetLobbyTypeId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchStandardMatch1MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetRegionId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchStandardMatch1MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetLeagueId() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchStandardMatch1MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetGameVersionId() *string {
+	return v.MatchStandardFields.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchStandardMatch1MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetParsedDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchStandardMatch1MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch1MatchType) GetStatsDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchStandardMatch1MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchStandardMatch1MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchStandardMatch1MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchStandardFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchStandardMatch1MatchType struct {
+	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
+
+	PlaybackData *MatchStandardFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchStandardMatch1MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchStandardMatch1MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchStandardMatch1MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchStandardMatch1MatchType
+
+	retval.Players = v.MatchStandardFields.Players
+	retval.PlaybackData = v.MatchStandardFields.PlaybackData
+	retval.Id = v.MatchStandardFields.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchStandardFields.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchStandardFields.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchStandardFields.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchStandardFields.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchStandardFields.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchStandardFields.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchStandardFields.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchStandardFields.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchStandardFields.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchStandardMatch2MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchStandardMatch2MatchType struct {
+	MatchStandardFields `json:"-"`
+}
+
+// GetPlayers returns StratzGetMatchBatchStandardMatch2MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
+	return v.MatchStandardFields.Players
+}
+
+// GetPlaybackData returns StratzGetMatchBatchStandardMatch2MatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetPlaybackData() *MatchStandardFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchStandardFields.PlaybackData
+}
+
+// GetId returns StratzGetMatchBatchStandardMatch2MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetId() int64 {
+	return v.MatchStandardFields.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzGetMatchBatchStandardMatch2MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetStartDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchStandardMatch2MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetDurationSeconds() *int {
+	return v.MatchStandardFields.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchStandardMatch2MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetDidRadiantWin() *bool {
+	return v.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchStandardMatch2MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetRadiantKills() *int {
+	return v.MatchStandardFields.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchStandardMatch2MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetDireKills() *int {
+	return v.MatchStandardFields.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchStandardMatch2MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetGameModeId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchStandardMatch2MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetLobbyTypeId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchStandardMatch2MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetRegionId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchStandardMatch2MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetLeagueId() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchStandardMatch2MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetGameVersionId() *string {
+	return v.MatchStandardFields.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchStandardMatch2MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetParsedDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchStandardMatch2MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch2MatchType) GetStatsDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchStandardMatch2MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchStandardMatch2MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchStandardMatch2MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchStandardFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchStandardMatch2MatchType struct {
+	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
+
+	PlaybackData *MatchStandardFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchStandardMatch2MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchStandardMatch2MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchStandardMatch2MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchStandardMatch2MatchType
+
+	retval.Players = v.MatchStandardFields.Players
+	retval.PlaybackData = v.MatchStandardFields.PlaybackData
+	retval.Id = v.MatchStandardFields.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchStandardFields.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchStandardFields.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchStandardFields.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchStandardFields.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchStandardFields.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchStandardFields.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchStandardFields.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchStandardFields.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchStandardFields.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchStandardMatch3MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchStandardMatch3MatchType struct {
+	MatchStandardFields `json:"-"`
+}
+
+// GetPlayers returns StratzGetMatchBatchStandardMatch3MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
+	return v.MatchStandardFields.Players
+}
+
+// GetPlaybackData returns StratzGetMatchBatchStandardMatch3MatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetPlaybackData() *MatchStandardFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchStandardFields.PlaybackData
+}
+
+// GetId returns StratzGetMatchBatchStandardMatch3MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetId() int64 {
+	return v.MatchStandardFields.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzGetMatchBatchStandardMatch3MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetStartDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchStandardMatch3MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetDurationSeconds() *int {
+	return v.MatchStandardFields.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchStandardMatch3MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetDidRadiantWin() *bool {
+	return v.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchStandardMatch3MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetRadiantKills() *int {
+	return v.MatchStandardFields.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchStandardMatch3MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetDireKills() *int {
+	return v.MatchStandardFields.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchStandardMatch3MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetGameModeId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchStandardMatch3MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetLobbyTypeId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchStandardMatch3MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetRegionId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchStandardMatch3MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetLeagueId() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchStandardMatch3MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetGameVersionId() *string {
+	return v.MatchStandardFields.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchStandardMatch3MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetParsedDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchStandardMatch3MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch3MatchType) GetStatsDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchStandardMatch3MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchStandardMatch3MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchStandardMatch3MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchStandardFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchStandardMatch3MatchType struct {
+	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
+
+	PlaybackData *MatchStandardFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchStandardMatch3MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchStandardMatch3MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchStandardMatch3MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchStandardMatch3MatchType
+
+	retval.Players = v.MatchStandardFields.Players
+	retval.PlaybackData = v.MatchStandardFields.PlaybackData
+	retval.Id = v.MatchStandardFields.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchStandardFields.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchStandardFields.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchStandardFields.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchStandardFields.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchStandardFields.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchStandardFields.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchStandardFields.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchStandardFields.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchStandardFields.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchStandardMatch4MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchStandardMatch4MatchType struct {
+	MatchStandardFields `json:"-"`
+}
+
+// GetPlayers returns StratzGetMatchBatchStandardMatch4MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
+	return v.MatchStandardFields.Players
+}
+
+// GetPlaybackData returns StratzGetMatchBatchStandardMatch4MatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetPlaybackData() *MatchStandardFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchStandardFields.PlaybackData
+}
+
+// GetId returns StratzGetMatchBatchStandardMatch4MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetId() int64 {
+	return v.MatchStandardFields.MatchSummaryFields.Id
+}
+
+// GetStartDateTime returns StratzGetMatchBatchStandardMatch4MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetStartDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchStandardMatch4MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetDurationSeconds() *int {
+	return v.MatchStandardFields.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchStandardMatch4MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetDidRadiantWin() *bool {
+	return v.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchStandardMatch4MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetRadiantKills() *int {
+	return v.MatchStandardFields.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchStandardMatch4MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetDireKills() *int {
+	return v.MatchStandardFields.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchStandardMatch4MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetGameModeId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchStandardMatch4MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetLobbyTypeId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchStandardMatch4MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetRegionId() *int {
+	return v.MatchStandardFields.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchStandardMatch4MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetLeagueId() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchStandardMatch4MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetGameVersionId() *string {
+	return v.MatchStandardFields.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchStandardMatch4MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetParsedDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchStandardMatch4MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardMatch4MatchType) GetStatsDateTime() *int64 {
+	return v.MatchStandardFields.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchStandardMatch4MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchStandardMatch4MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchStandardMatch4MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchStandardFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchStandardMatch4MatchType struct {
+	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
+
+	PlaybackData *MatchStandardFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchStandardMatch4MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchStandardMatch4MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchStandardMatch4MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchStandardMatch4MatchType
+
+	retval.Players = v.MatchStandardFields.Players
+	retval.PlaybackData = v.MatchStandardFields.PlaybackData
+	retval.Id = v.MatchStandardFields.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchStandardFields.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchStandardFields.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchStandardFields.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchStandardFields.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchStandardFields.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchStandardFields.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchStandardFields.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchStandardFields.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchStandardFields.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchStandardFields.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchStandardFields.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchStandardFields.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchStandardResponse is returned by StratzGetMatchBatchStandard on success.
+type StratzGetMatchBatchStandardResponse struct {
+	Match0 *StratzGetMatchBatchStandardMatch0MatchType `json:"match0"`
+	Match1 *StratzGetMatchBatchStandardMatch1MatchType `json:"match1"`
+	Match2 *StratzGetMatchBatchStandardMatch2MatchType `json:"match2"`
+	Match3 *StratzGetMatchBatchStandardMatch3MatchType `json:"match3"`
+	Match4 *StratzGetMatchBatchStandardMatch4MatchType `json:"match4"`
+}
+
+// GetMatch0 returns StratzGetMatchBatchStandardResponse.Match0, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardResponse) GetMatch0() *StratzGetMatchBatchStandardMatch0MatchType {
+	return v.Match0
+}
+
+// GetMatch1 returns StratzGetMatchBatchStandardResponse.Match1, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardResponse) GetMatch1() *StratzGetMatchBatchStandardMatch1MatchType {
+	return v.Match1
+}
+
+// GetMatch2 returns StratzGetMatchBatchStandardResponse.Match2, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardResponse) GetMatch2() *StratzGetMatchBatchStandardMatch2MatchType {
+	return v.Match2
+}
+
+// GetMatch3 returns StratzGetMatchBatchStandardResponse.Match3, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardResponse) GetMatch3() *StratzGetMatchBatchStandardMatch3MatchType {
+	return v.Match3
+}
+
+// GetMatch4 returns StratzGetMatchBatchStandardResponse.Match4, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchStandardResponse) GetMatch4() *StratzGetMatchBatchStandardMatch4MatchType {
+	return v.Match4
+}
+
+// StratzGetMatchBatchSummaryMatch0MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchSummaryMatch0MatchType struct {
+	MatchSummaryFields `json:"-"`
+	Players            []StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType `json:"players"`
+}
+
+// GetPlayers returns StratzGetMatchBatchSummaryMatch0MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetPlayers() []StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType {
+	return v.Players
+}
+
+// GetId returns StratzGetMatchBatchSummaryMatch0MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetId() int64 { return v.MatchSummaryFields.Id }
+
+// GetStartDateTime returns StratzGetMatchBatchSummaryMatch0MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetStartDateTime() *int64 {
+	return v.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchSummaryMatch0MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetDurationSeconds() *int {
+	return v.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchSummaryMatch0MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetDidRadiantWin() *bool {
+	return v.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchSummaryMatch0MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetRadiantKills() *int {
+	return v.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchSummaryMatch0MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetDireKills() *int {
+	return v.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchSummaryMatch0MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetGameModeId() *int {
+	return v.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchSummaryMatch0MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetLobbyTypeId() *int {
+	return v.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchSummaryMatch0MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetRegionId() *int {
+	return v.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchSummaryMatch0MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetLeagueId() *int64 {
+	return v.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchSummaryMatch0MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetGameVersionId() *string {
+	return v.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchSummaryMatch0MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetParsedDateTime() *int64 {
+	return v.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchSummaryMatch0MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) GetStatsDateTime() *int64 {
+	return v.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchSummaryMatch0MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchSummaryMatch0MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchSummaryFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchSummaryMatch0MatchType struct {
+	Players []StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType `json:"players"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchSummaryMatch0MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchSummaryMatch0MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchSummaryMatch0MatchType
+
+	retval.Players = v.Players
+	retval.Id = v.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType includes the requested fields of the GraphQL type MatchPlayerType.
+type StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType struct {
+	MatchPlayerFields `json:"-"`
+}
+
+// GetSteamAccountId returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.SteamAccountId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetSteamAccountId() *int64 {
+	return v.MatchPlayerFields.SteamAccountId
+}
+
+// GetHeroId returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetHeroId() int {
+	return v.MatchPlayerFields.HeroId
+}
+
+// GetIsRadiant returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.IsRadiant, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetIsRadiant() bool {
+	return v.MatchPlayerFields.IsRadiant
+}
+
+// GetPlayerSlot returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.PlayerSlot, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetPlayerSlot() int {
+	return v.MatchPlayerFields.PlayerSlot
+}
+
+// GetKills returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetKills() int {
+	return v.MatchPlayerFields.Kills
+}
+
+// GetDeaths returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.Deaths, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetDeaths() int {
+	return v.MatchPlayerFields.Deaths
+}
+
+// GetAssists returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.Assists, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetAssists() int {
+	return v.MatchPlayerFields.Assists
+}
+
+// GetNetworth returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.Networth, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetNetworth() *int {
+	return v.MatchPlayerFields.Networth
+}
+
+// GetLevel returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.Level, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetLevel() *int {
+	return v.MatchPlayerFields.Level
+}
+
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchPlayerFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType struct {
+	SteamAccountId *int64 `json:"steamAccountId"`
+
+	HeroId int `json:"heroId"`
+
+	IsRadiant bool `json:"isRadiant"`
+
+	PlayerSlot int `json:"playerSlot"`
+
+	Kills int `json:"kills"`
+
+	Deaths int `json:"deaths"`
+
+	Assists int `json:"assists"`
+
+	Networth *int `json:"networth"`
+
+	Level *int `json:"level"`
+}
+
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) __premarshalJSON() (*__premarshalStratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType, error) {
+	var retval __premarshalStratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType
+
+	retval.SteamAccountId = v.MatchPlayerFields.SteamAccountId
+	retval.HeroId = v.MatchPlayerFields.HeroId
+	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
+	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Kills = v.MatchPlayerFields.Kills
+	retval.Deaths = v.MatchPlayerFields.Deaths
+	retval.Assists = v.MatchPlayerFields.Assists
+	retval.Networth = v.MatchPlayerFields.Networth
+	retval.Level = v.MatchPlayerFields.Level
+	return &retval, nil
+}
+
+// StratzGetMatchBatchSummaryMatch1MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchSummaryMatch1MatchType struct {
+	MatchSummaryFields `json:"-"`
+	Players            []StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType `json:"players"`
+}
+
+// GetPlayers returns StratzGetMatchBatchSummaryMatch1MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetPlayers() []StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType {
+	return v.Players
+}
+
+// GetId returns StratzGetMatchBatchSummaryMatch1MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetId() int64 { return v.MatchSummaryFields.Id }
+
+// GetStartDateTime returns StratzGetMatchBatchSummaryMatch1MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetStartDateTime() *int64 {
+	return v.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchSummaryMatch1MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetDurationSeconds() *int {
+	return v.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchSummaryMatch1MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetDidRadiantWin() *bool {
+	return v.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchSummaryMatch1MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetRadiantKills() *int {
+	return v.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchSummaryMatch1MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetDireKills() *int {
+	return v.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchSummaryMatch1MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetGameModeId() *int {
+	return v.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchSummaryMatch1MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetLobbyTypeId() *int {
+	return v.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchSummaryMatch1MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetRegionId() *int {
+	return v.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchSummaryMatch1MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetLeagueId() *int64 {
+	return v.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchSummaryMatch1MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetGameVersionId() *string {
+	return v.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchSummaryMatch1MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetParsedDateTime() *int64 {
+	return v.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchSummaryMatch1MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) GetStatsDateTime() *int64 {
+	return v.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchSummaryMatch1MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchSummaryMatch1MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchSummaryFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchSummaryMatch1MatchType struct {
+	Players []StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType `json:"players"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchSummaryMatch1MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchSummaryMatch1MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchSummaryMatch1MatchType
+
+	retval.Players = v.Players
+	retval.Id = v.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType includes the requested fields of the GraphQL type MatchPlayerType.
+type StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType struct {
+	MatchPlayerFields `json:"-"`
+}
+
+// GetSteamAccountId returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.SteamAccountId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetSteamAccountId() *int64 {
+	return v.MatchPlayerFields.SteamAccountId
+}
+
+// GetHeroId returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetHeroId() int {
+	return v.MatchPlayerFields.HeroId
+}
+
+// GetIsRadiant returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.IsRadiant, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetIsRadiant() bool {
+	return v.MatchPlayerFields.IsRadiant
+}
+
+// GetPlayerSlot returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.PlayerSlot, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetPlayerSlot() int {
+	return v.MatchPlayerFields.PlayerSlot
+}
+
+// GetKills returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetKills() int {
+	return v.MatchPlayerFields.Kills
+}
+
+// GetDeaths returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.Deaths, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetDeaths() int {
+	return v.MatchPlayerFields.Deaths
+}
+
+// GetAssists returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.Assists, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetAssists() int {
+	return v.MatchPlayerFields.Assists
+}
+
+// GetNetworth returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.Networth, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetNetworth() *int {
+	return v.MatchPlayerFields.Networth
+}
+
+// GetLevel returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.Level, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetLevel() *int {
+	return v.MatchPlayerFields.Level
+}
+
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchPlayerFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType struct {
+	SteamAccountId *int64 `json:"steamAccountId"`
+
+	HeroId int `json:"heroId"`
+
+	IsRadiant bool `json:"isRadiant"`
+
+	PlayerSlot int `json:"playerSlot"`
+
+	Kills int `json:"kills"`
+
+	Deaths int `json:"deaths"`
+
+	Assists int `json:"assists"`
+
+	Networth *int `json:"networth"`
+
+	Level *int `json:"level"`
+}
+
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) __premarshalJSON() (*__premarshalStratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType, error) {
+	var retval __premarshalStratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType
+
+	retval.SteamAccountId = v.MatchPlayerFields.SteamAccountId
+	retval.HeroId = v.MatchPlayerFields.HeroId
+	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
+	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Kills = v.MatchPlayerFields.Kills
+	retval.Deaths = v.MatchPlayerFields.Deaths
+	retval.Assists = v.MatchPlayerFields.Assists
+	retval.Networth = v.MatchPlayerFields.Networth
+	retval.Level = v.MatchPlayerFields.Level
+	return &retval, nil
+}
+
+// StratzGetMatchBatchSummaryMatch2MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchSummaryMatch2MatchType struct {
+	MatchSummaryFields `json:"-"`
+	Players            []StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType `json:"players"`
+}
+
+// GetPlayers returns StratzGetMatchBatchSummaryMatch2MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetPlayers() []StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType {
+	return v.Players
+}
+
+// GetId returns StratzGetMatchBatchSummaryMatch2MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetId() int64 { return v.MatchSummaryFields.Id }
+
+// GetStartDateTime returns StratzGetMatchBatchSummaryMatch2MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetStartDateTime() *int64 {
+	return v.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchSummaryMatch2MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetDurationSeconds() *int {
+	return v.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchSummaryMatch2MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetDidRadiantWin() *bool {
+	return v.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchSummaryMatch2MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetRadiantKills() *int {
+	return v.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchSummaryMatch2MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetDireKills() *int {
+	return v.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchSummaryMatch2MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetGameModeId() *int {
+	return v.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchSummaryMatch2MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetLobbyTypeId() *int {
+	return v.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchSummaryMatch2MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetRegionId() *int {
+	return v.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchSummaryMatch2MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetLeagueId() *int64 {
+	return v.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchSummaryMatch2MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetGameVersionId() *string {
+	return v.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchSummaryMatch2MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetParsedDateTime() *int64 {
+	return v.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchSummaryMatch2MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) GetStatsDateTime() *int64 {
+	return v.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchSummaryMatch2MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchSummaryMatch2MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchSummaryFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchSummaryMatch2MatchType struct {
+	Players []StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType `json:"players"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchSummaryMatch2MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchSummaryMatch2MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchSummaryMatch2MatchType
+
+	retval.Players = v.Players
+	retval.Id = v.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType includes the requested fields of the GraphQL type MatchPlayerType.
+type StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType struct {
+	MatchPlayerFields `json:"-"`
+}
+
+// GetSteamAccountId returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.SteamAccountId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetSteamAccountId() *int64 {
+	return v.MatchPlayerFields.SteamAccountId
+}
+
+// GetHeroId returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetHeroId() int {
+	return v.MatchPlayerFields.HeroId
+}
+
+// GetIsRadiant returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.IsRadiant, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetIsRadiant() bool {
+	return v.MatchPlayerFields.IsRadiant
+}
+
+// GetPlayerSlot returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.PlayerSlot, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetPlayerSlot() int {
+	return v.MatchPlayerFields.PlayerSlot
+}
+
+// GetKills returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetKills() int {
+	return v.MatchPlayerFields.Kills
+}
+
+// GetDeaths returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.Deaths, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetDeaths() int {
+	return v.MatchPlayerFields.Deaths
+}
+
+// GetAssists returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.Assists, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetAssists() int {
+	return v.MatchPlayerFields.Assists
+}
+
+// GetNetworth returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.Networth, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetNetworth() *int {
+	return v.MatchPlayerFields.Networth
+}
+
+// GetLevel returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.Level, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetLevel() *int {
+	return v.MatchPlayerFields.Level
+}
+
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchPlayerFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType struct {
+	SteamAccountId *int64 `json:"steamAccountId"`
+
+	HeroId int `json:"heroId"`
+
+	IsRadiant bool `json:"isRadiant"`
+
+	PlayerSlot int `json:"playerSlot"`
+
+	Kills int `json:"kills"`
+
+	Deaths int `json:"deaths"`
+
+	Assists int `json:"assists"`
+
+	Networth *int `json:"networth"`
+
+	Level *int `json:"level"`
+}
+
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) __premarshalJSON() (*__premarshalStratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType, error) {
+	var retval __premarshalStratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType
+
+	retval.SteamAccountId = v.MatchPlayerFields.SteamAccountId
+	retval.HeroId = v.MatchPlayerFields.HeroId
+	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
+	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Kills = v.MatchPlayerFields.Kills
+	retval.Deaths = v.MatchPlayerFields.Deaths
+	retval.Assists = v.MatchPlayerFields.Assists
+	retval.Networth = v.MatchPlayerFields.Networth
+	retval.Level = v.MatchPlayerFields.Level
+	return &retval, nil
+}
+
+// StratzGetMatchBatchSummaryMatch3MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchSummaryMatch3MatchType struct {
+	MatchSummaryFields `json:"-"`
+	Players            []StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType `json:"players"`
+}
+
+// GetPlayers returns StratzGetMatchBatchSummaryMatch3MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetPlayers() []StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType {
+	return v.Players
+}
+
+// GetId returns StratzGetMatchBatchSummaryMatch3MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetId() int64 { return v.MatchSummaryFields.Id }
+
+// GetStartDateTime returns StratzGetMatchBatchSummaryMatch3MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetStartDateTime() *int64 {
+	return v.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchSummaryMatch3MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetDurationSeconds() *int {
+	return v.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchSummaryMatch3MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetDidRadiantWin() *bool {
+	return v.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchSummaryMatch3MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetRadiantKills() *int {
+	return v.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchSummaryMatch3MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetDireKills() *int {
+	return v.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchSummaryMatch3MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetGameModeId() *int {
+	return v.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchSummaryMatch3MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetLobbyTypeId() *int {
+	return v.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchSummaryMatch3MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetRegionId() *int {
+	return v.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchSummaryMatch3MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetLeagueId() *int64 {
+	return v.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchSummaryMatch3MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetGameVersionId() *string {
+	return v.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchSummaryMatch3MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetParsedDateTime() *int64 {
+	return v.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchSummaryMatch3MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) GetStatsDateTime() *int64 {
+	return v.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchSummaryMatch3MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchSummaryMatch3MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchSummaryFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchSummaryMatch3MatchType struct {
+	Players []StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType `json:"players"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchSummaryMatch3MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchSummaryMatch3MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchSummaryMatch3MatchType
+
+	retval.Players = v.Players
+	retval.Id = v.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType includes the requested fields of the GraphQL type MatchPlayerType.
+type StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType struct {
+	MatchPlayerFields `json:"-"`
+}
+
+// GetSteamAccountId returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.SteamAccountId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetSteamAccountId() *int64 {
+	return v.MatchPlayerFields.SteamAccountId
+}
+
+// GetHeroId returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetHeroId() int {
+	return v.MatchPlayerFields.HeroId
+}
+
+// GetIsRadiant returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.IsRadiant, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetIsRadiant() bool {
+	return v.MatchPlayerFields.IsRadiant
+}
+
+// GetPlayerSlot returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.PlayerSlot, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetPlayerSlot() int {
+	return v.MatchPlayerFields.PlayerSlot
+}
+
+// GetKills returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetKills() int {
+	return v.MatchPlayerFields.Kills
+}
+
+// GetDeaths returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.Deaths, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetDeaths() int {
+	return v.MatchPlayerFields.Deaths
+}
+
+// GetAssists returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.Assists, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetAssists() int {
+	return v.MatchPlayerFields.Assists
+}
+
+// GetNetworth returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.Networth, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetNetworth() *int {
+	return v.MatchPlayerFields.Networth
+}
+
+// GetLevel returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.Level, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetLevel() *int {
+	return v.MatchPlayerFields.Level
+}
+
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchPlayerFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType struct {
+	SteamAccountId *int64 `json:"steamAccountId"`
+
+	HeroId int `json:"heroId"`
+
+	IsRadiant bool `json:"isRadiant"`
+
+	PlayerSlot int `json:"playerSlot"`
+
+	Kills int `json:"kills"`
+
+	Deaths int `json:"deaths"`
+
+	Assists int `json:"assists"`
+
+	Networth *int `json:"networth"`
+
+	Level *int `json:"level"`
+}
+
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) __premarshalJSON() (*__premarshalStratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType, error) {
+	var retval __premarshalStratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType
+
+	retval.SteamAccountId = v.MatchPlayerFields.SteamAccountId
+	retval.HeroId = v.MatchPlayerFields.HeroId
+	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
+	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Kills = v.MatchPlayerFields.Kills
+	retval.Deaths = v.MatchPlayerFields.Deaths
+	retval.Assists = v.MatchPlayerFields.Assists
+	retval.Networth = v.MatchPlayerFields.Networth
+	retval.Level = v.MatchPlayerFields.Level
+	return &retval, nil
+}
+
+// StratzGetMatchBatchSummaryMatch4MatchType includes the requested fields of the GraphQL type MatchType.
+type StratzGetMatchBatchSummaryMatch4MatchType struct {
+	MatchSummaryFields `json:"-"`
+	Players            []StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType `json:"players"`
+}
+
+// GetPlayers returns StratzGetMatchBatchSummaryMatch4MatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetPlayers() []StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType {
+	return v.Players
+}
+
+// GetId returns StratzGetMatchBatchSummaryMatch4MatchType.Id, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetId() int64 { return v.MatchSummaryFields.Id }
+
+// GetStartDateTime returns StratzGetMatchBatchSummaryMatch4MatchType.StartDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetStartDateTime() *int64 {
+	return v.MatchSummaryFields.StartDateTime
+}
+
+// GetDurationSeconds returns StratzGetMatchBatchSummaryMatch4MatchType.DurationSeconds, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetDurationSeconds() *int {
+	return v.MatchSummaryFields.DurationSeconds
+}
+
+// GetDidRadiantWin returns StratzGetMatchBatchSummaryMatch4MatchType.DidRadiantWin, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetDidRadiantWin() *bool {
+	return v.MatchSummaryFields.DidRadiantWin
+}
+
+// GetRadiantKills returns StratzGetMatchBatchSummaryMatch4MatchType.RadiantKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetRadiantKills() *int {
+	return v.MatchSummaryFields.RadiantKills
+}
+
+// GetDireKills returns StratzGetMatchBatchSummaryMatch4MatchType.DireKills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetDireKills() *int {
+	return v.MatchSummaryFields.DireKills
+}
+
+// GetGameModeId returns StratzGetMatchBatchSummaryMatch4MatchType.GameModeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetGameModeId() *int {
+	return v.MatchSummaryFields.GameModeId
+}
+
+// GetLobbyTypeId returns StratzGetMatchBatchSummaryMatch4MatchType.LobbyTypeId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetLobbyTypeId() *int {
+	return v.MatchSummaryFields.LobbyTypeId
+}
+
+// GetRegionId returns StratzGetMatchBatchSummaryMatch4MatchType.RegionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetRegionId() *int {
+	return v.MatchSummaryFields.RegionId
+}
+
+// GetLeagueId returns StratzGetMatchBatchSummaryMatch4MatchType.LeagueId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetLeagueId() *int64 {
+	return v.MatchSummaryFields.LeagueId
+}
+
+// GetGameVersionId returns StratzGetMatchBatchSummaryMatch4MatchType.GameVersionId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetGameVersionId() *string {
+	return v.MatchSummaryFields.GameVersionId
+}
+
+// GetParsedDateTime returns StratzGetMatchBatchSummaryMatch4MatchType.ParsedDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetParsedDateTime() *int64 {
+	return v.MatchSummaryFields.ParsedDateTime
+}
+
+// GetStatsDateTime returns StratzGetMatchBatchSummaryMatch4MatchType.StatsDateTime, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) GetStatsDateTime() *int64 {
+	return v.MatchSummaryFields.StatsDateTime
+}
+
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchSummaryMatch4MatchType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchSummaryMatch4MatchType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchSummaryFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchSummaryMatch4MatchType struct {
+	Players []StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType `json:"players"`
+
+	Id int64 `json:"id"`
+
+	StartDateTime *int64 `json:"startDateTime"`
+
+	DurationSeconds *int `json:"durationSeconds"`
+
+	DidRadiantWin *bool `json:"didRadiantWin"`
+
+	RadiantKills *int `json:"radiantKills"`
+
+	DireKills *int `json:"direKills"`
+
+	GameModeId *int `json:"gameModeId"`
+
+	LobbyTypeId *int `json:"lobbyTypeId"`
+
+	RegionId *int `json:"regionId"`
+
+	LeagueId *int64 `json:"leagueId"`
+
+	GameVersionId *string `json:"gameVersionId"`
+
+	ParsedDateTime *int64 `json:"parsedDateTime"`
+
+	StatsDateTime *int64 `json:"statsDateTime"`
+}
+
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchSummaryMatch4MatchType) __premarshalJSON() (*__premarshalStratzGetMatchBatchSummaryMatch4MatchType, error) {
+	var retval __premarshalStratzGetMatchBatchSummaryMatch4MatchType
+
+	retval.Players = v.Players
+	retval.Id = v.MatchSummaryFields.Id
+	retval.StartDateTime = v.MatchSummaryFields.StartDateTime
+	retval.DurationSeconds = v.MatchSummaryFields.DurationSeconds
+	retval.DidRadiantWin = v.MatchSummaryFields.DidRadiantWin
+	retval.RadiantKills = v.MatchSummaryFields.RadiantKills
+	retval.DireKills = v.MatchSummaryFields.DireKills
+	retval.GameModeId = v.MatchSummaryFields.GameModeId
+	retval.LobbyTypeId = v.MatchSummaryFields.LobbyTypeId
+	retval.RegionId = v.MatchSummaryFields.RegionId
+	retval.LeagueId = v.MatchSummaryFields.LeagueId
+	retval.GameVersionId = v.MatchSummaryFields.GameVersionId
+	retval.ParsedDateTime = v.MatchSummaryFields.ParsedDateTime
+	retval.StatsDateTime = v.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType includes the requested fields of the GraphQL type MatchPlayerType.
+type StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType struct {
+	MatchPlayerFields `json:"-"`
+}
+
+// GetSteamAccountId returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.SteamAccountId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetSteamAccountId() *int64 {
+	return v.MatchPlayerFields.SteamAccountId
+}
+
+// GetHeroId returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetHeroId() int {
+	return v.MatchPlayerFields.HeroId
+}
+
+// GetIsRadiant returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.IsRadiant, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetIsRadiant() bool {
+	return v.MatchPlayerFields.IsRadiant
+}
+
+// GetPlayerSlot returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.PlayerSlot, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetPlayerSlot() int {
+	return v.MatchPlayerFields.PlayerSlot
+}
+
+// GetKills returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetKills() int {
+	return v.MatchPlayerFields.Kills
+}
+
+// GetDeaths returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.Deaths, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetDeaths() int {
+	return v.MatchPlayerFields.Deaths
+}
+
+// GetAssists returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.Assists, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetAssists() int {
+	return v.MatchPlayerFields.Assists
+}
+
+// GetNetworth returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.Networth, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetNetworth() *int {
+	return v.MatchPlayerFields.Networth
+}
+
+// GetLevel returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.Level, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetLevel() *int {
+	return v.MatchPlayerFields.Level
+}
+
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchPlayerFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType struct {
+	SteamAccountId *int64 `json:"steamAccountId"`
+
+	HeroId int `json:"heroId"`
+
+	IsRadiant bool `json:"isRadiant"`
+
+	PlayerSlot int `json:"playerSlot"`
+
+	Kills int `json:"kills"`
+
+	Deaths int `json:"deaths"`
+
+	Assists int `json:"assists"`
+
+	Networth *int `json:"networth"`
+
+	Level *int `json:"level"`
+}
+
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) __premarshalJSON() (*__premarshalStratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType, error) {
+	var retval __premarshalStratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType
+
+	retval.SteamAccountId = v.MatchPlayerFields.SteamAccountId
+	retval.HeroId = v.MatchPlayerFields.HeroId
+	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
+	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Kills = v.MatchPlayerFields.Kills
+	retval.Deaths = v.MatchPlayerFields.Deaths
+	retval.Assists = v.MatchPlayerFields.Assists
+	retval.Networth = v.MatchPlayerFields.Networth
+	retval.Level = v.MatchPlayerFields.Level
+	return &retval, nil
+}
+
+// StratzGetMatchBatchSummaryResponse is returned by StratzGetMatchBatchSummary on success.
+type StratzGetMatchBatchSummaryResponse struct {
+	Match0 *StratzGetMatchBatchSummaryMatch0MatchType `json:"match0"`
+	Match1 *StratzGetMatchBatchSummaryMatch1MatchType `json:"match1"`
+	Match2 *StratzGetMatchBatchSummaryMatch2MatchType `json:"match2"`
+	Match3 *StratzGetMatchBatchSummaryMatch3MatchType `json:"match3"`
+	Match4 *StratzGetMatchBatchSummaryMatch4MatchType `json:"match4"`
+}
+
+// GetMatch0 returns StratzGetMatchBatchSummaryResponse.Match0, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryResponse) GetMatch0() *StratzGetMatchBatchSummaryMatch0MatchType {
+	return v.Match0
+}
+
+// GetMatch1 returns StratzGetMatchBatchSummaryResponse.Match1, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryResponse) GetMatch1() *StratzGetMatchBatchSummaryMatch1MatchType {
+	return v.Match1
+}
+
+// GetMatch2 returns StratzGetMatchBatchSummaryResponse.Match2, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryResponse) GetMatch2() *StratzGetMatchBatchSummaryMatch2MatchType {
+	return v.Match2
+}
+
+// GetMatch3 returns StratzGetMatchBatchSummaryResponse.Match3, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryResponse) GetMatch3() *StratzGetMatchBatchSummaryMatch3MatchType {
+	return v.Match3
+}
+
+// GetMatch4 returns StratzGetMatchBatchSummaryResponse.Match4, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryResponse) GetMatch4() *StratzGetMatchBatchSummaryMatch4MatchType {
+	return v.Match4
+}
+
 // StratzGetMatchFullMatchMatchType includes the requested fields of the GraphQL type MatchType.
 type StratzGetMatchFullMatchMatchType struct {
 	MatchFullFields `json:"-"`
 }
 
-// GetFights returns StratzGetMatchFullMatchMatchType.Fights, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchFullMatchMatchType) GetFights() []MatchFullFieldsFightsMatchFightType {
-	return v.MatchFullFields.Fights
-}
-
-// GetEconomy returns StratzGetMatchFullMatchMatchType.Economy, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchFullMatchMatchType) GetEconomy() []MatchFullFieldsEconomyMatchEconomyType {
-	return v.MatchFullFields.Economy
+// GetPlaybackData returns StratzGetMatchFullMatchMatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchFullMatchMatchType) GetPlaybackData() *MatchFullFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchFullFields.PlaybackData
 }
 
 // GetPlayers returns StratzGetMatchFullMatchMatchType.Players, and is useful for accessing the field via an interface.
 func (v *StratzGetMatchFullMatchMatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
 	return v.MatchFullFields.MatchStandardFields.Players
-}
-
-// GetObjectives returns StratzGetMatchFullMatchMatchType.Objectives, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchFullMatchMatchType) GetObjectives() []MatchStandardFieldsObjectivesMatchEventType {
-	return v.MatchFullFields.MatchStandardFields.Objectives
-}
-
-// GetTimeline returns StratzGetMatchFullMatchMatchType.Timeline, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchFullMatchMatchType) GetTimeline() []MatchStandardFieldsTimelineMatchEventType {
-	return v.MatchFullFields.MatchStandardFields.Timeline
 }
 
 // GetId returns StratzGetMatchFullMatchMatchType.Id, and is useful for accessing the field via an interface.
@@ -2326,15 +4623,9 @@ func (v *StratzGetMatchFullMatchMatchType) UnmarshalJSON(b []byte) error {
 }
 
 type __premarshalStratzGetMatchFullMatchMatchType struct {
-	Fights []MatchFullFieldsFightsMatchFightType `json:"fights"`
-
-	Economy []MatchFullFieldsEconomyMatchEconomyType `json:"economy"`
+	PlaybackData *MatchFullFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
 
 	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
-
-	Objectives []MatchStandardFieldsObjectivesMatchEventType `json:"objectives"`
-
-	Timeline []MatchStandardFieldsTimelineMatchEventType `json:"timeline"`
 
 	Id int64 `json:"id"`
 
@@ -2374,11 +4665,8 @@ func (v *StratzGetMatchFullMatchMatchType) MarshalJSON() ([]byte, error) {
 func (v *StratzGetMatchFullMatchMatchType) __premarshalJSON() (*__premarshalStratzGetMatchFullMatchMatchType, error) {
 	var retval __premarshalStratzGetMatchFullMatchMatchType
 
-	retval.Fights = v.MatchFullFields.Fights
-	retval.Economy = v.MatchFullFields.Economy
+	retval.PlaybackData = v.MatchFullFields.PlaybackData
 	retval.Players = v.MatchFullFields.MatchStandardFields.Players
-	retval.Objectives = v.MatchFullFields.MatchStandardFields.Objectives
-	retval.Timeline = v.MatchFullFields.MatchStandardFields.Timeline
 	retval.Id = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
 	retval.StartDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
 	retval.DurationSeconds = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
@@ -2413,14 +4701,9 @@ func (v *StratzGetMatchStandardMatchMatchType) GetPlayers() []MatchStandardField
 	return v.MatchStandardFields.Players
 }
 
-// GetObjectives returns StratzGetMatchStandardMatchMatchType.Objectives, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchStandardMatchMatchType) GetObjectives() []MatchStandardFieldsObjectivesMatchEventType {
-	return v.MatchStandardFields.Objectives
-}
-
-// GetTimeline returns StratzGetMatchStandardMatchMatchType.Timeline, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchStandardMatchMatchType) GetTimeline() []MatchStandardFieldsTimelineMatchEventType {
-	return v.MatchStandardFields.Timeline
+// GetPlaybackData returns StratzGetMatchStandardMatchMatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchStandardMatchMatchType) GetPlaybackData() *MatchStandardFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchStandardFields.PlaybackData
 }
 
 // GetId returns StratzGetMatchStandardMatchMatchType.Id, and is useful for accessing the field via an interface.
@@ -2516,9 +4799,7 @@ func (v *StratzGetMatchStandardMatchMatchType) UnmarshalJSON(b []byte) error {
 type __premarshalStratzGetMatchStandardMatchMatchType struct {
 	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
 
-	Objectives []MatchStandardFieldsObjectivesMatchEventType `json:"objectives"`
-
-	Timeline []MatchStandardFieldsTimelineMatchEventType `json:"timeline"`
+	PlaybackData *MatchStandardFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
 
 	Id int64 `json:"id"`
 
@@ -2559,8 +4840,7 @@ func (v *StratzGetMatchStandardMatchMatchType) __premarshalJSON() (*__premarshal
 	var retval __premarshalStratzGetMatchStandardMatchMatchType
 
 	retval.Players = v.MatchStandardFields.Players
-	retval.Objectives = v.MatchStandardFields.Objectives
-	retval.Timeline = v.MatchStandardFields.Timeline
+	retval.PlaybackData = v.MatchStandardFields.PlaybackData
 	retval.Id = v.MatchStandardFields.MatchSummaryFields.Id
 	retval.StartDateTime = v.MatchStandardFields.MatchSummaryFields.StartDateTime
 	retval.DurationSeconds = v.MatchStandardFields.MatchSummaryFields.DurationSeconds
@@ -2877,29 +5157,14 @@ type StratzGetMatchesFullMatchesMatchType struct {
 	MatchFullFields `json:"-"`
 }
 
-// GetFights returns StratzGetMatchesFullMatchesMatchType.Fights, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchesFullMatchesMatchType) GetFights() []MatchFullFieldsFightsMatchFightType {
-	return v.MatchFullFields.Fights
-}
-
-// GetEconomy returns StratzGetMatchesFullMatchesMatchType.Economy, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchesFullMatchesMatchType) GetEconomy() []MatchFullFieldsEconomyMatchEconomyType {
-	return v.MatchFullFields.Economy
+// GetPlaybackData returns StratzGetMatchesFullMatchesMatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchesFullMatchesMatchType) GetPlaybackData() *MatchFullFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchFullFields.PlaybackData
 }
 
 // GetPlayers returns StratzGetMatchesFullMatchesMatchType.Players, and is useful for accessing the field via an interface.
 func (v *StratzGetMatchesFullMatchesMatchType) GetPlayers() []MatchStandardFieldsPlayersMatchPlayerType {
 	return v.MatchFullFields.MatchStandardFields.Players
-}
-
-// GetObjectives returns StratzGetMatchesFullMatchesMatchType.Objectives, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchesFullMatchesMatchType) GetObjectives() []MatchStandardFieldsObjectivesMatchEventType {
-	return v.MatchFullFields.MatchStandardFields.Objectives
-}
-
-// GetTimeline returns StratzGetMatchesFullMatchesMatchType.Timeline, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchesFullMatchesMatchType) GetTimeline() []MatchStandardFieldsTimelineMatchEventType {
-	return v.MatchFullFields.MatchStandardFields.Timeline
 }
 
 // GetId returns StratzGetMatchesFullMatchesMatchType.Id, and is useful for accessing the field via an interface.
@@ -2993,15 +5258,9 @@ func (v *StratzGetMatchesFullMatchesMatchType) UnmarshalJSON(b []byte) error {
 }
 
 type __premarshalStratzGetMatchesFullMatchesMatchType struct {
-	Fights []MatchFullFieldsFightsMatchFightType `json:"fights"`
-
-	Economy []MatchFullFieldsEconomyMatchEconomyType `json:"economy"`
+	PlaybackData *MatchFullFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
 
 	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
-
-	Objectives []MatchStandardFieldsObjectivesMatchEventType `json:"objectives"`
-
-	Timeline []MatchStandardFieldsTimelineMatchEventType `json:"timeline"`
 
 	Id int64 `json:"id"`
 
@@ -3041,11 +5300,8 @@ func (v *StratzGetMatchesFullMatchesMatchType) MarshalJSON() ([]byte, error) {
 func (v *StratzGetMatchesFullMatchesMatchType) __premarshalJSON() (*__premarshalStratzGetMatchesFullMatchesMatchType, error) {
 	var retval __premarshalStratzGetMatchesFullMatchesMatchType
 
-	retval.Fights = v.MatchFullFields.Fights
-	retval.Economy = v.MatchFullFields.Economy
+	retval.PlaybackData = v.MatchFullFields.PlaybackData
 	retval.Players = v.MatchFullFields.MatchStandardFields.Players
-	retval.Objectives = v.MatchFullFields.MatchStandardFields.Objectives
-	retval.Timeline = v.MatchFullFields.MatchStandardFields.Timeline
 	retval.Id = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.Id
 	retval.StartDateTime = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.StartDateTime
 	retval.DurationSeconds = v.MatchFullFields.MatchStandardFields.MatchSummaryFields.DurationSeconds
@@ -3082,14 +5338,9 @@ func (v *StratzGetMatchesStandardMatchesMatchType) GetPlayers() []MatchStandardF
 	return v.MatchStandardFields.Players
 }
 
-// GetObjectives returns StratzGetMatchesStandardMatchesMatchType.Objectives, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchesStandardMatchesMatchType) GetObjectives() []MatchStandardFieldsObjectivesMatchEventType {
-	return v.MatchStandardFields.Objectives
-}
-
-// GetTimeline returns StratzGetMatchesStandardMatchesMatchType.Timeline, and is useful for accessing the field via an interface.
-func (v *StratzGetMatchesStandardMatchesMatchType) GetTimeline() []MatchStandardFieldsTimelineMatchEventType {
-	return v.MatchStandardFields.Timeline
+// GetPlaybackData returns StratzGetMatchesStandardMatchesMatchType.PlaybackData, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchesStandardMatchesMatchType) GetPlaybackData() *MatchStandardFieldsPlaybackDataMatchPlaybackDataType {
+	return v.MatchStandardFields.PlaybackData
 }
 
 // GetId returns StratzGetMatchesStandardMatchesMatchType.Id, and is useful for accessing the field via an interface.
@@ -3185,9 +5436,7 @@ func (v *StratzGetMatchesStandardMatchesMatchType) UnmarshalJSON(b []byte) error
 type __premarshalStratzGetMatchesStandardMatchesMatchType struct {
 	Players []MatchStandardFieldsPlayersMatchPlayerType `json:"players"`
 
-	Objectives []MatchStandardFieldsObjectivesMatchEventType `json:"objectives"`
-
-	Timeline []MatchStandardFieldsTimelineMatchEventType `json:"timeline"`
+	PlaybackData *MatchStandardFieldsPlaybackDataMatchPlaybackDataType `json:"playbackData"`
 
 	Id int64 `json:"id"`
 
@@ -3228,8 +5477,7 @@ func (v *StratzGetMatchesStandardMatchesMatchType) __premarshalJSON() (*__premar
 	var retval __premarshalStratzGetMatchesStandardMatchesMatchType
 
 	retval.Players = v.MatchStandardFields.Players
-	retval.Objectives = v.MatchStandardFields.Objectives
-	retval.Timeline = v.MatchStandardFields.Timeline
+	retval.PlaybackData = v.MatchStandardFields.PlaybackData
 	retval.Id = v.MatchStandardFields.MatchSummaryFields.Id
 	retval.StartDateTime = v.MatchStandardFields.MatchSummaryFields.StartDateTime
 	retval.DurationSeconds = v.MatchStandardFields.MatchSummaryFields.DurationSeconds
@@ -3959,15 +6207,6 @@ func (v *StratzListLeaguesLeaguesLeagueType) GetEndDateTime() *int64 {
 	return v.LeagueFields.EndDateTime
 }
 
-// GetIsFuture returns StratzListLeaguesLeaguesLeagueType.IsFuture, and is useful for accessing the field via an interface.
-func (v *StratzListLeaguesLeaguesLeagueType) GetIsFuture() *bool { return v.LeagueFields.IsFuture }
-
-// GetIsEnded returns StratzListLeaguesLeaguesLeagueType.IsEnded, and is useful for accessing the field via an interface.
-func (v *StratzListLeaguesLeaguesLeagueType) GetIsEnded() *bool { return v.LeagueFields.IsEnded }
-
-// GetIsLive returns StratzListLeaguesLeaguesLeagueType.IsLive, and is useful for accessing the field via an interface.
-func (v *StratzListLeaguesLeaguesLeagueType) GetIsLive() *bool { return v.LeagueFields.IsLive }
-
 func (v *StratzListLeaguesLeaguesLeagueType) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -4007,12 +6246,6 @@ type __premarshalStratzListLeaguesLeaguesLeagueType struct {
 	StartDateTime *int64 `json:"startDateTime"`
 
 	EndDateTime *int64 `json:"endDateTime"`
-
-	IsFuture *bool `json:"isFuture"`
-
-	IsEnded *bool `json:"isEnded"`
-
-	IsLive *bool `json:"isLive"`
 }
 
 func (v *StratzListLeaguesLeaguesLeagueType) MarshalJSON() ([]byte, error) {
@@ -4033,9 +6266,6 @@ func (v *StratzListLeaguesLeaguesLeagueType) __premarshalJSON() (*__premarshalSt
 	retval.Tier = v.LeagueFields.Tier
 	retval.StartDateTime = v.LeagueFields.StartDateTime
 	retval.EndDateTime = v.LeagueFields.EndDateTime
-	retval.IsFuture = v.LeagueFields.IsFuture
-	retval.IsEnded = v.LeagueFields.IsEnded
-	retval.IsLive = v.LeagueFields.IsLive
 	return &retval, nil
 }
 
@@ -4061,17 +6291,15 @@ func (v *StratzListLiveMatchesLiveLiveQuery) GetMatches() []StratzListLiveMatche
 
 // StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType includes the requested fields of the GraphQL type MatchLiveType.
 type StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType struct {
-	Id              int64                                                                              `json:"id"`
-	StartDateTime   *int64                                                                             `json:"startDateTime"`
-	GameTime        *int                                                                               `json:"gameTime"`
-	GameModeId      *int                                                                               `json:"gameModeId"`
-	SpectatorCount  *int                                                                               `json:"spectatorCount"`
-	RadiantTeamId   *int                                                                               `json:"radiantTeamId"`
-	DireTeamId      *int                                                                               `json:"direTeamId"`
-	RadiantTeamName *string                                                                            `json:"radiantTeamName"`
-	DireTeamName    *string                                                                            `json:"direTeamName"`
-	League          *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType            `json:"league"`
-	Players         []StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType `json:"players"`
+	Id             int64                                                                              `json:"id"`
+	StartDateTime  *int64                                                                             `json:"startDateTime"`
+	GameTime       *int                                                                               `json:"gameTime"`
+	GameModeId     *int                                                                               `json:"gameModeId"`
+	SpectatorCount *int                                                                               `json:"spectatorCount"`
+	RadiantTeamId  *int                                                                               `json:"radiantTeamId"`
+	DireTeamId     *int                                                                               `json:"direTeamId"`
+	League         *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType            `json:"league"`
+	Players        []StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType `json:"players"`
 }
 
 // GetId returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.Id, and is useful for accessing the field via an interface.
@@ -4105,16 +6333,6 @@ func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetRadiantTeamI
 // GetDireTeamId returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.DireTeamId, and is useful for accessing the field via an interface.
 func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetDireTeamId() *int {
 	return v.DireTeamId
-}
-
-// GetRadiantTeamName returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.RadiantTeamName, and is useful for accessing the field via an interface.
-func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetRadiantTeamName() *string {
-	return v.RadiantTeamName
-}
-
-// GetDireTeamName returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.DireTeamName, and is useful for accessing the field via an interface.
-func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType) GetDireTeamName() *string {
-	return v.DireTeamName
 }
 
 // GetLeague returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveType.League, and is useful for accessing the field via an interface.
@@ -4167,21 +6385,6 @@ func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType)
 	return v.LeagueFields.EndDateTime
 }
 
-// GetIsFuture returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.IsFuture, and is useful for accessing the field via an interface.
-func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetIsFuture() *bool {
-	return v.LeagueFields.IsFuture
-}
-
-// GetIsEnded returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.IsEnded, and is useful for accessing the field via an interface.
-func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetIsEnded() *bool {
-	return v.LeagueFields.IsEnded
-}
-
-// GetIsLive returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType.IsLive, and is useful for accessing the field via an interface.
-func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) GetIsLive() *bool {
-	return v.LeagueFields.IsLive
-}
-
 func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -4221,12 +6424,6 @@ type __premarshalStratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLea
 	StartDateTime *int64 `json:"startDateTime"`
 
 	EndDateTime *int64 `json:"endDateTime"`
-
-	IsFuture *bool `json:"isFuture"`
-
-	IsEnded *bool `json:"isEnded"`
-
-	IsLive *bool `json:"isLive"`
 }
 
 func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType) MarshalJSON() ([]byte, error) {
@@ -4247,9 +6444,6 @@ func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypeLeagueLeagueType)
 	retval.Tier = v.LeagueFields.Tier
 	retval.StartDateTime = v.LeagueFields.StartDateTime
 	retval.EndDateTime = v.LeagueFields.EndDateTime
-	retval.IsFuture = v.LeagueFields.IsFuture
-	retval.IsEnded = v.LeagueFields.IsEnded
-	retval.IsLive = v.LeagueFields.IsLive
 	return &retval, nil
 }
 
@@ -4259,9 +6453,9 @@ type StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlaye
 	HeroId         int    `json:"heroId"`
 	IsRadiant      bool   `json:"isRadiant"`
 	PlayerSlot     int    `json:"playerSlot"`
-	Kills          int    `json:"kills"`
-	Deaths         int    `json:"deaths"`
-	Assists        int    `json:"assists"`
+	Kills          *int   `json:"kills"`
+	Deaths         *int   `json:"deaths"`
+	Assists        *int   `json:"assists"`
 	Networth       *int   `json:"networth"`
 	Level          *int   `json:"level"`
 }
@@ -4287,17 +6481,17 @@ func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLiveP
 }
 
 // GetKills returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.Kills, and is useful for accessing the field via an interface.
-func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetKills() int {
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetKills() *int {
 	return v.Kills
 }
 
 // GetDeaths returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.Deaths, and is useful for accessing the field via an interface.
-func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetDeaths() int {
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetDeaths() *int {
 	return v.Deaths
 }
 
 // GetAssists returns StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType.Assists, and is useful for accessing the field via an interface.
-func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetAssists() int {
+func (v *StratzListLiveMatchesLiveLiveQueryMatchesMatchLiveTypePlayersMatchLivePlayerType) GetAssists() *int {
 	return v.Assists
 }
 
@@ -4503,27 +6697,57 @@ func (v *StratzSchemaProbeResponse) GetTypename() *string { return v.Typename }
 
 // __StratzGetHeroStatsDayInput is used internally by genqlient
 type __StratzGetHeroStatsDayInput struct {
-	Request HeroStatsRequestType `json:"request"`
+	HeroIds     []int                     `json:"heroIds"`
+	BracketIds  []RankBracket             `json:"bracketIds"`
+	PositionIds []MatchPlayerPositionType `json:"positionIds"`
 }
 
-// GetRequest returns __StratzGetHeroStatsDayInput.Request, and is useful for accessing the field via an interface.
-func (v *__StratzGetHeroStatsDayInput) GetRequest() HeroStatsRequestType { return v.Request }
+// GetHeroIds returns __StratzGetHeroStatsDayInput.HeroIds, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsDayInput) GetHeroIds() []int { return v.HeroIds }
+
+// GetBracketIds returns __StratzGetHeroStatsDayInput.BracketIds, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsDayInput) GetBracketIds() []RankBracket { return v.BracketIds }
+
+// GetPositionIds returns __StratzGetHeroStatsDayInput.PositionIds, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsDayInput) GetPositionIds() []MatchPlayerPositionType {
+	return v.PositionIds
+}
 
 // __StratzGetHeroStatsMonthInput is used internally by genqlient
 type __StratzGetHeroStatsMonthInput struct {
-	Request HeroStatsRequestType `json:"request"`
+	HeroIds     []int                     `json:"heroIds"`
+	BracketIds  []RankBracket             `json:"bracketIds"`
+	PositionIds []MatchPlayerPositionType `json:"positionIds"`
 }
 
-// GetRequest returns __StratzGetHeroStatsMonthInput.Request, and is useful for accessing the field via an interface.
-func (v *__StratzGetHeroStatsMonthInput) GetRequest() HeroStatsRequestType { return v.Request }
+// GetHeroIds returns __StratzGetHeroStatsMonthInput.HeroIds, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsMonthInput) GetHeroIds() []int { return v.HeroIds }
+
+// GetBracketIds returns __StratzGetHeroStatsMonthInput.BracketIds, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsMonthInput) GetBracketIds() []RankBracket { return v.BracketIds }
+
+// GetPositionIds returns __StratzGetHeroStatsMonthInput.PositionIds, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsMonthInput) GetPositionIds() []MatchPlayerPositionType {
+	return v.PositionIds
+}
 
 // __StratzGetHeroStatsWeekInput is used internally by genqlient
 type __StratzGetHeroStatsWeekInput struct {
-	Request HeroStatsRequestType `json:"request"`
+	HeroIds     []int                     `json:"heroIds"`
+	BracketIds  []RankBracket             `json:"bracketIds"`
+	PositionIds []MatchPlayerPositionType `json:"positionIds"`
 }
 
-// GetRequest returns __StratzGetHeroStatsWeekInput.Request, and is useful for accessing the field via an interface.
-func (v *__StratzGetHeroStatsWeekInput) GetRequest() HeroStatsRequestType { return v.Request }
+// GetHeroIds returns __StratzGetHeroStatsWeekInput.HeroIds, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsWeekInput) GetHeroIds() []int { return v.HeroIds }
+
+// GetBracketIds returns __StratzGetHeroStatsWeekInput.BracketIds, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsWeekInput) GetBracketIds() []RankBracket { return v.BracketIds }
+
+// GetPositionIds returns __StratzGetHeroStatsWeekInput.PositionIds, and is useful for accessing the field via an interface.
+func (v *__StratzGetHeroStatsWeekInput) GetPositionIds() []MatchPlayerPositionType {
+	return v.PositionIds
+}
 
 // __StratzGetLeagueInput is used internally by genqlient
 type __StratzGetLeagueInput struct {
@@ -4532,6 +6756,78 @@ type __StratzGetLeagueInput struct {
 
 // GetId returns __StratzGetLeagueInput.Id, and is useful for accessing the field via an interface.
 func (v *__StratzGetLeagueInput) GetId() int { return v.Id }
+
+// __StratzGetMatchBatchFullInput is used internally by genqlient
+type __StratzGetMatchBatchFullInput struct {
+	Id0 int64 `json:"id0"`
+	Id1 int64 `json:"id1"`
+	Id2 int64 `json:"id2"`
+	Id3 int64 `json:"id3"`
+	Id4 int64 `json:"id4"`
+}
+
+// GetId0 returns __StratzGetMatchBatchFullInput.Id0, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchFullInput) GetId0() int64 { return v.Id0 }
+
+// GetId1 returns __StratzGetMatchBatchFullInput.Id1, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchFullInput) GetId1() int64 { return v.Id1 }
+
+// GetId2 returns __StratzGetMatchBatchFullInput.Id2, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchFullInput) GetId2() int64 { return v.Id2 }
+
+// GetId3 returns __StratzGetMatchBatchFullInput.Id3, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchFullInput) GetId3() int64 { return v.Id3 }
+
+// GetId4 returns __StratzGetMatchBatchFullInput.Id4, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchFullInput) GetId4() int64 { return v.Id4 }
+
+// __StratzGetMatchBatchStandardInput is used internally by genqlient
+type __StratzGetMatchBatchStandardInput struct {
+	Id0 int64 `json:"id0"`
+	Id1 int64 `json:"id1"`
+	Id2 int64 `json:"id2"`
+	Id3 int64 `json:"id3"`
+	Id4 int64 `json:"id4"`
+}
+
+// GetId0 returns __StratzGetMatchBatchStandardInput.Id0, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchStandardInput) GetId0() int64 { return v.Id0 }
+
+// GetId1 returns __StratzGetMatchBatchStandardInput.Id1, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchStandardInput) GetId1() int64 { return v.Id1 }
+
+// GetId2 returns __StratzGetMatchBatchStandardInput.Id2, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchStandardInput) GetId2() int64 { return v.Id2 }
+
+// GetId3 returns __StratzGetMatchBatchStandardInput.Id3, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchStandardInput) GetId3() int64 { return v.Id3 }
+
+// GetId4 returns __StratzGetMatchBatchStandardInput.Id4, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchStandardInput) GetId4() int64 { return v.Id4 }
+
+// __StratzGetMatchBatchSummaryInput is used internally by genqlient
+type __StratzGetMatchBatchSummaryInput struct {
+	Id0 int64 `json:"id0"`
+	Id1 int64 `json:"id1"`
+	Id2 int64 `json:"id2"`
+	Id3 int64 `json:"id3"`
+	Id4 int64 `json:"id4"`
+}
+
+// GetId0 returns __StratzGetMatchBatchSummaryInput.Id0, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchSummaryInput) GetId0() int64 { return v.Id0 }
+
+// GetId1 returns __StratzGetMatchBatchSummaryInput.Id1, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchSummaryInput) GetId1() int64 { return v.Id1 }
+
+// GetId2 returns __StratzGetMatchBatchSummaryInput.Id2, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchSummaryInput) GetId2() int64 { return v.Id2 }
+
+// GetId3 returns __StratzGetMatchBatchSummaryInput.Id3, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchSummaryInput) GetId3() int64 { return v.Id3 }
+
+// GetId4 returns __StratzGetMatchBatchSummaryInput.Id4, and is useful for accessing the field via an interface.
+func (v *__StratzGetMatchBatchSummaryInput) GetId4() int64 { return v.Id4 }
 
 // __StratzGetMatchFullInput is used internally by genqlient
 type __StratzGetMatchFullInput struct {
@@ -4644,35 +6940,36 @@ query StratzGetConstants {
 		heroes {
 			id
 			name
-			localizedName
-			primaryAttribute
-			attackType
-			roles
+			localizedName: displayName
+			stats {
+				primaryAttribute
+				attackType
+			}
+			roles {
+				roleId
+			}
 		}
 		items {
-			... ConstantFields
+			id
+			name
+			localizedName: displayName
 		}
 		abilities {
-			... ConstantFields
+			id
+			name
+			language {
+				displayName
+			}
 		}
 		gameModes {
-			... ConstantFields
+			id
+			name
 		}
 		regions {
-			... ConstantFields
+			id
+			name
+			localizedName: displayName
 		}
-		ranks {
-			... ConstantFields
-		}
-	}
-}
-fragment ConstantFields on ConstantType {
-	id
-	name
-	localizedName
-	metadata {
-		key
-		value
 	}
 }
 `
@@ -4700,44 +6997,14 @@ func StratzGetConstants(
 
 // The query executed by StratzGetHeroStatsDay.
 const StratzGetHeroStatsDay_Operation = `
-query StratzGetHeroStatsDay ($request: HeroStatsRequestType!) {
-	heroStats(request: $request) {
-		... HeroStatsFields
-	}
-}
-fragment HeroStatsFields on HeroStatsType {
-	heroId
-	matchCount
-	pickCount
-	winCount
-	banCount
-	populationMatchCount
-	rankDataAvailable
-	roles {
-		name
-		matchCount
-		pickCount
-		winCount
-		populationMatchCount
-	}
-	lanes {
-		name
-		matchCount
-		pickCount
-		winCount
-		populationMatchCount
-	}
-	matchups {
-		heroId
-		matchCount
-		winCount
-		expectedWinRate
-	}
-	synergies {
-		heroId
-		matchCount
-		winCount
-		expectedWinRate
+query StratzGetHeroStatsDay ($heroIds: [Short!], $bracketIds: [RankBracket!], $positionIds: [MatchPlayerPositionType!]) {
+	heroStats {
+		stats: winDay(heroIds: $heroIds, bracketIds: $bracketIds, positionIds: $positionIds, take: 400, skip: 0, groupBy: TIME) {
+			heroId
+			matchCount
+			winCount
+			period: day
+		}
 	}
 }
 `
@@ -4745,13 +7012,17 @@ fragment HeroStatsFields on HeroStatsType {
 func StratzGetHeroStatsDay(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	request HeroStatsRequestType,
+	heroIds []int,
+	bracketIds []RankBracket,
+	positionIds []MatchPlayerPositionType,
 ) (data_ *StratzGetHeroStatsDayResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "StratzGetHeroStatsDay",
 		Query:  StratzGetHeroStatsDay_Operation,
 		Variables: &__StratzGetHeroStatsDayInput{
-			Request: request,
+			HeroIds:     heroIds,
+			BracketIds:  bracketIds,
+			PositionIds: positionIds,
 		},
 	}
 
@@ -4769,44 +7040,14 @@ func StratzGetHeroStatsDay(
 
 // The query executed by StratzGetHeroStatsMonth.
 const StratzGetHeroStatsMonth_Operation = `
-query StratzGetHeroStatsMonth ($request: HeroStatsRequestType!) {
-	heroStats(request: $request) {
-		... HeroStatsFields
-	}
-}
-fragment HeroStatsFields on HeroStatsType {
-	heroId
-	matchCount
-	pickCount
-	winCount
-	banCount
-	populationMatchCount
-	rankDataAvailable
-	roles {
-		name
-		matchCount
-		pickCount
-		winCount
-		populationMatchCount
-	}
-	lanes {
-		name
-		matchCount
-		pickCount
-		winCount
-		populationMatchCount
-	}
-	matchups {
-		heroId
-		matchCount
-		winCount
-		expectedWinRate
-	}
-	synergies {
-		heroId
-		matchCount
-		winCount
-		expectedWinRate
+query StratzGetHeroStatsMonth ($heroIds: [Short!], $bracketIds: [RankBracket!], $positionIds: [MatchPlayerPositionType!]) {
+	heroStats {
+		stats: winMonth(heroIds: $heroIds, bracketIds: $bracketIds, positionIds: $positionIds, take: 18, skip: 0, groupBy: TIME) {
+			heroId
+			matchCount
+			winCount
+			period: month
+		}
 	}
 }
 `
@@ -4814,13 +7055,17 @@ fragment HeroStatsFields on HeroStatsType {
 func StratzGetHeroStatsMonth(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	request HeroStatsRequestType,
+	heroIds []int,
+	bracketIds []RankBracket,
+	positionIds []MatchPlayerPositionType,
 ) (data_ *StratzGetHeroStatsMonthResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "StratzGetHeroStatsMonth",
 		Query:  StratzGetHeroStatsMonth_Operation,
 		Variables: &__StratzGetHeroStatsMonthInput{
-			Request: request,
+			HeroIds:     heroIds,
+			BracketIds:  bracketIds,
+			PositionIds: positionIds,
 		},
 	}
 
@@ -4838,44 +7083,14 @@ func StratzGetHeroStatsMonth(
 
 // The query executed by StratzGetHeroStatsWeek.
 const StratzGetHeroStatsWeek_Operation = `
-query StratzGetHeroStatsWeek ($request: HeroStatsRequestType!) {
-	heroStats(request: $request) {
-		... HeroStatsFields
-	}
-}
-fragment HeroStatsFields on HeroStatsType {
-	heroId
-	matchCount
-	pickCount
-	winCount
-	banCount
-	populationMatchCount
-	rankDataAvailable
-	roles {
-		name
-		matchCount
-		pickCount
-		winCount
-		populationMatchCount
-	}
-	lanes {
-		name
-		matchCount
-		pickCount
-		winCount
-		populationMatchCount
-	}
-	matchups {
-		heroId
-		matchCount
-		winCount
-		expectedWinRate
-	}
-	synergies {
-		heroId
-		matchCount
-		winCount
-		expectedWinRate
+query StratzGetHeroStatsWeek ($heroIds: [Short!], $bracketIds: [RankBracket!], $positionIds: [MatchPlayerPositionType!]) {
+	heroStats {
+		stats: winWeek(heroIds: $heroIds, bracketIds: $bracketIds, positionIds: $positionIds, take: 60, skip: 0, groupBy: TIME) {
+			heroId
+			matchCount
+			winCount
+			period: week
+		}
 	}
 }
 `
@@ -4883,13 +7098,17 @@ fragment HeroStatsFields on HeroStatsType {
 func StratzGetHeroStatsWeek(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	request HeroStatsRequestType,
+	heroIds []int,
+	bracketIds []RankBracket,
+	positionIds []MatchPlayerPositionType,
 ) (data_ *StratzGetHeroStatsWeekResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "StratzGetHeroStatsWeek",
 		Query:  StratzGetHeroStatsWeek_Operation,
 		Variables: &__StratzGetHeroStatsWeekInput{
-			Request: request,
+			HeroIds:     heroIds,
+			BracketIds:  bracketIds,
+			PositionIds: positionIds,
 		},
 	}
 
@@ -4920,9 +7139,6 @@ fragment LeagueFields on LeagueType {
 	tier
 	startDateTime
 	endDateTime
-	isFuture
-	isEnded
-	isLive
 }
 `
 
@@ -4951,35 +7167,39 @@ func StratzGetLeague(
 	return data_, err_
 }
 
-// The query executed by StratzGetMatchFull.
-const StratzGetMatchFull_Operation = `
-query StratzGetMatchFull ($id: Long!) {
-	match(id: $id) {
+// The query executed by StratzGetMatchBatchFull.
+const StratzGetMatchBatchFull_Operation = `
+query StratzGetMatchBatchFull ($id0: Long!, $id1: Long!, $id2: Long!, $id3: Long!, $id4: Long!) {
+	match0: match(id: $id0) {
+		... MatchFullFields
+	}
+	match1: match(id: $id1) {
+		... MatchFullFields
+	}
+	match2: match(id: $id2) {
+		... MatchFullFields
+	}
+	match3: match(id: $id3) {
+		... MatchFullFields
+	}
+	match4: match(id: $id4) {
 		... MatchFullFields
 	}
 }
 fragment MatchFullFields on MatchType {
 	... MatchStandardFields
-	fights {
-		startTime
-		endTime
-		radiantKills
-		direKills
-		radiantNetworthDelta
-		participants {
-			steamAccountId
-			heroId
-			isRadiant
-			kills
-			deaths
+	playbackData {
+		runeEvents {
+			time
+			action
+			rune
 		}
-	}
-	economy {
-		time
-		radiantNetworth
-		direNetworth
-		radiantExperience
-		direExperience
+		wardEvents {
+			time
+			action
+			wardType
+			fromPlayer
+		}
 	}
 }
 fragment MatchStandardFields on MatchType {
@@ -4987,21 +7207,21 @@ fragment MatchStandardFields on MatchType {
 	players {
 		... MatchPlayerFields
 	}
-	objectives {
-		time
-		type
-		isRadiant
-		steamAccountId
-		heroId
-		value
-	}
-	timeline {
-		time
-		type
-		isRadiant
-		steamAccountId
-		heroId
-		value
+	playbackData {
+		buildingEvents {
+			time
+			type
+			isRadiant
+			npcId
+		}
+		roshanEvents {
+			time
+		}
+		towerDeathEvents {
+			time
+			radiant
+			dire
+		}
 	}
 }
 fragment MatchSummaryFields on MatchType {
@@ -5011,8 +7231,311 @@ fragment MatchSummaryFields on MatchType {
 	didRadiantWin
 	radiantKills
 	direKills
-	gameModeId
-	lobbyTypeId
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
+	regionId
+	leagueId
+	gameVersionId
+	parsedDateTime
+	statsDateTime
+}
+fragment MatchPlayerFields on MatchPlayerType {
+	steamAccountId
+	heroId
+	isRadiant
+	playerSlot
+	kills
+	deaths
+	assists
+	networth
+	level
+}
+`
+
+func StratzGetMatchBatchFull(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	id0 int64,
+	id1 int64,
+	id2 int64,
+	id3 int64,
+	id4 int64,
+) (data_ *StratzGetMatchBatchFullResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzGetMatchBatchFull",
+		Query:  StratzGetMatchBatchFull_Operation,
+		Variables: &__StratzGetMatchBatchFullInput{
+			Id0: id0,
+			Id1: id1,
+			Id2: id2,
+			Id3: id3,
+			Id4: id4,
+		},
+	}
+
+	data_ = &StratzGetMatchBatchFullResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzGetMatchBatchStandard.
+const StratzGetMatchBatchStandard_Operation = `
+query StratzGetMatchBatchStandard ($id0: Long!, $id1: Long!, $id2: Long!, $id3: Long!, $id4: Long!) {
+	match0: match(id: $id0) {
+		... MatchStandardFields
+	}
+	match1: match(id: $id1) {
+		... MatchStandardFields
+	}
+	match2: match(id: $id2) {
+		... MatchStandardFields
+	}
+	match3: match(id: $id3) {
+		... MatchStandardFields
+	}
+	match4: match(id: $id4) {
+		... MatchStandardFields
+	}
+}
+fragment MatchStandardFields on MatchType {
+	... MatchSummaryFields
+	players {
+		... MatchPlayerFields
+	}
+	playbackData {
+		buildingEvents {
+			time
+			type
+			isRadiant
+			npcId
+		}
+		roshanEvents {
+			time
+		}
+		towerDeathEvents {
+			time
+			radiant
+			dire
+		}
+	}
+}
+fragment MatchSummaryFields on MatchType {
+	id
+	startDateTime
+	durationSeconds
+	didRadiantWin
+	radiantKills
+	direKills
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
+	regionId
+	leagueId
+	gameVersionId
+	parsedDateTime
+	statsDateTime
+}
+fragment MatchPlayerFields on MatchPlayerType {
+	steamAccountId
+	heroId
+	isRadiant
+	playerSlot
+	kills
+	deaths
+	assists
+	networth
+	level
+}
+`
+
+func StratzGetMatchBatchStandard(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	id0 int64,
+	id1 int64,
+	id2 int64,
+	id3 int64,
+	id4 int64,
+) (data_ *StratzGetMatchBatchStandardResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzGetMatchBatchStandard",
+		Query:  StratzGetMatchBatchStandard_Operation,
+		Variables: &__StratzGetMatchBatchStandardInput{
+			Id0: id0,
+			Id1: id1,
+			Id2: id2,
+			Id3: id3,
+			Id4: id4,
+		},
+	}
+
+	data_ = &StratzGetMatchBatchStandardResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzGetMatchBatchSummary.
+const StratzGetMatchBatchSummary_Operation = `
+query StratzGetMatchBatchSummary ($id0: Long!, $id1: Long!, $id2: Long!, $id3: Long!, $id4: Long!) {
+	match0: match(id: $id0) {
+		... MatchSummaryFields
+		players {
+			... MatchPlayerFields
+		}
+	}
+	match1: match(id: $id1) {
+		... MatchSummaryFields
+		players {
+			... MatchPlayerFields
+		}
+	}
+	match2: match(id: $id2) {
+		... MatchSummaryFields
+		players {
+			... MatchPlayerFields
+		}
+	}
+	match3: match(id: $id3) {
+		... MatchSummaryFields
+		players {
+			... MatchPlayerFields
+		}
+	}
+	match4: match(id: $id4) {
+		... MatchSummaryFields
+		players {
+			... MatchPlayerFields
+		}
+	}
+}
+fragment MatchSummaryFields on MatchType {
+	id
+	startDateTime
+	durationSeconds
+	didRadiantWin
+	radiantKills
+	direKills
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
+	regionId
+	leagueId
+	gameVersionId
+	parsedDateTime
+	statsDateTime
+}
+fragment MatchPlayerFields on MatchPlayerType {
+	steamAccountId
+	heroId
+	isRadiant
+	playerSlot
+	kills
+	deaths
+	assists
+	networth
+	level
+}
+`
+
+func StratzGetMatchBatchSummary(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	id0 int64,
+	id1 int64,
+	id2 int64,
+	id3 int64,
+	id4 int64,
+) (data_ *StratzGetMatchBatchSummaryResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzGetMatchBatchSummary",
+		Query:  StratzGetMatchBatchSummary_Operation,
+		Variables: &__StratzGetMatchBatchSummaryInput{
+			Id0: id0,
+			Id1: id1,
+			Id2: id2,
+			Id3: id3,
+			Id4: id4,
+		},
+	}
+
+	data_ = &StratzGetMatchBatchSummaryResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzGetMatchFull.
+const StratzGetMatchFull_Operation = `
+query StratzGetMatchFull ($id: Long!) {
+	match(id: $id) {
+		... MatchFullFields
+	}
+}
+fragment MatchFullFields on MatchType {
+	... MatchStandardFields
+	playbackData {
+		runeEvents {
+			time
+			action
+			rune
+		}
+		wardEvents {
+			time
+			action
+			wardType
+			fromPlayer
+		}
+	}
+}
+fragment MatchStandardFields on MatchType {
+	... MatchSummaryFields
+	players {
+		... MatchPlayerFields
+	}
+	playbackData {
+		buildingEvents {
+			time
+			type
+			isRadiant
+			npcId
+		}
+		roshanEvents {
+			time
+		}
+		towerDeathEvents {
+			time
+			radiant
+			dire
+		}
+	}
+}
+fragment MatchSummaryFields on MatchType {
+	id
+	startDateTime
+	durationSeconds
+	didRadiantWin
+	radiantKills
+	direKills
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
 	regionId
 	leagueId
 	gameVersionId
@@ -5069,21 +7592,21 @@ fragment MatchStandardFields on MatchType {
 	players {
 		... MatchPlayerFields
 	}
-	objectives {
-		time
-		type
-		isRadiant
-		steamAccountId
-		heroId
-		value
-	}
-	timeline {
-		time
-		type
-		isRadiant
-		steamAccountId
-		heroId
-		value
+	playbackData {
+		buildingEvents {
+			time
+			type
+			isRadiant
+			npcId
+		}
+		roshanEvents {
+			time
+		}
+		towerDeathEvents {
+			time
+			radiant
+			dire
+		}
 	}
 }
 fragment MatchSummaryFields on MatchType {
@@ -5093,8 +7616,8 @@ fragment MatchSummaryFields on MatchType {
 	didRadiantWin
 	radiantKills
 	direKills
-	gameModeId
-	lobbyTypeId
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
 	regionId
 	leagueId
 	gameVersionId
@@ -5156,8 +7679,8 @@ fragment MatchSummaryFields on MatchType {
 	didRadiantWin
 	radiantKills
 	direKills
-	gameModeId
-	lobbyTypeId
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
 	regionId
 	leagueId
 	gameVersionId
@@ -5211,26 +7734,18 @@ query StratzGetMatchesFull ($ids: [Long!]!) {
 }
 fragment MatchFullFields on MatchType {
 	... MatchStandardFields
-	fights {
-		startTime
-		endTime
-		radiantKills
-		direKills
-		radiantNetworthDelta
-		participants {
-			steamAccountId
-			heroId
-			isRadiant
-			kills
-			deaths
+	playbackData {
+		runeEvents {
+			time
+			action
+			rune
 		}
-	}
-	economy {
-		time
-		radiantNetworth
-		direNetworth
-		radiantExperience
-		direExperience
+		wardEvents {
+			time
+			action
+			wardType
+			fromPlayer
+		}
 	}
 }
 fragment MatchStandardFields on MatchType {
@@ -5238,21 +7753,21 @@ fragment MatchStandardFields on MatchType {
 	players {
 		... MatchPlayerFields
 	}
-	objectives {
-		time
-		type
-		isRadiant
-		steamAccountId
-		heroId
-		value
-	}
-	timeline {
-		time
-		type
-		isRadiant
-		steamAccountId
-		heroId
-		value
+	playbackData {
+		buildingEvents {
+			time
+			type
+			isRadiant
+			npcId
+		}
+		roshanEvents {
+			time
+		}
+		towerDeathEvents {
+			time
+			radiant
+			dire
+		}
 	}
 }
 fragment MatchSummaryFields on MatchType {
@@ -5262,8 +7777,8 @@ fragment MatchSummaryFields on MatchType {
 	didRadiantWin
 	radiantKills
 	direKills
-	gameModeId
-	lobbyTypeId
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
 	regionId
 	leagueId
 	gameVersionId
@@ -5320,21 +7835,21 @@ fragment MatchStandardFields on MatchType {
 	players {
 		... MatchPlayerFields
 	}
-	objectives {
-		time
-		type
-		isRadiant
-		steamAccountId
-		heroId
-		value
-	}
-	timeline {
-		time
-		type
-		isRadiant
-		steamAccountId
-		heroId
-		value
+	playbackData {
+		buildingEvents {
+			time
+			type
+			isRadiant
+			npcId
+		}
+		roshanEvents {
+			time
+		}
+		towerDeathEvents {
+			time
+			radiant
+			dire
+		}
 	}
 }
 fragment MatchSummaryFields on MatchType {
@@ -5344,8 +7859,8 @@ fragment MatchSummaryFields on MatchType {
 	didRadiantWin
 	radiantKills
 	direKills
-	gameModeId
-	lobbyTypeId
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
 	regionId
 	leagueId
 	gameVersionId
@@ -5407,8 +7922,8 @@ fragment MatchSummaryFields on MatchType {
 	didRadiantWin
 	radiantKills
 	direKills
-	gameModeId
-	lobbyTypeId
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
 	regionId
 	leagueId
 	gameVersionId
@@ -5572,8 +8087,8 @@ fragment MatchSummaryFields on MatchType {
 	didRadiantWin
 	radiantKills
 	direKills
-	gameModeId
-	lobbyTypeId
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
 	regionId
 	leagueId
 	gameVersionId
@@ -5624,9 +8139,6 @@ fragment LeagueFields on LeagueType {
 	tier
 	startDateTime
 	endDateTime
-	isFuture
-	isEnded
-	isLive
 }
 `
 
@@ -5660,15 +8172,13 @@ const StratzListLiveMatches_Operation = `
 query StratzListLiveMatches ($request: MatchLiveRequestType!) {
 	live {
 		matches(request: $request) {
-			id
-			startDateTime
+			id: matchId
+			startDateTime: createdDateTime
 			gameTime
-			gameModeId
-			spectatorCount
+			gameModeId: gameMode
+			spectatorCount: spectators
 			radiantTeamId
 			direTeamId
-			radiantTeamName
-			direTeamName
 			league {
 				... LeagueFields
 			}
@@ -5677,9 +8187,9 @@ query StratzListLiveMatches ($request: MatchLiveRequestType!) {
 				heroId
 				isRadiant
 				playerSlot
-				kills
-				deaths
-				assists
+				kills: numKills
+				deaths: numDeaths
+				assists: numAssists
 				networth
 				level
 			}
@@ -5694,9 +8204,6 @@ fragment LeagueFields on LeagueType {
 	tier
 	startDateTime
 	endDateTime
-	isFuture
-	isEnded
-	isLive
 }
 `
 
@@ -5742,8 +8249,8 @@ fragment MatchSummaryFields on MatchType {
 	didRadiantWin
 	radiantKills
 	direKills
-	gameModeId
-	lobbyTypeId
+	gameModeId: gameMode
+	lobbyTypeId: lobbyType
 	regionId
 	leagueId
 	gameVersionId

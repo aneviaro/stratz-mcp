@@ -1,7 +1,9 @@
 package playermatch
 
 import (
+	"bytes"
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
@@ -31,6 +33,7 @@ type Result[T any] struct {
 	Data       T
 	Raw        any
 	RateLimits []stratz.RateLimit
+	Warnings   []string
 }
 
 type upstreamPlayer struct {
@@ -57,21 +60,121 @@ type upstreamMatch struct {
 	StartDateTime   *int64                `json:"startDateTime"`
 	DurationSeconds *int64                `json:"durationSeconds"`
 	DidRadiantWin   *bool                 `json:"didRadiantWin"`
-	RadiantKills    *int64                `json:"radiantKills"`
-	DireKills       *int64                `json:"direKills"`
-	GameModeID      *int64                `json:"gameModeId"`
-	LobbyTypeID     *int64                `json:"lobbyTypeId"`
+	RadiantKills    upstreamKillCount     `json:"radiantKills"`
+	DireKills       upstreamKillCount     `json:"direKills"`
+	GameModeID      upstreamEnumID        `json:"gameModeId"`
+	LobbyTypeID     upstreamEnumID        `json:"lobbyTypeId"`
 	RegionID        *int64                `json:"regionId"`
 	LeagueID        *int64                `json:"leagueId"`
-	GameVersionID   *string               `json:"gameVersionId"`
+	GameVersionID   upstreamString        `json:"gameVersionId"`
 	ParsedDateTime  *int64                `json:"parsedDateTime"`
 	StatsDateTime   *int64                `json:"statsDateTime"`
 	ParseStatus     string                `json:"parseStatus"`
 	Players         []upstreamMatchPlayer `json:"players"`
-	Objectives      []upstreamEvent       `json:"objectives"`
-	Timeline        []upstreamEvent       `json:"timeline"`
+	PlaybackData    *upstreamPlaybackData `json:"playbackData"`
 	Fights          []upstreamFight       `json:"fights"`
 	Economy         []upstreamEconomy     `json:"economy"`
+}
+
+type upstreamPlaybackData struct {
+	BuildingEvents []struct {
+		Time      int64  `json:"time"`
+		Type      string `json:"type"`
+		IsRadiant *bool  `json:"isRadiant"`
+		NPCID     *int64 `json:"npcId"`
+	} `json:"buildingEvents"`
+	RoshanEvents []struct {
+		Time int64 `json:"time"`
+	} `json:"roshanEvents"`
+	TowerDeathEvents []struct {
+		Time    int64 `json:"time"`
+		Radiant int64 `json:"radiant"`
+		Dire    int64 `json:"dire"`
+	} `json:"towerDeathEvents"`
+	RuneEvents []struct {
+		Time   int64 `json:"time"`
+		Action int64 `json:"action"`
+		Rune   int64 `json:"rune"`
+	} `json:"runeEvents"`
+	WardEvents []struct {
+		Time       int64  `json:"time"`
+		Action     string `json:"action"`
+		WardType   string `json:"wardType"`
+		FromPlayer *int64 `json:"fromPlayer"`
+	} `json:"wardEvents"`
+}
+
+type upstreamKillCount struct {
+	Value *int64
+}
+
+func (value *upstreamKillCount) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		value.Value = nil
+		return nil
+	}
+	var direct int64
+	if err := json.Unmarshal(data, &direct); err == nil {
+		value.Value = &direct
+		return nil
+	}
+	var events []int64
+	if err := json.Unmarshal(data, &events); err != nil {
+		return err
+	}
+	count := int64(len(events))
+	value.Value = &count
+	return nil
+}
+
+type upstreamString struct {
+	Value *string
+}
+
+func (value *upstreamString) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		value.Value = nil
+		return nil
+	}
+	var text string
+	if err := json.Unmarshal(data, &text); err == nil {
+		value.Value = &text
+		return nil
+	}
+	var number json.Number
+	if err := json.Unmarshal(data, &number); err != nil {
+		return err
+	}
+	text = number.String()
+	if _, err := strconv.ParseInt(text, 10, 64); err != nil {
+		return err
+	}
+	value.Value = &text
+	return nil
+}
+
+type upstreamEnumID struct {
+	Number *int64
+	Name   string
+}
+
+func (value *upstreamEnumID) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		value.Number = nil
+		value.Name = ""
+		return nil
+	}
+	var number int64
+	if err := json.Unmarshal(data, &number); err == nil {
+		value.Number = &number
+		value.Name = ""
+		return nil
+	}
+	if err := json.Unmarshal(data, &value.Name); err != nil {
+		return err
+	}
+	value.Number = nil
+	return nil
 }
 
 type upstreamMatchPlayer struct {

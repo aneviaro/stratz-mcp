@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"reflect"
 	"testing"
@@ -116,59 +117,62 @@ func TestConstantsTypesExplicitAllAndMissingRanks(t *testing.T) {
 	}
 }
 
-func TestHeroStatisticsBucketsRatesRelationsAndRankUnavailable(t *testing.T) {
+func TestHeroStatisticsBucketsApplyDateRankAndRoleFilters(t *testing.T) {
 	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
 	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
 		if request.OperationName != "StratzGetHeroStatsWeek" {
 			t.Fatalf("operation = %q", request.OperationName)
 		}
-		variables := request.Variables.(map[string]any)["request"].(map[string]any)
-		if variables["bucket"] != "week" ||
-			variables["startDateTime"] != time.Date(2026, 4, 27, 0, 0, 0, 0, time.UTC).Unix() ||
-			variables["endDateTime"] != time.Date(2026, 6, 22, 0, 0, 0, 0, time.UTC).Unix() {
+		variables := request.Variables.(map[string]any)
+		if !reflect.DeepEqual(variables["heroIds"], []int64{1}) ||
+			!reflect.DeepEqual(variables["bracketIds"], []string{"IMMORTAL"}) ||
+			!reflect.DeepEqual(variables["positionIds"], []string{"POSITION_1", "POSITION_2", "POSITION_3"}) {
 			t.Fatalf("variables = %#v", variables)
 		}
-		return response(`{"heroStats":{
-			"heroId":1,"matchCount":40,"pickCount":40,"winCount":25,"banCount":10,"populationMatchCount":100,
-			"rankDataAvailable":true,
-			"roles":[{"name":"Core","matchCount":30,"pickCount":30,"winCount":18,"populationMatchCount":100}],
-			"lanes":[{"name":"Mid","matchCount":20,"pickCount":20,"winCount":12,"populationMatchCount":100}],
-			"matchups":[{"heroId":2,"matchCount":10,"winCount":7,"expectedWinRate":0.5}],
-			"synergies":[{"heroId":3,"matchCount":8,"winCount":5,"expectedWinRate":0.55}]
-		}}`), nil
+		return response(fmt.Sprintf(`{"heroStats":{"stats":[
+			{"heroId":0,"period":%d,"matchCount":20,"winCount":12},
+			{"heroId":1,"period":%d,"matchCount":20,"winCount":13},
+			{"heroId":1,"period":%d,"matchCount":999,"winCount":999}
+		]}}`,
+			time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC).Unix(),
+			time.Date(2026, 5, 11, 0, 0, 0, 0, time.UTC).Unix(),
+			time.Date(2026, 4, 20, 0, 0, 0, 0, time.UTC).Unix(),
+		)), nil
 	}}
 	service := mustServiceAt(t, executor, now)
 	from := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
 	to := time.Date(2026, 6, 19, 10, 0, 0, 0, time.UTC)
+	rank := "immortal"
+	role := "core"
 	result, err := service.GetHeroStats(context.Background(), StatsFilters{
-		Hero: json.Number("1"), From: &from, To: &to, IncludeMatchups: true, IncludeSynergies: true,
+		Hero: json.Number("1"), From: &from, To: &to, RankBracket: &rank, Role: &role,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.EffectiveRange == nil ||
-		result.Data.PickRate == nil || math.Abs(*result.Data.PickRate-0.4) > 0.000001 ||
 		result.Data.WinRate == nil || math.Abs(*result.Data.WinRate-0.625) > 0.000001 ||
-		result.Data.Matchups[0].Advantage == nil || math.Abs(*result.Data.Matchups[0].Advantage-0.2) > 0.000001 {
+		result.Data.SampleSize != 40 || result.Data.PickRate != nil || result.Data.BanRate != nil ||
+		len(result.Warnings) != 1 {
 		t.Fatalf("result = %#v", result)
 	}
+}
 
-	rankExecutor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
-		return response(`{"heroStats":{
-			"heroId":1,"matchCount":40,"pickCount":40,"winCount":25,"banCount":10,"populationMatchCount":100,
-			"rankDataAvailable":false,"roles":[],"lanes":[],"matchups":[],"synergies":[]
-		}}`), nil
-	}}
-	rank := "immortal"
-	rankResult, err := mustServiceAt(t, rankExecutor, now).GetHeroStats(
-		context.Background(),
-		StatsFilters{Hero: json.Number("1"), RankBracket: &rank},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(rankResult.Warnings) != 1 || rankResult.Data.WinRate != nil || rankResult.Data.SampleSize != 40 {
-		t.Fatalf("rank result = %#v", rankResult)
+func TestHeroStatisticsRejectUnsupportedDimensions(t *testing.T) {
+	service := mustServiceAt(t, &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		t.Fatal("upstream should not be called")
+		return nil, nil
+	}}, time.Date(2026, 6, 19, 0, 0, 0, 0, time.UTC))
+	lane := "mid"
+	_, err := service.GetHeroStats(context.Background(), StatsFilters{Hero: 1, Lane: &lane})
+	assertCode(t, err, contracts.ErrorCodeInvalidArgument)
+	_, err = service.GetHeroStats(context.Background(), StatsFilters{Hero: 1, IncludeMatchups: true})
+	assertCode(t, err, contracts.ErrorCodeInvalidArgument)
+	patch := "7.39"
+	_, err = service.GetHeroStats(context.Background(), StatsFilters{Hero: 1, PatchID: &patch})
+	assertCode(t, err, contracts.ErrorCodeInvalidArgument)
+	if err == nil {
+		t.Fatal("expected unsupported filter error")
 	}
 }
 
@@ -274,6 +278,14 @@ func mustServiceAt(t *testing.T, executor stratz.Executor, now time.Time) *Servi
 
 func response(data string) *stratz.Response {
 	return &stratz.Response{Data: json.RawMessage(data)}
+}
+
+func assertCode(t *testing.T, err error, want contracts.ErrorCode) {
+	t.Helper()
+	var domainErr *Error
+	if !errors.As(err, &domainErr) || domainErr.Code != want {
+		t.Fatalf("error = %#v, want %s", err, want)
+	}
 }
 
 const constantsFixture = `{"constants":{

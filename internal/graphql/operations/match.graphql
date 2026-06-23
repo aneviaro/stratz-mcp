@@ -5,8 +5,8 @@ fragment MatchSummaryFields on MatchType {
   didRadiantWin
   radiantKills
   direKills
-  gameModeId
-  lobbyTypeId
+  gameModeId: gameMode
+  lobbyTypeId: lobbyType
   regionId
   leagueId
   gameVersionId
@@ -31,46 +31,38 @@ fragment MatchStandardFields on MatchType {
   players {
     ...MatchPlayerFields
   }
-  objectives {
-    time
-    type
-    isRadiant
-    steamAccountId
-    heroId
-    value
-  }
-  timeline {
-    time
-    type
-    isRadiant
-    steamAccountId
-    heroId
-    value
+  playbackData {
+    buildingEvents {
+      time
+      type
+      isRadiant
+      npcId
+    }
+    roshanEvents {
+      time
+    }
+    towerDeathEvents {
+      time
+      radiant
+      dire
+    }
   }
 }
 
 fragment MatchFullFields on MatchType {
   ...MatchStandardFields
-  fights {
-    startTime
-    endTime
-    radiantKills
-    direKills
-    radiantNetworthDelta
-    participants {
-      steamAccountId
-      heroId
-      isRadiant
-      kills
-      deaths
+  playbackData {
+    runeEvents {
+      time
+      action
+      rune
     }
-  }
-  economy {
-    time
-    radiantNetworth
-    direNetworth
-    radiantExperience
-    direExperience
+    wardEvents {
+      time
+      action
+      wardType
+      fromPlayer
+    }
   }
 }
 
@@ -91,6 +83,93 @@ query StratzGetMatchStandard($id: Long!) {
 
 query StratzGetMatchFull($id: Long!) {
   match(id: $id) {
+    ...MatchFullFields
+  }
+}
+
+query StratzGetMatchBatchSummary(
+  $id0: Long!
+  $id1: Long!
+  $id2: Long!
+  $id3: Long!
+  $id4: Long!
+) {
+  match0: match(id: $id0) {
+    ...MatchSummaryFields
+    players {
+      ...MatchPlayerFields
+    }
+  }
+  match1: match(id: $id1) {
+    ...MatchSummaryFields
+    players {
+      ...MatchPlayerFields
+    }
+  }
+  match2: match(id: $id2) {
+    ...MatchSummaryFields
+    players {
+      ...MatchPlayerFields
+    }
+  }
+  match3: match(id: $id3) {
+    ...MatchSummaryFields
+    players {
+      ...MatchPlayerFields
+    }
+  }
+  match4: match(id: $id4) {
+    ...MatchSummaryFields
+    players {
+      ...MatchPlayerFields
+    }
+  }
+}
+
+query StratzGetMatchBatchStandard(
+  $id0: Long!
+  $id1: Long!
+  $id2: Long!
+  $id3: Long!
+  $id4: Long!
+) {
+  match0: match(id: $id0) {
+    ...MatchStandardFields
+  }
+  match1: match(id: $id1) {
+    ...MatchStandardFields
+  }
+  match2: match(id: $id2) {
+    ...MatchStandardFields
+  }
+  match3: match(id: $id3) {
+    ...MatchStandardFields
+  }
+  match4: match(id: $id4) {
+    ...MatchStandardFields
+  }
+}
+
+query StratzGetMatchBatchFull(
+  $id0: Long!
+  $id1: Long!
+  $id2: Long!
+  $id3: Long!
+  $id4: Long!
+) {
+  match0: match(id: $id0) {
+    ...MatchFullFields
+  }
+  match1: match(id: $id1) {
+    ...MatchFullFields
+  }
+  match2: match(id: $id2) {
+    ...MatchFullFields
+  }
+  match3: match(id: $id3) {
+    ...MatchFullFields
+  }
+  match4: match(id: $id4) {
     ...MatchFullFields
   }
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -16,7 +17,8 @@ import (
 )
 
 const (
-	playerListOperationVersion = "player-matches/v1"
+	playerListOperationVersion   = "player-matches/v1"
+	fullMatchAvailabilityWarning = "Fight and economy breakdowns are unavailable from the current STRATZ match playback data"
 )
 
 // Options configures player and match domain execution.
@@ -182,7 +184,7 @@ func (service *Service) GetMatch(
 	if err != nil {
 		return nil, err
 	}
-	query, operation := matchOperation(detail, false)
+	query, operation := matchOperation(detail)
 	response, err := service.execute(ctx, service.budget(), query, operation, map[string]any{"id": id})
 	if err != nil {
 		return nil, err
@@ -201,6 +203,7 @@ func (service *Service) GetMatch(
 		Data:       mapMatch(envelope.Match, detail),
 		Raw:        rawData(response.Data),
 		RateLimits: response.RateLimits,
+		Warnings:   matchWarnings(detail),
 	}, nil
 }
 
@@ -229,25 +232,51 @@ func (service *Service) BatchMatches(
 		id, _ := NormalizeMatchID(value)
 		ids = append(ids, id)
 	}
-	query, operation := matchOperation(detail, true)
-	response, err := service.execute(ctx, service.budget(), query, operation, map[string]any{"ids": ids})
-	if err != nil {
-		return nil, err
-	}
-	var envelope matchesEnvelope
-	if err := decodeData(response.Data, &envelope); err != nil {
-		return nil, protocol("STRATZ returned an invalid match batch payload")
-	}
-	results := make(map[string]contracts.Match, len(envelope.Matches))
-	for _, match := range envelope.Matches {
-		if match == nil {
-			continue
+	query, operation := batchMatchOperation(detail)
+	budget := service.budget()
+	results := make(map[string]contracts.Match, len(ids))
+	rawMatches := make([]any, 0, len(ids))
+	var rateLimits []stratz.RateLimit
+	const matchesPerRequest = 5
+	for offset := 0; offset < len(ids); offset += matchesPerRequest {
+		end := min(offset+matchesPerRequest, len(ids))
+		chunk := ids[offset:end]
+		variables := make(map[string]any, matchesPerRequest)
+		for index := range matchesPerRequest {
+			id := chunk[min(index, len(chunk)-1)]
+			variables[fmt.Sprintf("id%d", index)] = id
 		}
-		if availabilityErr := ensureAvailable(match, detail); availabilityErr != nil {
-			availabilityErr.FailedInput = strconv.FormatInt(match.ID, 10)
-			return nil, availabilityErr
+		response, executeErr := service.execute(
+			ctx,
+			budget,
+			query,
+			operation,
+			variables,
+		)
+		if executeErr != nil {
+			var domainErr *Error
+			if errors.As(executeErr, &domainErr) {
+				domainErr.FailedInput = matchKey(chunk[0])
+			}
+			return nil, executeErr
 		}
-		results[strconv.FormatInt(match.ID, 10)] = mapMatch(match, detail)
+		var matches map[string]*upstreamMatch
+		if err := decodeData(response.Data, &matches); err != nil {
+			return nil, protocol("STRATZ returned an invalid match batch payload")
+		}
+		rawMatches = append(rawMatches, rawData(response.Data))
+		rateLimits = append(rateLimits, response.RateLimits...)
+		for index, id := range chunk {
+			match := matches[fmt.Sprintf("match%d", index)]
+			if match == nil {
+				continue
+			}
+			if availabilityErr := ensureAvailable(match, detail); availabilityErr != nil {
+				availabilityErr.FailedInput = matchKey(id)
+				return nil, availabilityErr
+			}
+			results[matchKey(match.ID)] = mapMatch(match, detail)
+		}
 	}
 	items, reconstructErr := batch.Reconstruct(plan, results)
 	if reconstructErr != nil {
@@ -263,9 +292,17 @@ func (service *Service) BatchMatches(
 	}
 	return &Result[[]contracts.Match]{
 		Data:       items,
-		Raw:        rawData(response.Data),
-		RateLimits: response.RateLimits,
+		Raw:        map[string]any{"matches": rawMatches},
+		RateLimits: rateLimits,
+		Warnings:   matchWarnings(detail),
 	}, nil
+}
+
+func matchWarnings(detail contracts.DetailLevel) []string {
+	if detail == contracts.DetailLevelFull {
+		return []string{fullMatchAvailabilityWarning}
+	}
+	return []string{}
 }
 
 // PlayerMatchFilters contains native and bounded client-side list filters.
@@ -438,17 +475,7 @@ func (service *Service) execute(
 	return response, nil
 }
 
-func matchOperation(detail contracts.DetailLevel, many bool) (string, string) {
-	if many {
-		switch detail {
-		case contracts.DetailLevelSummary:
-			return generated.StratzGetMatchesSummary_Operation, "StratzGetMatchesSummary"
-		case contracts.DetailLevelFull:
-			return generated.StratzGetMatchesFull_Operation, "StratzGetMatchesFull"
-		default:
-			return generated.StratzGetMatchesStandard_Operation, "StratzGetMatchesStandard"
-		}
-	}
+func matchOperation(detail contracts.DetailLevel) (string, string) {
 	switch detail {
 	case contracts.DetailLevelSummary:
 		return generated.StratzGetMatchSummary_Operation, "StratzGetMatchSummary"
@@ -459,15 +486,33 @@ func matchOperation(detail contracts.DetailLevel, many bool) (string, string) {
 	}
 }
 
+func batchMatchOperation(detail contracts.DetailLevel) (string, string) {
+	switch detail {
+	case contracts.DetailLevelSummary:
+		return generated.StratzGetMatchBatchSummary_Operation, "StratzGetMatchBatchSummary"
+	case contracts.DetailLevelFull:
+		return generated.StratzGetMatchBatchFull_Operation, "StratzGetMatchBatchFull"
+	default:
+		return generated.StratzGetMatchBatchStandard_Operation, "StratzGetMatchBatchStandard"
+	}
+}
+
 func ensureAvailable(match *upstreamMatch, detail contracts.DetailLevel) *Error {
-	if detail == contracts.DetailLevelSummary || parseStatus(match) == "parsed" {
+	if detail == contracts.DetailLevelSummary {
 		return nil
 	}
 	summary := mapSummary(match)
+	reason := "parse_status"
+	if summary.ParseStatus == "parsed" && match.PlaybackData != nil {
+		return nil
+	}
+	if summary.ParseStatus == "parsed" {
+		reason = "playback_data"
+	}
 	return &Error{
 		Code:    contracts.ErrorCodeDataNotReady,
 		Message: "The requested match detail is not parsed and ready",
-		Details: map[string]any{"parse_status": summary.ParseStatus},
+		Details: map[string]any{"parse_status": summary.ParseStatus, "missing": reason},
 		Context: contracts.MatchAvailabilityContext{
 			Type:                 "match_availability",
 			Match:                summary,

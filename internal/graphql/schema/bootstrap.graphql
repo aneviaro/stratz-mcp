@@ -5,6 +5,7 @@ schema {
 }
 
 scalar Long
+scalar Short
 
 type DotaQuery {
   health: String
@@ -12,8 +13,8 @@ type DotaQuery {
   players(steamAccountIds: [Long!]!): [PlayerType!]!
   match(id: Long!): MatchType
   matches(ids: [Long!]!): [MatchType!]!
-  constants: ConstantsType!
-  heroStats(request: HeroStatsRequestType!): HeroStatsType
+  constants: ConstantQuery!
+  heroStats: HeroStatsQuery!
   league(id: Int!): LeagueType
   leagues(request: LeagueRequestType!): [LeagueType!]!
   live: LiveQuery!
@@ -47,9 +48,6 @@ type LeagueType {
   tier: String
   startDateTime: Long
   endDateTime: Long
-  isFuture: Boolean
-  isEnded: Boolean
-  isLive: Boolean
   matches(request: LeagueMatchesRequestType!): [MatchType!]!
 }
 
@@ -68,15 +66,13 @@ input MatchLiveRequestType {
 }
 
 type MatchLiveType {
-  id: Long!
-  startDateTime: Long
+  matchId: Long!
+  createdDateTime: Long
   gameTime: Int
-  gameModeId: Int
-  spectatorCount: Int
+  gameMode: Int
+  spectators: Int
   radiantTeamId: Int
   direTeamId: Int
-  radiantTeamName: String
-  direTeamName: String
   league: LeagueType
   players: [MatchLivePlayerType!]!
 }
@@ -86,83 +82,142 @@ type MatchLivePlayerType {
   heroId: Int!
   isRadiant: Boolean!
   playerSlot: Int!
-  kills: Int!
-  deaths: Int!
-  assists: Int!
+  numKills: Int
+  numDeaths: Int
+  numAssists: Int
   networth: Int
   level: Int
 }
 
-type ConstantsType {
-  heroes: [HeroConstantType!]!
-  items: [ConstantType!]!
-  abilities: [ConstantType!]!
-  gameModes: [ConstantType!]!
-  regions: [ConstantType!]!
-  ranks: [ConstantType!]
+type ConstantQuery {
+  heroes: [HeroType!]
+  items: [ItemType!]
+  abilities: [AbilityType!]
+  gameModes: [GameModeType!]
+  regions: [RegionType!]
 }
 
-type ConstantType {
-  id: String!
-  name: String!
-  localizedName: String
-  metadata: [ConstantMetadataType!]!
+type HeroType {
+  id: Int
+  name: String
+  displayName: String
+  stats: HeroStatType
+  roles: [HeroRoleType!]
 }
 
-type ConstantMetadataType {
-  key: String!
-  value: String
-}
-
-type HeroConstantType {
-  id: Int!
-  name: String!
-  localizedName: String
+type HeroStatType {
   primaryAttribute: String
   attackType: String
-  roles: [String!]!
 }
 
-input HeroStatsRequestType {
+type HeroRoleType {
+  roleId: String
+}
+
+type ItemType {
+  id: Int
+  name: String
+  displayName: String
+}
+
+type AbilityType {
+  id: Int
+  name: String
+  language: AbilityLanguageType
+}
+
+type AbilityLanguageType {
+  displayName: String
+}
+
+type GameModeType {
+  id: Int
+  name: String
+}
+
+type RegionType {
+  id: Int
+  name: String
+  displayName: String
+}
+
+type HeroStatsQuery {
+  winDay(
+    heroIds: [Short!]
+    take: Int
+    skip: Int
+    bracketIds: [RankBracket!]
+    positionIds: [MatchPlayerPositionType!]
+    groupBy: FilterHeroWinRequestGroupBy
+  ): [HeroWinDayType!]
+  winWeek(
+    heroIds: [Short!]
+    take: Int
+    skip: Int
+    bracketIds: [RankBracket!]
+    positionIds: [MatchPlayerPositionType!]
+    groupBy: FilterHeroWinRequestGroupBy
+  ): [HeroWinWeekType!]
+  winMonth(
+    heroIds: [Short!]
+    take: Int
+    skip: Int
+    bracketIds: [RankBracket!]
+    positionIds: [MatchPlayerPositionType!]
+    groupBy: FilterHeroWinRequestGroupBy
+  ): [HeroWinMonthType!]
+}
+
+type HeroWinDayType {
   heroId: Int!
-  bucket: String!
-  startDateTime: Long!
-  endDateTime: Long!
-  gameVersionId: String
-  rankBracket: String
-  role: String
-  lane: String
-  includeMatchups: Boolean!
-  includeSynergies: Boolean!
+  day: Long!
+  matchCount: Int!
+  winCount: Int!
 }
 
-type HeroStatsType {
+type HeroWinWeekType {
   heroId: Int!
+  week: Long!
   matchCount: Int!
-  pickCount: Int!
   winCount: Int!
-  banCount: Int!
-  populationMatchCount: Int!
-  rankDataAvailable: Boolean
-  roles: [HeroStatsBreakdownType!]!
-  lanes: [HeroStatsBreakdownType!]!
-  matchups: [HeroStatsRelationType!]!
-  synergies: [HeroStatsRelationType!]!
 }
 
-type HeroStatsBreakdownType {
-  name: String!
-  matchCount: Int!
-  pickCount: Int!
-  winCount: Int!
-  populationMatchCount: Int!
-}
-
-type HeroStatsRelationType {
+type HeroWinMonthType {
   heroId: Int!
+  month: Long!
   matchCount: Int!
   winCount: Int!
-  expectedWinRate: Float
+}
+
+enum RankBracket {
+  ANCIENT
+  ARCHON
+  CRUSADER
+  DIVINE
+  GUARDIAN
+  HERALD
+  IMMORTAL
+  LEGEND
+  UNCALIBRATED
+}
+
+enum MatchPlayerPositionType {
+  ALL
+  FILTERED
+  POSITION_1
+  POSITION_2
+  POSITION_3
+  POSITION_4
+  POSITION_5
+  UNKNOWN
+}
+
+enum FilterHeroWinRequestGroupBy {
+  ALL
+  HERO_ID
+  HERO_ID_DURATION_MINUTES
+  HERO_ID_POSITION_BRACKET
+  TIME
 }
 
 type PlayerType {
@@ -210,18 +265,53 @@ type MatchType {
   didRadiantWin: Boolean
   radiantKills: Int
   direKills: Int
-  gameModeId: Int
-  lobbyTypeId: Int
+  gameMode: Int
+  lobbyType: Int
   regionId: Int
   leagueId: Long
   gameVersionId: String
   parsedDateTime: Long
   statsDateTime: Long
   players: [MatchPlayerType!]!
-  objectives: [MatchEventType!]
-  timeline: [MatchEventType!]
-  fights: [MatchFightType!]
-  economy: [MatchEconomyType!]
+  playbackData: MatchPlaybackDataType
+}
+
+type MatchPlaybackDataType {
+  buildingEvents: [MatchPlaybackDataBuildingEventType!]
+  roshanEvents: [MatchPlaybackDataRoshanEventType!]
+  runeEvents: [MatchPlaybackDataRuneEventType!]
+  towerDeathEvents: [MatchPlaybackDataTowerDeathEventType!]
+  wardEvents: [MatchPlaybackDataWardEventType!]
+}
+
+type MatchPlaybackDataBuildingEventType {
+  time: Int!
+  type: String
+  isRadiant: Boolean
+  npcId: Int
+}
+
+type MatchPlaybackDataRoshanEventType {
+  time: Int!
+}
+
+type MatchPlaybackDataRuneEventType {
+  time: Int!
+  action: Int!
+  rune: Int!
+}
+
+type MatchPlaybackDataTowerDeathEventType {
+  time: Int!
+  radiant: Int!
+  dire: Int!
+}
+
+type MatchPlaybackDataWardEventType {
+  time: Int!
+  action: String
+  wardType: String
+  fromPlayer: Int
 }
 
 type MatchPlayerType {

@@ -171,7 +171,7 @@ All except minimum duration map to native `PlayerMatchesRequestType` fields. Min
 
 `standard` detail also returns key timeline events and objectives.
 
-`full` detail includes available player events, wards, purchases, fights, and economy timelines, subject to the global response-size limit.
+`full` detail includes the available replay-derived rune and ward timeline, subject to the global response-size limit. Fight and economy breakdowns remain optional reserved fields and are omitted with an explicit warning until STRATZ exposes a bounded, semantically correct source.
 
 If requested data is not parsed or ready, the tool returns an MCP execution error with code `DATA_NOT_READY`. Its required error `context` contains the stable normalized match summary, `parse_status`, and requested detail level. It must not silently downgrade the requested detail level or return a success envelope.
 
