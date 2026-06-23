@@ -1,3 +1,6 @@
+.ralphex/
+docs/plans/
+docs/implementation-plan.md
 *
 !dist/image/
 !dist/image/stratz-mcp-linux-amd64
