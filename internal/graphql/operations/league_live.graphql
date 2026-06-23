@@ -6,9 +6,6 @@ fragment LeagueFields on LeagueType {
   tier
   startDateTime
   endDateTime
-  isFuture
-  isEnded
-  isLive
 }
 
 query StratzGetLeague($id: Int!) {
@@ -35,15 +32,13 @@ query StratzListLeagueMatches($id: Int!, $request: LeagueMatchesRequestType!) {
 query StratzListLiveMatches($request: MatchLiveRequestType!) {
   live {
     matches(request: $request) {
-      id
-      startDateTime
+      id: matchId
+      startDateTime: createdDateTime
       gameTime
-      gameModeId
-      spectatorCount
+      gameModeId: gameMode
+      spectatorCount: spectators
       radiantTeamId
       direTeamId
-      radiantTeamName
-      direTeamName
       league {
         ...LeagueFields
       }
@@ -52,9 +47,9 @@ query StratzListLiveMatches($request: MatchLiveRequestType!) {
         heroId
         isRadiant
         playerSlot
-        kills
-        deaths
-        assists
+        kills: numKills
+        deaths: numDeaths
+        assists: numAssists
         networth
         level
       }

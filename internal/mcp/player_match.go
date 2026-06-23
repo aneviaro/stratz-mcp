@@ -49,7 +49,9 @@ func registerPlayerMatchHandlers(
 			if err != nil {
 				return nil, playerMatchExecutionError(err)
 			}
-			return curatedEnvelope(options, "get_match", detailInput(object), result.Data, result.Raw, includeRaw(object), result.RateLimits, nil), nil
+			output := curatedEnvelope(options, "get_match", detailInput(object), result.Data, result.Raw, includeRaw(object), result.RateLimits, nil)
+			output["warnings"] = result.Warnings
+			return output, nil
 		}
 	}
 	if handlers["stratz_batch_get_matches"] == nil {
@@ -64,7 +66,9 @@ func registerPlayerMatchHandlers(
 				return nil, playerMatchExecutionError(domainErr)
 			}
 			data := contracts.StratzBatchGetMatchesData{Items: result.Data}
-			return curatedEnvelope(options, "batch_get_matches", detailInput(object), data, result.Raw, includeRaw(object), result.RateLimits, nil), nil
+			output := curatedEnvelope(options, "batch_get_matches", detailInput(object), data, result.Raw, includeRaw(object), result.RateLimits, nil)
+			output["warnings"] = result.Warnings
+			return output, nil
 		}
 	}
 	if handlers["stratz_list_player_matches"] == nil {

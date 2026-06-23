@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -198,10 +200,13 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 		"gameVersionId":"7.XX",
 		"parsedDateTime":1781728000,
 		"players":[{"steamAccountId":39734272,"heroId":5,"isRadiant":true,"playerSlot":0,"kills":10,"deaths":2,"assists":15,"networth":20000,"level":25}],
-		"objectives":[{"time":100,"type":"tower","isRadiant":true,"steamAccountId":39734272,"heroId":5,"value":"top"}],
-		"timeline":[{"time":50,"type":"kill","isRadiant":true,"steamAccountId":39734272,"heroId":5,"value":1}],
-		"fights":[{"startTime":40,"endTime":60,"radiantKills":2,"direKills":1,"radiantNetworthDelta":500,"participants":[]}],
-		"economy":[{"time":60,"radiantNetworth":10000,"direNetworth":9000,"radiantExperience":8000,"direExperience":7500}]
+		"playbackData":{
+			"buildingEvents":[{"time":100,"type":"TOWER","isRadiant":true,"npcId":42}],
+			"roshanEvents":[{"time":200}],
+			"towerDeathEvents":[{"time":300,"radiant":1,"dire":2}],
+			"runeEvents":[{"time":50,"action":1,"rune":2}],
+			"wardEvents":[{"time":60,"action":"SPAWN","wardType":"OBSERVER","fromPlayer":0}]
+		}
 	}}`
 	for _, test := range []struct {
 		detail            contracts.DetailLevel
@@ -218,6 +223,13 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 				if request.OperationName != test.wantOperationName {
 					t.Fatalf("operation = %q", request.OperationName)
 				}
+				if test.wantObjectives && !strings.Contains(request.Query, "buildingEvents") {
+					t.Fatalf("standard query is missing playback objectives: %s", request.Query)
+				}
+				if test.wantFull && (!strings.Contains(request.Query, "runeEvents") ||
+					!strings.Contains(request.Query, "wardEvents")) {
+					t.Fatalf("full query is missing playback timeline: %s", request.Query)
+				}
 				return response(payload), nil
 			}}
 			result, err := mustService(t, executor, 5).GetMatch(context.Background(), "8000000000", test.detail)
@@ -225,9 +237,24 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 				t.Fatal(err)
 			}
 			if (result.Data.Objectives != nil) != test.wantObjectives ||
-				(result.Data.Fights != nil) != test.wantFull ||
-				(result.Data.Economy != nil) != test.wantFull {
+				(result.Data.Timeline != nil) != test.wantFull {
 				t.Fatalf("match detail mapping = %#v", result.Data)
+			}
+			if test.wantObjectives && len(result.Data.Objectives) != 3 {
+				t.Fatalf("objectives = %#v", result.Data.Objectives)
+			}
+			if test.wantFull && len(result.Data.Timeline) != 2 {
+				t.Fatalf("timeline = %#v", result.Data.Timeline)
+			}
+			if test.wantFull && result.Data.Timeline[1].Value != "ward_type=OBSERVER;from_player=0" {
+				t.Fatalf("ward value = %#v", result.Data.Timeline[1].Value)
+			}
+			if test.wantFull {
+				if !reflect.DeepEqual(result.Warnings, []string{fullMatchAvailabilityWarning}) {
+					t.Fatalf("warnings = %#v", result.Warnings)
+				}
+			} else if len(result.Warnings) != 0 {
+				t.Fatalf("warnings = %#v", result.Warnings)
 			}
 		})
 	}
@@ -242,6 +269,20 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 		domainErr.Context == nil ||
 		domainErr.Details["parse_status"] != "pending" {
 		t.Fatalf("error = %#v", err)
+	}
+
+	missingPlayback := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		return response(`{"match":{"id":10,"parsedDateTime":10,"players":[],"playbackData":null}}`), nil
+	}}
+	_, err = mustService(t, missingPlayback, 5).GetMatch(
+		context.Background(),
+		"10",
+		contracts.DetailLevelStandard,
+	)
+	if !errors.As(err, &domainErr) ||
+		domainErr.Code != contracts.ErrorCodeDataNotReady ||
+		domainErr.Details["missing"] != "playback_data" {
+		t.Fatalf("missing playback error = %#v", err)
 	}
 }
 
@@ -299,12 +340,53 @@ func TestListPlayerMatchesBoundedContinuation(t *testing.T) {
 	}
 }
 
+func TestListPlayerMatchesUsesCurrentGameModeAndLobbyTypeFilters(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
+		if !strings.Contains(request.Query, "gameModeId: gameMode") ||
+			!strings.Contains(request.Query, "lobbyTypeId: lobbyType") {
+			t.Fatalf("match query does not alias current STRATZ fields: %s", request.Query)
+		}
+		variables := request.Variables.(map[string]any)
+		requestInput := variables["request"].(map[string]any)
+		if got := requestInput["gameModeIds"]; !reflect.DeepEqual(got, []int64{22}) {
+			t.Fatalf("gameModeIds = %#v, want [22]", got)
+		}
+		if got := requestInput["lobbyTypeIds"]; !reflect.DeepEqual(got, []int64{7}) {
+			t.Fatalf("lobbyTypeIds = %#v, want [7]", got)
+		}
+		if _, exists := requestInput["gameMode"]; exists {
+			t.Fatalf("obsolete gameMode was sent: %#v", requestInput)
+		}
+		if _, exists := requestInput["lobbyType"]; exists {
+			t.Fatalf("obsolete lobbyType was sent: %#v", requestInput)
+		}
+		return response(`{"player":{"steamAccountId":1,"matches":[]}}`), nil
+	}}
+	gameModeID := int64(22)
+	lobbyTypeID := int64(7)
+	_, err := mustService(t, executor, 5).ListPlayerMatches(
+		context.Background(),
+		PlayerMatchFilters{
+			PlayerID:    "1",
+			Limit:       20,
+			GameModeID:  &gameModeID,
+			LobbyTypeID: &lobbyTypeID,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestBatchMatchesIsAtomicForDataNotReady(t *testing.T) {
-	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
-		return response(`{"matches":[
-			{"id":1,"parsedDateTime":10,"players":[]},
-			{"id":2,"parseStatus":"pending","players":[]}
-		]}`), nil
+	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
+		if request.OperationName != "StratzGetMatchBatchStandard" {
+			t.Fatalf("operation = %q", request.OperationName)
+		}
+		return response(`{
+			"match0":{"id":1,"parsedDateTime":10,"players":[],"playbackData":{}},
+			"match1":{"id":2,"parseStatus":"pending","players":[]}
+		}`), nil
 	}}
 	_, err := mustService(t, executor, 5).BatchMatches(
 		context.Background(),
@@ -316,6 +398,69 @@ func TestBatchMatchesIsAtomicForDataNotReady(t *testing.T) {
 		domainErr.Code != contracts.ErrorCodeDataNotReady ||
 		domainErr.FailedInput != "2" {
 		t.Fatalf("error = %#v", err)
+	}
+}
+
+func TestBatchMatchesUsesPublicSingleMatchQueries(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
+		if request.OperationName != "StratzGetMatchBatchSummary" ||
+			strings.Contains(request.Query, "matches(ids:") {
+			t.Fatalf("batch used non-public operation: %q\n%s", request.OperationName, request.Query)
+		}
+		variables := request.Variables.(map[string]any)
+		return response(`{
+			"match0":{"id":` + strconv.FormatInt(variables["id0"].(int64), 10) + `,"players":[]},
+			"match1":{"id":` + strconv.FormatInt(variables["id1"].(int64), 10) + `,"players":[]}
+		}`), nil
+	}}
+	result, err := mustService(t, executor, 5).BatchMatches(
+		context.Background(),
+		[]string{"2", "1", "2"},
+		contracts.DetailLevelSummary,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if executor.calls != 1 ||
+		len(result.Data) != 3 ||
+		result.Data[0].MatchID != "2" ||
+		result.Data[1].MatchID != "1" ||
+		result.Data[2].MatchID != "2" {
+		t.Fatalf("result = %#v, calls = %d", result.Data, executor.calls)
+	}
+}
+
+func TestBatchMatchesFitsTwentyFiveIDsWithinRequestBudget(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
+		if request.OperationName != "StratzGetMatchBatchSummary" {
+			t.Fatalf("operation = %q", request.OperationName)
+		}
+		variables := request.Variables.(map[string]any)
+		payload := make(map[string]any, 5)
+		for index := range 5 {
+			id := variables["id"+strconv.Itoa(index)].(int64)
+			payload["match"+strconv.Itoa(index)] = map[string]any{"id": id, "players": []any{}}
+		}
+		encoded, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return response(string(encoded)), nil
+	}}
+	ids := make([]string, 25)
+	for index := range ids {
+		ids[index] = strconv.Itoa(index + 1)
+	}
+	result, err := mustService(t, executor, 5).BatchMatches(
+		context.Background(),
+		ids,
+		contracts.DetailLevelSummary,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if executor.calls != 5 || len(result.Data) != 25 {
+		t.Fatalf("calls = %d, items = %d", executor.calls, len(result.Data))
 	}
 }
 

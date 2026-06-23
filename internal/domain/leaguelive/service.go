@@ -366,7 +366,8 @@ func acceptsLive(match upstreamLiveMatch, filters LiveFilters) bool {
 	if filters.TeamID != nil && !equalID(match.RadiantTeamID, filters.TeamID) && !equalID(match.DireTeamID, filters.TeamID) {
 		return false
 	}
-	if filters.GameModeID != nil && !equalID(match.GameModeID, filters.GameModeID) {
+	if filters.GameModeID != nil &&
+		!equalID(enumID(match.GameModeID, gameModeIDs), filters.GameModeID) {
 		return false
 	}
 	if filters.MinimumSpectators != nil && (match.SpectatorCount == nil || *match.SpectatorCount < *filters.MinimumSpectators) {

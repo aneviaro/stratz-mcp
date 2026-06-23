@@ -220,6 +220,30 @@ func TestLiveNativeAndClientFiltersWithIncompleteSnapshotWarning(t *testing.T) {
 		if request.OperationName != "StratzListLiveMatches" {
 			t.Fatalf("operation = %q", request.OperationName)
 		}
+		for _, selection := range []string{
+			"id: matchId",
+			"startDateTime: createdDateTime",
+			"gameModeId: gameMode",
+			"spectatorCount: spectators",
+			"kills: numKills",
+			"deaths: numDeaths",
+			"assists: numAssists",
+		} {
+			if !strings.Contains(request.Query, selection) {
+				t.Fatalf("live query is missing %q: %s", selection, request.Query)
+			}
+		}
+		for _, obsolete := range []string{
+			"radiantTeamName",
+			"direTeamName",
+			"isFuture",
+			"isEnded",
+			"isLive",
+		} {
+			if strings.Contains(request.Query, obsolete) {
+				t.Fatalf("live query contains obsolete selection %q: %s", obsolete, request.Query)
+			}
+		}
 		native := request.Variables.(map[string]any)["request"].(map[string]any)
 		if native["orderBy"] != "SPECTATOR_COUNT" ||
 			native["leagueIds"].([]int64)[0] != 9 ||

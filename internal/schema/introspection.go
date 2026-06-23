@@ -27,29 +27,24 @@ const IntrospectionQuery = `query StratzSchemaIntrospection {
       kind
       name
       description
-      specifiedByURL
       fields(includeDeprecated: true) {
         name
         description
-        args(includeDeprecated: true) {
+        args {
           name
           description
           type { ...TypeRef }
           defaultValue
-          isDeprecated
-          deprecationReason
         }
         type { ...TypeRef }
         isDeprecated
         deprecationReason
       }
-      inputFields(includeDeprecated: true) {
+      inputFields {
         name
         description
         type { ...TypeRef }
         defaultValue
-        isDeprecated
-        deprecationReason
       }
       interfaces { ...TypeRef }
       enumValues(includeDeprecated: true) {
@@ -63,15 +58,12 @@ const IntrospectionQuery = `query StratzSchemaIntrospection {
     directives {
       name
       description
-      isRepeatable
       locations
-      args(includeDeprecated: true) {
+      args {
         name
         description
         type { ...TypeRef }
         defaultValue
-        isDeprecated
-        deprecationReason
       }
     }
   }

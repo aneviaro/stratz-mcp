@@ -3,89 +3,101 @@ query StratzGetConstants {
     heroes {
       id
       name
-      localizedName
-      primaryAttribute
-      attackType
-      roles
+      localizedName: displayName
+      stats {
+        primaryAttribute
+        attackType
+      }
+      roles {
+        roleId
+      }
     }
     items {
-      ... ConstantFields
+      id
+      name
+      localizedName: displayName
     }
     abilities {
-      ... ConstantFields
+      id
+      name
+      language {
+        displayName
+      }
     }
     gameModes {
-      ... ConstantFields
+      id
+      name
     }
     regions {
-      ... ConstantFields
+      id
+      name
+      localizedName: displayName
     }
-    ranks {
-      ... ConstantFields
+  }
+}
+
+query StratzGetHeroStatsDay(
+  $heroIds: [Short!]
+  $bracketIds: [RankBracket!]
+  $positionIds: [MatchPlayerPositionType!]
+) {
+  heroStats {
+    stats: winDay(
+      heroIds: $heroIds
+      bracketIds: $bracketIds
+      positionIds: $positionIds
+      take: 400
+      skip: 0
+      groupBy: TIME
+    ) {
+      heroId
+      matchCount
+      winCount
+      period: day
     }
   }
 }
 
-query StratzGetHeroStatsDay($request: HeroStatsRequestType!) {
-  heroStats(request: $request) {
-    ... HeroStatsFields
+query StratzGetHeroStatsWeek(
+  $heroIds: [Short!]
+  $bracketIds: [RankBracket!]
+  $positionIds: [MatchPlayerPositionType!]
+) {
+  heroStats {
+    stats: winWeek(
+      heroIds: $heroIds
+      bracketIds: $bracketIds
+      positionIds: $positionIds
+      take: 60
+      skip: 0
+      groupBy: TIME
+    ) {
+      heroId
+      matchCount
+      winCount
+      period: week
+    }
   }
 }
 
-query StratzGetHeroStatsWeek($request: HeroStatsRequestType!) {
-  heroStats(request: $request) {
-    ... HeroStatsFields
-  }
-}
-
-query StratzGetHeroStatsMonth($request: HeroStatsRequestType!) {
-  heroStats(request: $request) {
-    ... HeroStatsFields
-  }
-}
-
-fragment ConstantFields on ConstantType {
-  id
-  name
-  localizedName
-  metadata {
-    key
-    value
-  }
-}
-
-fragment HeroStatsFields on HeroStatsType {
-  heroId
-  matchCount
-  pickCount
-  winCount
-  banCount
-  populationMatchCount
-  rankDataAvailable
-  roles {
-    name
-    matchCount
-    pickCount
-    winCount
-    populationMatchCount
-  }
-  lanes {
-    name
-    matchCount
-    pickCount
-    winCount
-    populationMatchCount
-  }
-  matchups {
-    heroId
-    matchCount
-    winCount
-    expectedWinRate
-  }
-  synergies {
-    heroId
-    matchCount
-    winCount
-    expectedWinRate
+query StratzGetHeroStatsMonth(
+  $heroIds: [Short!]
+  $bracketIds: [RankBracket!]
+  $positionIds: [MatchPlayerPositionType!]
+) {
+  heroStats {
+    stats: winMonth(
+      heroIds: $heroIds
+      bracketIds: $bracketIds
+      positionIds: $positionIds
+      take: 18
+      skip: 0
+      groupBy: TIME
+    ) {
+      heroId
+      matchCount
+      winCount
+      period: month
+    }
   }
 }

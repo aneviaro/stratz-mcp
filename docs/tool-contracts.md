@@ -147,7 +147,7 @@ The server never adds cross-service enrichment. A private profile is an executio
 |---|---|
 | `summary` | Match summary fields plus ten-or-fewer `players` |
 | `standard` | Summary plus bounded `objectives`; omit `timeline`, `fights`, and `economy` |
-| `full` | Standard plus bounded `timeline`, `fights`, and `economy` |
+| `full` | Standard plus bounded `timeline`; omit unavailable `fights` and `economy` with an explicit warning |
 
 If replay-derived data required by the requested level is unavailable, return `DATA_NOT_READY`; do not silently downgrade. This is an error-only result with MCP `isError: true`. Its required `context` is:
 

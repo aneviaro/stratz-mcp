@@ -158,26 +158,32 @@ func (service *Service) GetHeroStats(ctx context.Context, filters StatsFilters) 
 	if rangeErr != nil {
 		return nil, rangeErr
 	}
-	if filters.PatchID != nil && bucket != "day" {
-		return nil, invalid(
-			"Patch-filtered hero statistics are limited to ranges represented by daily buckets",
-			map[string]any{"bucket": bucket},
-		)
+	if filters.PatchID != nil {
+		return nil, invalid("Patch-filtered hero statistics are not supported by the current STRATZ aggregate", nil)
 	}
-	request := map[string]any{
-		"heroId":           heroID,
-		"bucket":           bucket,
-		"startDateTime":    effective.From.Unix(),
-		"endDateTime":      effective.To.Unix(),
-		"includeMatchups":  filters.IncludeMatchups,
-		"includeSynergies": filters.IncludeSynergies,
+	if filters.Lane != nil {
+		return nil, invalid("Lane-filtered hero statistics are not supported by the current STRATZ aggregate", nil)
 	}
-	addOptional(request, "gameVersionId", filters.PatchID)
-	addOptional(request, "rankBracket", filters.RankBracket)
-	addOptional(request, "role", filters.Role)
-	addOptional(request, "lane", filters.Lane)
+	if filters.IncludeMatchups || filters.IncludeSynergies {
+		return nil, invalid("Matchup and synergy expansion is not supported by the current STRATZ aggregate", nil)
+	}
+	variables := map[string]any{"heroIds": []int64{heroID}}
+	if filters.RankBracket != nil {
+		rank, ok := heroStatsRank(*filters.RankBracket)
+		if !ok {
+			return nil, invalid("Unsupported hero statistics rank bracket", map[string]any{"rank_bracket": *filters.RankBracket})
+		}
+		variables["bracketIds"] = []string{rank}
+	}
+	if filters.Role != nil {
+		positions, ok := heroStatsPositions(*filters.Role)
+		if !ok {
+			return nil, invalid("Unsupported hero statistics role", map[string]any{"role": *filters.Role})
+		}
+		variables["positionIds"] = positions
+	}
 	query, operation := statisticsOperation(bucket)
-	response, err := service.execute(ctx, budget, query, operation, map[string]any{"request": request})
+	response, err := service.execute(ctx, budget, query, operation, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -188,26 +194,16 @@ func (service *Service) GetHeroStats(ctx context.Context, filters StatsFilters) 
 	if envelope.HeroStats == nil {
 		return nil, notFound("Hero statistics were not found", map[string]any{"hero_id": heroID})
 	}
-	warnings := []string{}
-	rankDataUnavailable := filters.RankBracket != nil &&
-		(envelope.HeroStats.RankDataAvailable == nil || !*envelope.HeroStats.RankDataAvailable)
-	if rankDataUnavailable {
-		warnings = append(warnings, "Rank-bracket redistribution data is unavailable; rates are omitted to avoid mixing populations")
+	stats := aggregateStats(envelope.HeroStats.Stats, effective, heroID)
+	if stats == nil {
+		return nil, notFound("Hero statistics were not found in the effective date range", map[string]any{"hero_id": heroID})
 	}
+	warnings := []string{"Pick and ban rates are unavailable from the current STRATZ win aggregate"}
 	raw := rawData(response.Data)
 	if constantsResponse != nil {
 		raw = map[string]any{"constants": rawData(constantsResponse.Data), "statistics": raw}
 	}
-	data := mapStats(envelope.HeroStats, filters)
-	if rankDataUnavailable {
-		data.PickRate = nil
-		data.WinRate = nil
-		data.BanRate = nil
-		data.Roles = []contracts.HeroBreakdown{}
-		data.Lanes = []contracts.HeroBreakdown{}
-		data.Matchups = []contracts.HeroRelation{}
-		data.Synergies = []contracts.HeroRelation{}
-	}
+	data := mapStats(stats, filters)
 	return &Result[contracts.StratzGetHeroStatsData]{
 		Data:           data,
 		Raw:            raw,
@@ -216,6 +212,81 @@ func (service *Service) GetHeroStats(ctx context.Context, filters StatsFilters) 
 		EffectiveRange: &effective,
 		PatchID:        filters.PatchID,
 	}, nil
+}
+
+func aggregateStats(rows []upstreamStats, effective DateRange, heroID int64) *upstreamStats {
+	result := &upstreamStats{HeroID: heroID}
+	found := false
+	for _, row := range rows {
+		period, ok := heroStatsPeriod(row.Period)
+		if !ok || period.Before(effective.From) || !period.Before(effective.To) ||
+			(row.HeroID != 0 && row.HeroID != heroID) {
+			continue
+		}
+		result.MatchCount += row.MatchCount
+		result.WinCount += row.WinCount
+		found = true
+	}
+	if !found {
+		return nil
+	}
+	return result
+}
+
+func heroStatsPeriod(value int64) (time.Time, bool) {
+	if value > 100000000000 {
+		return time.UnixMilli(value).UTC(), true
+	}
+	if value > 1000000000 {
+		return time.Unix(value, 0).UTC(), true
+	}
+	text := strconv.FormatInt(value, 10)
+	for _, layout := range []string{"20060102", "200601", "2006"} {
+		if parsed, err := time.Parse(layout, text); err == nil {
+			return parsed.UTC(), true
+		}
+	}
+	if len(text) == 6 {
+		year, yearErr := strconv.Atoi(text[:4])
+		week, weekErr := strconv.Atoi(text[4:])
+		if yearErr == nil && weekErr == nil && week >= 1 && week <= 53 {
+			date := time.Date(year, 1, 4, 0, 0, 0, 0, time.UTC)
+			monday := date.AddDate(0, 0, -((int(date.Weekday()) + 6) % 7))
+			return monday.AddDate(0, 0, (week-1)*7), true
+		}
+	}
+	return time.Time{}, false
+}
+
+func heroStatsRank(value string) (string, bool) {
+	rank := strings.ToUpper(strings.TrimSpace(value))
+	switch rank {
+	case "ANCIENT", "ARCHON", "CRUSADER", "DIVINE", "GUARDIAN", "HERALD", "IMMORTAL", "LEGEND", "UNCALIBRATED":
+		return rank, true
+	default:
+		return "", false
+	}
+}
+
+func heroStatsPositions(value string) ([]string, bool) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "core":
+		return []string{"POSITION_1", "POSITION_2", "POSITION_3"}, true
+	case "support":
+		return []string{"POSITION_4", "POSITION_5"}, true
+	case "carry", "position_1":
+		return []string{"POSITION_1"}, true
+	case "mid", "position_2":
+		return []string{"POSITION_2"}, true
+	case "offlane", "off_lane", "position_3":
+		return []string{"POSITION_3"}, true
+	case "soft_support", "position_4":
+		return []string{"POSITION_4"}, true
+	case "hard_support", "position_5":
+		return []string{"POSITION_5"}, true
+	default:
+		return nil, false
+	}
 }
 
 func (service *Service) resolveStatsHero(ctx context.Context, budget *stratz.RequestBudget, identifier any) (int64, *stratz.Response, error) {
@@ -348,14 +419,25 @@ func containsHero(heroes []*upstreamHero, id int64) bool {
 }
 
 func mapHero(source *upstreamHero) contracts.Hero {
+	var primaryAttribute, attackType *string
+	if source.Stats != nil {
+		primaryAttribute = source.Stats.PrimaryAttribute
+		attackType = source.Stats.AttackType
+	}
+	roles := make([]string, 0, len(source.Roles))
+	for _, role := range source.Roles {
+		if role.RoleID != nil {
+			roles = append(roles, *role.RoleID)
+		}
+	}
 	return contracts.Hero{
 		HeroID:           source.ID,
 		Name:             clean(source.Name, 128),
 		Slug:             canonicalHeroSlug(source),
 		LocalizedName:    cleanPointer(source.LocalizedName, 128),
-		PrimaryAttribute: enumPointer(source.PrimaryAttribute, "strength", "agility", "intelligence", "universal"),
-		AttackType:       enumPointer(source.AttackType, "melee", "ranged"),
-		Roles:            cleanStrings(source.Roles, 16, 64),
+		PrimaryAttribute: enumPointer(primaryAttribute, "strength", "agility", "intelligence", "universal"),
+		AttackType:       enumPointer(attackType, "melee", "ranged"),
+		Roles:            cleanStrings(roles, 16, 64),
 	}
 }
 
@@ -365,26 +447,25 @@ func constantsForType(constants upstreamConstants, requested string) ([]contract
 	appendConstants := func(kind string, source []upstreamConstant) {
 		for _, item := range source {
 			metadata := map[string]any{"type": kind}
-			for _, pair := range item.Metadata {
-				if pair.Value != nil && strings.TrimSpace(pair.Key) != "" && len(metadata) < 64 {
-					metadata[clean(pair.Key, 64)] = clean(*pair.Value, 256)
-				}
+			localizedName := item.LocalizedName
+			if localizedName == nil && item.Language != nil {
+				localizedName = item.Language.DisplayName
 			}
 			items = append(items, contracts.ConstantRecord{
-				ID: item.ID, Name: clean(item.Name, 256), LocalizedName: cleanPointer(item.LocalizedName, 256), Metadata: metadata,
+				ID: item.ID.String(), Name: clean(item.Name, 256), LocalizedName: cleanPointer(localizedName, 256), Metadata: metadata,
 			})
 		}
 	}
 	appendHeroes := func() {
 		for _, hero := range constants.Heroes {
 			metadata := map[string]any{
-				"type": "heroes", "slug": canonicalHeroSlug(&hero), "roles": strings.Join(cleanStrings(hero.Roles, 16, 64), ","),
+				"type": "heroes", "slug": canonicalHeroSlug(&hero), "roles": strings.Join(mapHero(&hero).Roles, ","),
 			}
-			if hero.PrimaryAttribute != nil {
-				metadata["primary_attribute"] = clean(*hero.PrimaryAttribute, 64)
+			if hero.Stats != nil && hero.Stats.PrimaryAttribute != nil {
+				metadata["primary_attribute"] = clean(*hero.Stats.PrimaryAttribute, 64)
 			}
-			if hero.AttackType != nil {
-				metadata["attack_type"] = clean(*hero.AttackType, 64)
+			if hero.Stats != nil && hero.Stats.AttackType != nil {
+				metadata["attack_type"] = clean(*hero.Stats.AttackType, 64)
 			}
 			items = append(items, contracts.ConstantRecord{
 				ID: strconv.FormatInt(hero.ID, 10), Name: clean(hero.Name, 256), LocalizedName: cleanPointer(hero.LocalizedName, 256), Metadata: metadata,
