@@ -36,31 +36,37 @@ Do not carry over:
 - fetched schema snapshots, fetched constants, or any other restricted STRATZ-derived local artifacts
 - the existing `.git` directory or any private commit history
 
-## Manual clean-history import
+## Automated clean-history import
 
-Export the tracked `HEAD` snapshot into a fresh directory, review it, and create a new repository only after the checks above pass:
+Generate the clean public repository outside the working tree so the source checkout stays clean:
 
 ```sh
-test -z "$(git status --short)"
-export_dir="$(mktemp -d)"
-mkdir -p "$export_dir/stratz-mcp"
-git archive --format=tar HEAD | tar -xf - -C "$export_dir/stratz-mcp"
-cd "$export_dir/stratz-mcp"
-git init
-git add .
-git commit -m "Initial public import"
-make public-readiness
-make verify-public-surface
-make check
+make public-import OUTPUT_DIR="$(mktemp -d)/public-import"
 ```
 
-Review the exported tree before `git add .`. If any private working files, build outputs, or restricted STRATZ artifacts were copied across, remove them and restart the export.
+The script archives the tracked `HEAD` snapshot, removes the explicit public-import denylist, initializes a fresh repository, creates a single initial commit, renames the branch to `main`, and reruns `make public-readiness`, `make verify-public-surface`, and `make check` inside the generated repository before returning.
+
+By default the script refuses dirty tracked or untracked inputs. Use the documented override only when you intentionally want to snapshot a dirty tree:
+
+```sh
+ALLOW_DIRTY=1 make public-import OUTPUT_DIR="$(mktemp -d)/public-import"
+```
+
+If you prefer the default destination inside the source repository, run:
+
+```sh
+make public-import
+```
+
+This writes the generated repository to `dist/public-import`.
 
 ## Push the public source repository
 
 ```sh
+export_dir="$(mktemp -d)"
+make public-import OUTPUT_DIR="$export_dir/public-import"
+cd "$export_dir/public-import"
 git remote add origin <public-source-remote>
-git branch -M main
 git push -u origin main
 ```
 
