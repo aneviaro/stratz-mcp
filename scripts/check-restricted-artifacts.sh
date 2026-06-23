@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+repo_root="$(cd "$repo_root" && pwd)"
 cd "$repo_root"
+
+tracked_worktree_files() {
+  while IFS= read -r path; do
+    if [[ -e "$path" ]]; then
+      printf '%s\n' "$path"
+    fi
+  done < <(git ls-files)
+}
 
 forbidden='(^|/)(introspection\.json|\.stratz-restricted)$|(^|/)schema/(full|player|match|hero|league|live|constants)\.graphql$|(^|/)constants/(heroes|items|abilities|game-modes|regions|ranks)\.json$'
 
-violations="$(git ls-files | grep -E "$forbidden" || true)"
+violations="$(tracked_worktree_files | grep -E "$forbidden" || true)"
 if [[ -n "$violations" ]]; then
   echo "restricted STRATZ artifacts are tracked:" >&2
   echo "$violations" >&2

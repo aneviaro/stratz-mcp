@@ -8,7 +8,7 @@ LDFLAGS := -X $(COMMAND_PACKAGE).version=$(VERSION) \
 	-X $(COMMAND_PACKAGE).revision=$(REVISION) \
 	-X $(COMMAND_PACKAGE).schemaVersion=$(SCHEMA_VERSION)
 
-.PHONY: build check check-format check-generated check-policies check-restricted cross-build dev generate interop-smoke notices package test test-live tools vet verify verify-build-info
+.PHONY: build check check-format check-generated check-policies check-restricted cross-build dev generate interop-smoke notices package public-readiness test test-live tools vet verify verify-build-info
 
 build:
 	mkdir -p dist
@@ -16,7 +16,7 @@ build:
 
 check: export PAGER := cat
 check: export GIT_PAGER := cat
-check: verify check-format vet test check-generated check-restricted check-policies verify-build-info
+check: verify check-format vet test check-generated public-readiness check-policies verify-build-info
 
 check-format:
 	@test -z "$$(gofmt -l -- $$(find . -name '*.go' -type f))"
@@ -26,6 +26,9 @@ check-generated:
 
 check-restricted:
 	./scripts/check-restricted-artifacts.sh
+
+public-readiness:
+	./scripts/check-public-readiness.sh
 
 cross-build:
 	VERSION="$(VERSION)" REVISION="$(REVISION)" SCHEMA_VERSION="$(SCHEMA_VERSION)" \

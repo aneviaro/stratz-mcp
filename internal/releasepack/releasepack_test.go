@@ -1,9 +1,11 @@
 package releasepack
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -20,6 +22,7 @@ func TestReleaseSurface(t *testing.T) {
 		"THIRD_PARTY_NOTICES",
 		".github/workflows/release.yml",
 		".github/workflows/security.yml",
+		"scripts/check-public-readiness.sh",
 		"scripts/package-release.sh",
 		"scripts/interop-smoke.sh",
 		"docs/release.md",
@@ -29,6 +32,23 @@ func TestReleaseSurface(t *testing.T) {
 		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
 			t.Errorf("required release file %s: %v", name, err)
 		}
+	}
+}
+
+func TestMakefileIncludesPublicReadiness(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "..", "Makefile"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(content)
+	if !regexp.MustCompile(`(?m)^\.PHONY: .*?\bpublic-readiness\b`).MatchString(text) {
+		t.Fatal("Makefile .PHONY list must include public-readiness")
+	}
+	if !regexp.MustCompile(`(?m)^public-readiness:\s*$`).MatchString(text) {
+		t.Fatal("Makefile must define a public-readiness target")
+	}
+	if !regexp.MustCompile(`(?m)^check: .*?\bpublic-readiness\b`).MatchString(text) {
+		t.Fatal("make check must depend on public-readiness")
 	}
 }
 
@@ -155,6 +175,57 @@ func TestContainerIsNonRootAndScratchBased(t *testing.T) {
 	}
 }
 
+func TestPublicReadinessAuditPassesOnMinimalRepository(t *testing.T) {
+	root := filepath.Join("..", "..")
+	repo := createPublicReadinessFixtureRepo(t, root)
+	command := exec.Command(filepath.Join(repo, "scripts", "check-public-readiness.sh"))
+	command.Dir = repo
+	if result, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("public readiness audit failed: %v\n%s", err, result)
+	}
+}
+
+func TestPublicReadinessAuditRejectsForbiddenTrackedFiles(t *testing.T) {
+	root := filepath.Join("..", "..")
+	scriptMessage := "tracked private/local files are present"
+	localPathMessage := "tracked non-doc files contain machine-local absolute home paths"
+	restrictedMessage := "restricted STRATZ artifacts are tracked"
+	machineLocalFixture := "#!/bin/sh\n# " + strings.Join([]string{"/Users", "alex", "private"}, "/") + "\n"
+	cases := []struct {
+		name       string
+		path       string
+		content    string
+		wantSubstr string
+	}{
+		{name: "planning output", path: "docs/plans/private.md", content: "local plan\n", wantSubstr: scriptMessage},
+		{name: "legacy implementation plan", path: "docs/implementation-plan.md", content: "private plan\n", wantSubstr: scriptMessage},
+		{name: "env file", path: ".env", content: "STRATZ_API_TOKEN=secret\n", wantSubstr: scriptMessage},
+		{name: "dist binary", path: "dist/stratz-mcp", content: "artifact\n", wantSubstr: scriptMessage},
+		{name: "tool cache", path: ".bin/genqlient", content: "artifact\n", wantSubstr: scriptMessage},
+		{name: "local state", path: ".stratz-local/state.json", content: "{}\n", wantSubstr: scriptMessage},
+		{name: "cache database", path: "cache.db", content: "not sqlite\n", wantSubstr: scriptMessage},
+		{name: "restricted sentinel", path: ".stratz-restricted", content: "restricted\n", wantSubstr: restrictedMessage},
+		{name: "machine local path content", path: "scripts/local-path.sh", content: machineLocalFixture, wantSubstr: localPathMessage},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			repo := createPublicReadinessFixtureRepo(t, root)
+			writeFixtureFile(t, repo, tc.path, tc.content, 0o644)
+			gitAddAll(t, repo)
+			command := exec.Command(filepath.Join(repo, "scripts", "check-public-readiness.sh"))
+			command.Dir = repo
+			result, err := command.CombinedOutput()
+			if err == nil {
+				t.Fatalf("expected public readiness audit to fail for %s", tc.path)
+			}
+			if !bytes.Contains(result, []byte(tc.wantSubstr)) {
+				t.Fatalf("audit output %q does not contain %q", result, tc.wantSubstr)
+			}
+		})
+	}
+}
+
 func containsInstruction(instructions []string, want string) bool {
 	for _, instruction := range instructions {
 		if instruction == want {
@@ -162,4 +233,54 @@ func containsInstruction(instructions []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func createPublicReadinessFixtureRepo(t *testing.T, sourceRoot string) string {
+	t.Helper()
+	repo := t.TempDir()
+	runCommand(t, repo, "git", "init")
+	runCommand(t, repo, "git", "config", "user.name", "Fixture User")
+	runCommand(t, repo, "git", "config", "user.email", "fixture@example.com")
+
+	writeFixtureFile(t, repo, "README.md", "# STRATZ MCP\n\nUnofficial, local-only MCP server for bounded access to the STRATZ GraphQL API. Public release is currently blocked pending explicit STRATZ API-use, caching, redistribution, attribution, and branding clearance.\n", 0o644)
+	writeFixtureFile(t, repo, "docs/release.md", "# Release procedure\n\nPublic publishing is disabled until `go run ./cmd/release-clearance-check` succeeds against `docs/release-clearance.json`.\n", 0o644)
+	writeFixtureFile(t, repo, "scripts/check-public-readiness.sh", readFile(t, filepath.Join(sourceRoot, "scripts", "check-public-readiness.sh")), 0o755)
+	writeFixtureFile(t, repo, "scripts/check-restricted-artifacts.sh", readFile(t, filepath.Join(sourceRoot, "scripts", "check-restricted-artifacts.sh")), 0o755)
+
+	gitAddAll(t, repo)
+	return repo
+}
+
+func gitAddAll(t *testing.T, repo string) {
+	t.Helper()
+	runCommand(t, repo, "git", "add", ".")
+}
+
+func readFile(t *testing.T, path string) string {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(content)
+}
+
+func runCommand(t *testing.T, dir string, name string, args ...string) {
+	t.Helper()
+	command := exec.Command(name, args...)
+	command.Dir = dir
+	if result, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("%s %s: %v\n%s", name, strings.Join(args, " "), err, result)
+	}
+}
+
+func writeFixtureFile(t *testing.T, repo string, path string, content string, mode os.FileMode) {
+	t.Helper()
+	fullPath := filepath.Join(repo, path)
+	if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(fullPath, []byte(content), mode); err != nil {
+		t.Fatal(err)
+	}
 }

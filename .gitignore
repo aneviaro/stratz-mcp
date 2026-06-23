@@ -1,7 +1,13 @@
 .env
+/.ralphex/
 /.bin/
 /dist/
+/docs/plans/
+/docs/implementation-plan.md
 /.stratz-local/
+**/cache.db
+**/cache.db-shm
+**/cache.db-wal
 **/.stratz-restricted
 **/introspection.json
 **/schema/full.graphql
