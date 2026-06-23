@@ -27,6 +27,7 @@ func TestReleaseSurface(t *testing.T) {
 		".github/workflows/release.yml",
 		".github/workflows/security.yml",
 		"scripts/check-public-readiness.sh",
+		"scripts/create-public-import.sh",
 		"scripts/verify-public-surface.sh",
 		"scripts/package-release.sh",
 		"scripts/interop-smoke.sh",
@@ -52,6 +53,12 @@ func TestMakefileIncludesPublicReadiness(t *testing.T) {
 	}
 	if !regexp.MustCompile(`(?m)^public-readiness:\s*$`).MatchString(text) {
 		t.Fatal("Makefile must define a public-readiness target")
+	}
+	if !regexp.MustCompile(`(?m)^\.PHONY: .*?\bpublic-import\b`).MatchString(text) {
+		t.Fatal("Makefile .PHONY list must include public-import")
+	}
+	if !regexp.MustCompile(`(?m)^public-import:\s*$`).MatchString(text) {
+		t.Fatal("Makefile must define a public-import target")
 	}
 	if !regexp.MustCompile(`(?m)^\.PHONY: .*?\bverify-public-surface\b`).MatchString(text) {
 		t.Fatal("Makefile .PHONY list must include verify-public-surface")
@@ -225,7 +232,8 @@ func TestPublicDocumentationIsSanitizedForPublicImport(t *testing.T) {
 				"make verify-public-surface",
 				"make check",
 				"docker build --build-arg TARGETARCH=amd64 -t stratz-mcp:test .",
-				"git archive --format=tar HEAD",
+				"make public-import OUTPUT_DIR=\"$(mktemp -d)/public-import\"",
+				"ALLOW_DIRTY=1",
 				"Do not create release tags or publish packages or images until the clearance check succeeds",
 			},
 		},
@@ -421,6 +429,125 @@ func TestPublicReadinessAuditRejectsForbiddenTrackedFiles(t *testing.T) {
 	}
 }
 
+func TestCreatePublicImportCreatesSingleCommitRepositoryAndPrunesForbiddenPaths(t *testing.T) {
+	root := filepath.Join("..", "..")
+	repo := createPublicImportFixtureRepo(t, root)
+	output := filepath.Join(t.TempDir(), "public-import")
+
+	command := exec.Command(filepath.Join(repo, "scripts", "create-public-import.sh"))
+	command.Dir = repo
+	command.Env = append(os.Environ(), "OUTPUT_DIR="+output)
+	if result, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("create public import: %v\n%s", err, result)
+	}
+
+	if count := strings.TrimSpace(runCommandOutput(t, output, "git", "rev-list", "--count", "HEAD")); count != "1" {
+		t.Fatalf("public import commit count = %q, want 1", count)
+	}
+	if branch := strings.TrimSpace(runCommandOutput(t, output, "git", "branch", "--show-current")); branch != "main" {
+		t.Fatalf("public import branch = %q, want main", branch)
+	}
+	if subject := strings.TrimSpace(runCommandOutput(t, output, "git", "log", "-1", "--pretty=%s")); subject != "Initial public import" {
+		t.Fatalf("public import commit subject = %q", subject)
+	}
+
+	for _, path := range []string{
+		"README.md",
+		"Makefile",
+		"docs/public-repo-import.md",
+		"cmd/stratz-mcp/main.go",
+		"scripts/create-public-import.sh",
+	} {
+		if _, err := os.Stat(filepath.Join(output, filepath.FromSlash(path))); err != nil {
+			t.Fatalf("expected %s in public import: %v", path, err)
+		}
+	}
+
+	for _, path := range []string{
+		".ralphex/private.md",
+		"docs/plans/private.md",
+		"docs/implementation-plan.md",
+		".env",
+		"dist/private.txt",
+		".bin/tool",
+		"cache.db",
+		"cache.db-wal",
+		"cache.db-shm",
+		".stratz-local/state.json",
+		"introspection.json",
+		"schema/full.graphql",
+		"schema/player.graphql",
+		"constants/heroes.json",
+		"constants/items.json",
+		".stratz-restricted",
+	} {
+		if _, err := os.Stat(filepath.Join(output, filepath.FromSlash(path))); !os.IsNotExist(err) {
+			t.Fatalf("forbidden path %s exists in public import", path)
+		}
+	}
+
+	sourceValidation := readFile(t, filepath.Join(repo, "validation.log"))
+	assertContainsAll(t, "source validation log", sourceValidation, []string{
+		"public-readiness",
+		"verify-public-surface",
+	})
+	importValidation := readFile(t, filepath.Join(output, "validation.log"))
+	assertContainsAll(t, "public import validation log", importValidation, []string{
+		"public-readiness",
+		"verify-public-surface",
+		"check",
+	})
+}
+
+func TestCreatePublicImportRejectsDirtyWorktree(t *testing.T) {
+	root := filepath.Join("..", "..")
+	repo := createPublicImportFixtureRepo(t, root)
+	writeFixtureFile(t, repo, "scratch.txt", "dirty\n", 0o644)
+
+	command := exec.Command(filepath.Join(repo, "scripts", "create-public-import.sh"))
+	command.Dir = repo
+	command.Env = append(os.Environ(), "OUTPUT_DIR="+filepath.Join(t.TempDir(), "public-import"))
+	result, err := command.CombinedOutput()
+	if err == nil {
+		t.Fatal("expected dirty worktree to be rejected")
+	}
+	if !bytes.Contains(result, []byte("public import requires a clean worktree")) {
+		t.Fatalf("unexpected output: %s", result)
+	}
+}
+
+func TestCreatePublicImportDoesNotCarryPrivateHistory(t *testing.T) {
+	root := filepath.Join("..", "..")
+	repo := createPublicImportFixtureRepo(t, root)
+	writeFixtureFile(t, repo, "docs/plans/private.md", "updated draft\n", 0o644)
+	writeFixtureFile(t, repo, "schema/full.graphql", "updated restricted\n", 0o644)
+	gitAddAll(t, repo)
+	runCommand(t, repo, "git", "commit", "-m", "private history")
+	runCommand(t, repo, "git", "rm", "-r", "docs/plans")
+	runCommand(t, repo, "git", "rm", "schema/full.graphql")
+	writeFixtureFile(t, repo, "docs/public.txt", "public\n", 0o644)
+	gitAddAll(t, repo)
+	runCommand(t, repo, "git", "commit", "-m", "remove private files")
+
+	output := filepath.Join(t.TempDir(), "public-import")
+	command := exec.Command(filepath.Join(repo, "scripts", "create-public-import.sh"))
+	command.Dir = repo
+	command.Env = append(os.Environ(), "OUTPUT_DIR="+output)
+	if result, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("create public import: %v\n%s", err, result)
+	}
+
+	for _, path := range []string{"docs/plans/private.md", "schema/full.graphql", "docs/implementation-plan.md"} {
+		logOutput := strings.TrimSpace(runCommandOutput(t, output, "git", "log", "--all", "--", path))
+		if logOutput != "" {
+			t.Fatalf("public import history unexpectedly contains %s: %s", path, logOutput)
+		}
+	}
+	if count := strings.TrimSpace(runCommandOutput(t, output, "git", "rev-list", "--count", "HEAD")); count != "1" {
+		t.Fatalf("public import commit count = %q, want 1", count)
+	}
+}
+
 func containsInstruction(instructions []string, want string) bool {
 	for _, instruction := range instructions {
 		if instruction == want {
@@ -446,9 +573,77 @@ func createPublicReadinessFixtureRepo(t *testing.T, sourceRoot string) string {
 	return repo
 }
 
+func createPublicImportFixtureRepo(t *testing.T, sourceRoot string) string {
+	t.Helper()
+	repo := t.TempDir()
+	runCommand(t, repo, "git", "init")
+	runCommand(t, repo, "git", "config", "user.name", "Fixture User")
+	runCommand(t, repo, "git", "config", "user.email", "fixture@example.com")
+
+	writeFixtureFile(t, repo, ".gitignore", strings.Join([]string{
+		".ralphex/",
+		".env",
+		"dist/",
+		".bin/",
+		"cache.db*",
+		".stratz-local/",
+		"introspection.json",
+		"schema/player.graphql",
+		"constants/items.json",
+		"validation.log",
+	}, "\n")+"\n", 0o644)
+	writeFixtureFile(t, repo, "README.md", "# STRATZ MCP\n", 0o644)
+	writeFixtureFile(t, repo, "Makefile", strings.Join([]string{
+		".PHONY: public-readiness verify-public-surface check",
+		"public-readiness:",
+		"\t@printf 'public-readiness\\n' >> validation.log",
+		"verify-public-surface:",
+		"\t@printf 'verify-public-surface\\n' >> validation.log",
+		"check:",
+		"\t@printf 'check\\n' >> validation.log",
+	}, "\n")+"\n", 0o644)
+	writeFixtureFile(t, repo, "docs/public-repo-import.md", "single initial commit\n", 0o644)
+	writeFixtureFile(t, repo, "cmd/stratz-mcp/main.go", "package main\n\nfunc main() {}\n", 0o644)
+	writeFixtureFile(t, repo, "scripts/create-public-import.sh", readFile(t, filepath.Join(sourceRoot, "scripts", "create-public-import.sh")), 0o755)
+
+	writeFixtureFile(t, repo, "docs/plans/private.md", "private plan\n", 0o644)
+	writeFixtureFile(t, repo, "docs/implementation-plan.md", "legacy plan\n", 0o644)
+	writeFixtureFile(t, repo, "schema/full.graphql", "restricted\n", 0o644)
+	writeFixtureFile(t, repo, "constants/heroes.json", "{\"source\":\"restricted\"}\n", 0o644)
+	writeFixtureFile(t, repo, ".stratz-restricted", "restricted\n", 0o644)
+
+	gitAddAll(t, repo)
+	runCommand(t, repo, "git", "commit", "-m", "fixture")
+
+	writeFixtureFile(t, repo, ".ralphex/private.md", "local plan\n", 0o644)
+	writeFixtureFile(t, repo, ".env", "STRATZ_API_TOKEN=secret\n", 0o644)
+	writeFixtureFile(t, repo, "dist/private.txt", "artifact\n", 0o644)
+	writeFixtureFile(t, repo, ".bin/tool", "artifact\n", 0o644)
+	writeFixtureFile(t, repo, "cache.db", "artifact\n", 0o644)
+	writeFixtureFile(t, repo, "cache.db-wal", "artifact\n", 0o644)
+	writeFixtureFile(t, repo, "cache.db-shm", "artifact\n", 0o644)
+	writeFixtureFile(t, repo, ".stratz-local/state.json", "{}\n", 0o644)
+	writeFixtureFile(t, repo, "introspection.json", "{\"source\":\"restricted\"}\n", 0o644)
+	writeFixtureFile(t, repo, "schema/player.graphql", "ignored restricted\n", 0o644)
+	writeFixtureFile(t, repo, "constants/items.json", "{\"source\":\"ignored\"}\n", 0o644)
+
+	return repo
+}
+
 func gitAddAll(t *testing.T, repo string) {
 	t.Helper()
 	runCommand(t, repo, "git", "add", ".")
+}
+
+func runCommandOutput(t *testing.T, dir string, name string, args ...string) string {
+	t.Helper()
+	command := exec.Command(name, args...)
+	command.Dir = dir
+	result, err := command.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%s %s: %v\n%s", name, strings.Join(args, " "), err, result)
+	}
+	return string(result)
 }
 
 func readFile(t *testing.T, path string) string {

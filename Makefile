@@ -8,7 +8,7 @@ LDFLAGS := -X $(COMMAND_PACKAGE).version=$(VERSION) \
 	-X $(COMMAND_PACKAGE).revision=$(REVISION) \
 	-X $(COMMAND_PACKAGE).schemaVersion=$(SCHEMA_VERSION)
 
-.PHONY: build check check-format check-generated check-policies check-restricted cross-build dev generate interop-smoke notices package public-readiness test test-live tools vet verify verify-build-info verify-public-surface
+.PHONY: build check check-format check-generated check-policies check-restricted cross-build dev generate interop-smoke notices package public-import public-readiness test test-live tools vet verify verify-build-info verify-public-surface
 
 build:
 	mkdir -p dist
@@ -29,6 +29,9 @@ check-restricted:
 
 public-readiness:
 	./scripts/check-public-readiness.sh
+
+public-import:
+	./scripts/create-public-import.sh
 
 verify-public-surface: build
 	./scripts/verify-public-surface.sh dist/stratz-mcp
