@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -154,7 +155,10 @@ func TestSDKConformance(t *testing.T) {
 	if len(listed.Tools) != len(contracts.Definitions()) {
 		t.Fatalf("tool count = %d, want %d", len(listed.Tools), len(contracts.Definitions()))
 	}
+	assertListedToolNames(t, listed.Tools)
 	for _, tool := range listed.Tools {
+		assertToolSchemaDraft(t, tool.Name, contracts.InputSchema, tool.InputSchema)
+		assertToolSchemaDraft(t, tool.Name, contracts.OutputSchema, tool.OutputSchema)
 		assertToolSchema(t, tool.Name, contracts.InputSchema, tool.InputSchema)
 		assertToolSchema(t, tool.Name, contracts.OutputSchema, tool.OutputSchema)
 	}
@@ -170,15 +174,7 @@ func TestSDKConformance(t *testing.T) {
 			len(resourcecatalog.Definitions()),
 		)
 	}
-	uris := make(map[string]struct{}, len(listedResources.Resources))
-	for _, resource := range listedResources.Resources {
-		uris[resource.URI] = struct{}{}
-	}
-	for _, definition := range resourcecatalog.Definitions() {
-		if _, ok := uris[definition.URI]; !ok {
-			t.Errorf("resource URI %q is not registered", definition.URI)
-		}
-	}
+	assertListedResourceURIs(t, listedResources.Resources)
 	readResource, err := clientSession.ReadResource(ctx, &sdk.ReadResourceParams{
 		URI: "stratz://schema/full",
 	})
@@ -196,6 +192,7 @@ func TestSDKConformance(t *testing.T) {
 	if len(prompts.Prompts) != len(promptcatalog.Definitions()) {
 		t.Fatalf("prompt count = %d, want %d", len(prompts.Prompts), len(promptcatalog.Definitions()))
 	}
+	assertListedPromptNames(t, prompts.Prompts)
 	matchPrompt, err := clientSession.GetPrompt(ctx, &sdk.GetPromptParams{
 		Name:      "analyze_dota_match",
 		Arguments: map[string]string{"match_id": "123"},
@@ -486,6 +483,65 @@ func assertToolSchema(t *testing.T, name string, kind contracts.SchemaKind, got 
 	}
 	if !bytes.Equal(gotCompact, expectedCompact) {
 		t.Fatalf("%s %s schema differs from generated contract", name, kind)
+	}
+}
+
+func assertToolSchemaDraft(t *testing.T, name string, kind contracts.SchemaKind, got any) {
+	t.Helper()
+	schema, ok := got.(map[string]any)
+	if !ok {
+		t.Fatalf("%s %s schema type = %T, want JSON object", name, kind, got)
+	}
+	if schema["$schema"] != contracts.SchemaDraft {
+		t.Fatalf("%s %s schema draft = %v, want %s", name, kind, schema["$schema"], contracts.SchemaDraft)
+	}
+}
+
+func assertListedToolNames(t *testing.T, tools []*sdk.Tool) {
+	t.Helper()
+	got := make([]string, 0, len(tools))
+	for _, tool := range tools {
+		got = append(got, tool.Name)
+	}
+	want := make([]string, 0, len(contracts.Definitions()))
+	for _, definition := range contracts.Definitions() {
+		want = append(want, definition.Name)
+	}
+	assertExactStrings(t, "tool names", got, want)
+}
+
+func assertListedResourceURIs(t *testing.T, resources []*sdk.Resource) {
+	t.Helper()
+	got := make([]string, 0, len(resources))
+	for _, resource := range resources {
+		got = append(got, resource.URI)
+	}
+	want := make([]string, 0, len(resourcecatalog.Definitions()))
+	for _, definition := range resourcecatalog.Definitions() {
+		want = append(want, definition.URI)
+	}
+	assertExactStrings(t, "resource URIs", got, want)
+}
+
+func assertListedPromptNames(t *testing.T, prompts []*sdk.Prompt) {
+	t.Helper()
+	got := make([]string, 0, len(prompts))
+	for _, prompt := range prompts {
+		got = append(got, prompt.Name)
+	}
+	want := make([]string, 0, len(promptcatalog.Definitions()))
+	for _, definition := range promptcatalog.Definitions() {
+		want = append(want, definition.Name)
+	}
+	assertExactStrings(t, "prompt names", got, want)
+}
+
+func assertExactStrings(t *testing.T, label string, got []string, want []string) {
+	t.Helper()
+	slices.Sort(got)
+	slices.Sort(want)
+	if !slices.Equal(got, want) {
+		t.Fatalf("%s = %v, want %v", label, got, want)
 	}
 }
 

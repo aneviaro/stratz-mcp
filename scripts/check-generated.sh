@@ -3,6 +3,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 snapshot="$(mktemp -d)"
+go_cmd="${GO:-go}"
 trap 'rm -rf "$snapshot"' EXIT
 
 cd "$repo_root"
@@ -16,7 +17,7 @@ cp internal/prompts/zz_generated.prompts.go "$snapshot/prompts.go"
 cp -R skills "$snapshot/skills"
 cp docs/skills-installation.md "$snapshot/skills-installation.md"
 
-go generate ./...
+"$go_cmd" generate ./...
 
 diff -ru "$snapshot/generated" internal/contracts/generated
 diff -u "$snapshot/zz_generated.contracts.go" internal/contracts/zz_generated.contracts.go
@@ -26,3 +27,5 @@ diff -u "$snapshot/operations.json" internal/graphql/generated/operations.json
 diff -u "$snapshot/prompts.go" internal/prompts/zz_generated.prompts.go
 diff -ru "$snapshot/skills" skills
 diff -u "$snapshot/skills-installation.md" docs/skills-installation.md
+
+"$go_cmd" test ./internal/contracts ./internal/workflowgen
