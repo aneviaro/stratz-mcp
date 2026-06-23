@@ -8,7 +8,7 @@ LDFLAGS := -X $(COMMAND_PACKAGE).version=$(VERSION) \
 	-X $(COMMAND_PACKAGE).revision=$(REVISION) \
 	-X $(COMMAND_PACKAGE).schemaVersion=$(SCHEMA_VERSION)
 
-.PHONY: build check check-format check-generated check-policies check-restricted cross-build dev generate interop-smoke notices package test tools vet verify verify-build-info
+.PHONY: build check check-format check-generated check-policies check-restricted cross-build dev generate interop-smoke notices package test test-live tools vet verify verify-build-info
 
 build:
 	mkdir -p dist
@@ -52,6 +52,10 @@ generate:
 
 test:
 	$(GO) test ./...
+
+test-live:
+	STRATZ_ENV_FILE="$$(cd "$$(dirname "$${STRATZ_ENV_FILE:-.env}")" && pwd)/$$(basename "$${STRATZ_ENV_FILE:-.env}")" \
+		$(GO) test -tags=integration -count=1 -v ./integration
 
 tools:
 	mkdir -p .bin
