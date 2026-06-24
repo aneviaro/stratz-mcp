@@ -359,24 +359,29 @@ func TestListPlayerMatchesCanIncludeRequestedPlayerRow(t *testing.T) {
 				{"steamAccountId":2,"heroId":5,"isRadiant":false,"playerSlot":128,"kills":1,"deaths":2,"assists":3,"networth":4000,"level":10,"imp":1.5},
 				{"steamAccountId":1,"heroId":7,"isRadiant":true,"playerSlot":2,"kills":11,"deaths":1,"assists":14,"networth":21000,"level":25,"imp":9.25}
 			]
+		},{
+			"id":124,
+			"didRadiantWin":null,
+			"parseStatus":"parsed",
+			"players":[{"steamAccountId":1,"heroId":8,"isRadiant":false,"playerSlot":128,"kills":1,"deaths":2,"assists":3}]
 		}]}}`), nil
 	}}
 	result, err := mustService(t, executor, 5).ListPlayerMatches(context.Background(), PlayerMatchFilters{
 		PlayerID:      "1",
-		Limit:         1,
+		Limit:         2,
 		IncludePlayer: true,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(result.Data.Items) != 1 || result.Data.Items[0].Player == nil {
+	if len(result.Data.Items) != 2 || result.Data.Items[0].Player == nil || result.Data.Items[1].Player == nil {
 		t.Fatalf("missing player row: %#v", result.Data.Items)
 	}
 	player := result.Data.Items[0].Player
 	if player.AccountID == nil || *player.AccountID != "1" ||
 		player.HeroID != 7 ||
 		player.Team != "radiant" ||
-		!player.Won ||
+		player.Won == nil || !*player.Won ||
 		player.Kills != 11 ||
 		player.Deaths != 1 ||
 		player.Assists != 14 ||
@@ -385,6 +390,9 @@ func TestListPlayerMatchesCanIncludeRequestedPlayerRow(t *testing.T) {
 		player.Imp == nil || *player.Imp != 9.25 {
 		t.Fatalf("player row = %#v", player)
 	}
+	if result.Data.Items[1].Player.Won != nil {
+		t.Fatalf("unknown result was fabricated as won=%v", *result.Data.Items[1].Player.Won)
+	}
 }
 
 func TestListPlayerMatchesUsesCurrentGameModeAndLobbyTypeFilters(t *testing.T) {
@@ -392,6 +400,9 @@ func TestListPlayerMatchesUsesCurrentGameModeAndLobbyTypeFilters(t *testing.T) {
 		if !strings.Contains(request.Query, "gameModeId: gameMode") ||
 			!strings.Contains(request.Query, "lobbyTypeId: lobbyType") {
 			t.Fatalf("match query does not alias current STRATZ fields: %s", request.Query)
+		}
+		if strings.Contains(request.Query, "players {") {
+			t.Fatalf("summary-only player match query fetched player rows: %s", request.Query)
 		}
 		variables := request.Variables.(map[string]any)
 		requestInput := variables["request"].(map[string]any)

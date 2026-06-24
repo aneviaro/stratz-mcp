@@ -103,10 +103,7 @@ func findMatchPlayer(source *upstreamMatch, accountID int64) *contracts.MatchPla
 		if player.IsRadiant {
 			team = "radiant"
 		}
-		won := false
-		if source.DidRadiantWin != nil {
-			won = *source.DidRadiantWin == player.IsRadiant
-		}
+		won := playerWon(source.DidRadiantWin, player.IsRadiant)
 		publicAccountID := strconv.FormatInt(accountID, 10)
 		return &contracts.MatchPlayer{
 			AccountID: &publicAccountID,
@@ -182,10 +179,7 @@ func mapMatch(source *upstreamMatch, detail contracts.DetailLevel) contracts.Mat
 		if player.IsRadiant {
 			team = "radiant"
 		}
-		won := false
-		if source.DidRadiantWin != nil {
-			won = *source.DidRadiantWin == player.IsRadiant
-		}
+		won := playerWon(source.DidRadiantWin, player.IsRadiant)
 		match.Players = append(match.Players, contracts.MatchPlayer{
 			AccountID: accountID,
 			HeroID:    player.HeroID,
@@ -259,6 +253,14 @@ func mapTimeline(source *upstreamPlaybackData) []contracts.TimelineEvent {
 	}
 	sort.SliceStable(events, func(i, j int) bool { return events[i].Time < events[j].Time })
 	return mapEvents(events)
+}
+
+func playerWon(didRadiantWin *bool, isRadiant bool) *bool {
+	if didRadiantWin == nil {
+		return nil
+	}
+	won := *didRadiantWin == isRadiant
+	return &won
 }
 
 func normalizedPlayerSlot(slot int64) int64 {
