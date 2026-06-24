@@ -370,6 +370,7 @@ func (service *Service) ListPlayerMatchesWithBudget(
 	}
 	rawPages := make([]any, 0, service.maxUpstreamRequests)
 	var rateLimits []stratz.RateLimit
+	query, operation := listPlayerMatchesOperation(filters.IncludePlayer)
 	pageSize := filters.Limit
 	if pageSize < 20 {
 		pageSize = 20
@@ -387,7 +388,7 @@ func (service *Service) ListPlayerMatchesWithBudget(
 				"steamAccountId": int64(playerID.AccountID),
 				"request":        nativePlayerMatchRequest(filters, pageSize, offset),
 			}
-			response, executeErr := service.execute(ctx, budget, generated.StratzListPlayerMatches_Operation, "StratzListPlayerMatches", variables)
+			response, executeErr := service.execute(ctx, budget, query, operation, variables)
 			if executeErr != nil {
 				return pagination.Page[int64, upstreamMatch]{}, executeErr
 			}
@@ -474,6 +475,13 @@ func (service *Service) execute(
 		return nil, protocol("STRATZ returned no curated GraphQL data")
 	}
 	return response, nil
+}
+
+func listPlayerMatchesOperation(includePlayer bool) (string, string) {
+	if includePlayer {
+		return generated.StratzListPlayerMatchesWithPlayers_Operation, "StratzListPlayerMatchesWithPlayers"
+	}
+	return generated.StratzListPlayerMatches_Operation, "StratzListPlayerMatches"
 }
 
 func matchOperation(detail contracts.DetailLevel) (string, string) {

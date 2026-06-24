@@ -236,7 +236,7 @@ type MatchPlayer struct {
 	Networth  *int64   `json:"networth"`
 	Position  int64    `json:"position"`
 	Team      string   `json:"team"`
-	Won       bool     `json:"won"`
+	Won       *bool    `json:"won"`
 }
 
 type MatchSummary struct {

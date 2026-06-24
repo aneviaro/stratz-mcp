@@ -532,7 +532,10 @@
                               "type": "string"
                             },
                             "won": {
-                              "type": "boolean"
+                              "type": [
+                                "boolean",
+                                "null"
+                              ]
                             }
                           },
                           "required": [

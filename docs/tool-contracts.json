@@ -438,7 +438,7 @@
           "description": "STRATZ Individual Match Performance (IMP) for this player when upstream provides it. Null means unavailable for the match/player."
         },
         "won": {
-          "type": "boolean"
+          "type": ["boolean", "null"]
         }
       },
       "required": [
