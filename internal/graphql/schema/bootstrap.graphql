@@ -324,6 +324,7 @@ type MatchPlayerType {
   assists: Int!
   networth: Int
   level: Int
+  imp: Float
 }
 
 type MatchEventType {

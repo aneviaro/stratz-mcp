@@ -143,6 +143,7 @@ func mapMatch(source *upstreamMatch, detail contracts.DetailLevel) contracts.Mat
 			Assists:   maxZero(player.Assists),
 			Networth:  nonNegative(player.Networth),
 			Level:     nonNegative(player.Level),
+			Imp:       player.IMP,
 			Won:       won,
 		})
 	}
