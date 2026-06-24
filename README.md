@@ -22,8 +22,6 @@ The executable is written to `./dist/stratz-mcp`. Source builds require Go 1.25 
 
 This repository does not publish official binaries, archives, containers, or release tags. Build from source.
 
-Before copying the source tree into a public repository, run `make public-readiness`. The clean-history import flow is documented in [docs/public-repo-import.md](docs/public-repo-import.md).
-
 ## Configure
 
 Set exactly one credential source:
