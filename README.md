@@ -2,6 +2,12 @@
 
 Unofficial, local-only MCP server for bounded access to the STRATZ GraphQL API.
 
+Ask your AI agent:
+- “Analyze my last 10 Dota matches and find my most common throw pattern.”
+- “Compare this player’s hero pool against the current meta.”
+- “Summarize live pro matches with draft strengths and weaknesses.”
+- “Find Dota matches where Team X lost after a 10k gold lead.”
+
 ## Install
 
 Build from a source checkout:
