@@ -7,7 +7,7 @@ Status: Current
 # Project guidance
 
 - Treat `docs/tool-contracts.json`, `internal/graphql/operations/*.graphql`, `internal/graphql/schema/bootstrap.graphql`, and `workflows/workflows.json` as canonical sources. Do not edit generated outputs directly.
-- Run `make generate` after canonical-source changes, `make check-generated` to detect stale artifacts, and `make check` before handoff.
+- Run `make generate` after canonical-source changes, `make check-generated` to detect stale artifacts, and both `make check` and `make test-live` before handoff.
 - Use conventional commit messages, such as `feat: add optional player rows to match list`.
 - Never commit tokens, `.env`, cache databases, introspection, fetched STRATZ schemas/constants, or `.stratz-restricted`.
 - Preserve JSON-RPC-only stdout and centralized secret redaction.
