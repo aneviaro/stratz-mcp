@@ -7,14 +7,20 @@ go_cmd=${GO:-go}
 mode=${1:-native}
 target=${2:-dist/stratz-mcp}
 client=${CLIENT_PROFILE:-codex}
-input=$(mktemp)
+initialize_input=$(mktemp)
+request_input=$(mktemp)
 output=$(mktemp)
 errors=$(mktemp)
 validator=$(mktemp "$repo_root/interop-smoke.XXXXXX.go")
-trap 'rm -f "$input" "$output" "$errors" "$validator"' EXIT
+handshake_delay=${INTEROP_SMOKE_HANDSHAKE_DELAY:-2}
+shutdown_delay=${INTEROP_SMOKE_SHUTDOWN_DELAY:-2}
+trap 'rm -f "$initialize_input" "$request_input" "$output" "$errors" "$validator"' EXIT
 
-cat > "$input" <<EOF
+cat > "$initialize_input" <<EOF
 {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"${client}-interop","version":"1"}}}
+EOF
+
+cat > "$request_input" <<EOF
 {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
 {"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
 {"jsonrpc":"2.0","id":3,"method":"resources/list","params":{}}
@@ -25,14 +31,14 @@ EOF
 case "$mode" in
 	native)
 		set +e
-		{ cat "$input"; sleep 1; } |
+		{ cat "$initialize_input"; sleep "$handshake_delay"; cat "$request_input"; sleep "$shutdown_delay"; } |
 			STRATZ_API_TOKEN=smoke-test-token "$target" serve > "$output" 2> "$errors"
 		rc=$?
 		set -e
 		;;
 	docker)
 		set +e
-		{ cat "$input"; sleep 1; } |
+		{ cat "$initialize_input"; sleep "$handshake_delay"; cat "$request_input"; sleep "$shutdown_delay"; } |
 			docker run --rm -i --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m \
 				-e STRATZ_API_TOKEN=smoke-test-token "$target" serve > "$output" 2> "$errors"
 		rc=$?
