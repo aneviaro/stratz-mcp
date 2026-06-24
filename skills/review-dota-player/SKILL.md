@@ -15,7 +15,7 @@ Use this skill when the user asks for this workflow. User-supplied parameters ar
 
 - `player` (required): Account ID, SteamID64, or STRATZ player URL.
 - `sample_size` (optional; default 20): Recent match sample from 5 through 100.
-- `detail_level` (optional; default standard): summary, standard, or full.
+- `detail_level` (optional; default standard): summary, players, standard, or full. Use players for player rows without objective/timeline noise.
 - `fresh` (optional; default false): Set true to bypass eligible cached data.
 
 ## Approved tools

@@ -7,7 +7,7 @@ var generatedDefinitions = []Definition{
 		Arguments: []Argument{
 			{Name: "match_id", Description: "Exact STRATZ or Dota match identifier.", Required: true, Default: ""},
 			{Name: "focus_player", Description: "Optional account ID, SteamID64, or STRATZ player URL.", Required: false, Default: ""},
-			{Name: "detail_level", Description: "summary, standard, or full.", Required: false, Default: "standard"},
+			{Name: "detail_level", Description: "summary, players, standard, or full. Use players for player rows without objective/timeline noise.", Required: false, Default: "standard"},
 			{Name: "fresh", Description: "Set true to bypass eligible cached data.", Required: false, Default: "false"},
 		},
 		Tools: []string{
@@ -95,7 +95,7 @@ var generatedDefinitions = []Definition{
 		Arguments: []Argument{
 			{Name: "player", Description: "Account ID, SteamID64, or STRATZ player URL.", Required: true, Default: ""},
 			{Name: "sample_size", Description: "Recent match sample from 5 through 100.", Required: false, Default: "20"},
-			{Name: "detail_level", Description: "summary, standard, or full.", Required: false, Default: "standard"},
+			{Name: "detail_level", Description: "summary, players, standard, or full. Use players for player rows without objective/timeline noise.", Required: false, Default: "standard"},
 			{Name: "fresh", Description: "Set true to bypass eligible cached data.", Required: false, Default: "false"},
 		},
 		Tools: []string{

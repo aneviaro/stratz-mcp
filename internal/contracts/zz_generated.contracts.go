@@ -223,6 +223,15 @@ type MatchAvailabilityContext struct {
 	Type                 string       `json:"type"`
 }
 
+type MatchDetailLevel string
+
+const (
+	MatchDetailLevelSummary  MatchDetailLevel = "summary"
+	MatchDetailLevelPlayers  MatchDetailLevel = "players"
+	MatchDetailLevelStandard MatchDetailLevel = "standard"
+	MatchDetailLevelFull     MatchDetailLevel = "full"
+)
+
 type MatchID string
 
 type MatchPlayer struct {
@@ -308,8 +317,8 @@ type Provenance struct {
 		From NullableDateTime `json:"from"`
 		To   NullableDateTime `json:"to"`
 	} `json:"date_range"`
-	DetailLevel *DetailLevel `json:"detail_level"`
-	Operation   string       `json:"operation"`
+	DetailLevel *MatchDetailLevel `json:"detail_level"`
+	Operation   string            `json:"operation"`
 	Patch       *struct {
 		ID   *string `json:"id"`
 		Name *string `json:"name"`
@@ -357,10 +366,10 @@ type StratzBatchGetHeroesData struct {
 type StratzBatchGetHeroesResponse ToolResult[StratzBatchGetHeroesData]
 
 type StratzBatchGetMatchesRequest struct {
-	DetailLevel *DetailLevel `json:"detail_level,omitempty"`
-	Fresh       *bool        `json:"fresh,omitempty"`
-	IncludeRaw  *bool        `json:"include_raw,omitempty"`
-	MatchIds    []MatchID    `json:"match_ids"`
+	DetailLevel *MatchDetailLevel `json:"detail_level,omitempty"`
+	Fresh       *bool             `json:"fresh,omitempty"`
+	IncludeRaw  *bool             `json:"include_raw,omitempty"`
+	MatchIds    []MatchID         `json:"match_ids"`
 }
 
 type StratzBatchGetMatchesData struct {
@@ -467,10 +476,10 @@ type StratzGetLeagueData League
 type StratzGetLeagueResponse ToolResult[StratzGetLeagueData]
 
 type StratzGetMatchRequest struct {
-	DetailLevel *DetailLevel `json:"detail_level,omitempty"`
-	Fresh       *bool        `json:"fresh,omitempty"`
-	IncludeRaw  *bool        `json:"include_raw,omitempty"`
-	MatchID     MatchID      `json:"match_id"`
+	DetailLevel *MatchDetailLevel `json:"detail_level,omitempty"`
+	Fresh       *bool             `json:"fresh,omitempty"`
+	IncludeRaw  *bool             `json:"include_raw,omitempty"`
+	MatchID     MatchID           `json:"match_id"`
 }
 
 type StratzGetMatchData Match
@@ -550,22 +559,22 @@ type StratzListLiveMatchesData struct {
 type StratzListLiveMatchesResponse ToolResult[StratzListLiveMatchesData]
 
 type StratzListPlayerMatchesRequest struct {
-	Cursor                 *string          `json:"cursor,omitempty"`
-	DetailLevel            *DetailLevel     `json:"detail_level,omitempty"`
-	Fresh                  *bool            `json:"fresh,omitempty"`
-	From                   *DateTime        `json:"from,omitempty"`
-	GameModeID             *int64           `json:"game_mode_id,omitempty"`
-	Hero                   *HeroIdentifier  `json:"hero,omitempty"`
-	IncludePlayer          *bool            `json:"include_player,omitempty"`
-	IncludeRaw             *bool            `json:"include_raw,omitempty"`
-	Limit                  *int64           `json:"limit,omitempty"`
-	LobbyTypeID            *int64           `json:"lobby_type_id,omitempty"`
-	MinimumDurationSeconds *int64           `json:"minimum_duration_seconds,omitempty"`
-	PatchID                *string          `json:"patch_id,omitempty"`
-	PlayerID               PlayerIdentifier `json:"player_id"`
-	Result                 *string          `json:"result,omitempty"`
-	Role                   *string          `json:"role,omitempty"`
-	To                     *DateTime        `json:"to,omitempty"`
+	Cursor                 *string           `json:"cursor,omitempty"`
+	DetailLevel            *MatchDetailLevel `json:"detail_level,omitempty"`
+	Fresh                  *bool             `json:"fresh,omitempty"`
+	From                   *DateTime         `json:"from,omitempty"`
+	GameModeID             *int64            `json:"game_mode_id,omitempty"`
+	Hero                   *HeroIdentifier   `json:"hero,omitempty"`
+	IncludePlayer          *bool             `json:"include_player,omitempty"`
+	IncludeRaw             *bool             `json:"include_raw,omitempty"`
+	Limit                  *int64            `json:"limit,omitempty"`
+	LobbyTypeID            *int64            `json:"lobby_type_id,omitempty"`
+	MinimumDurationSeconds *int64            `json:"minimum_duration_seconds,omitempty"`
+	PatchID                *string           `json:"patch_id,omitempty"`
+	PlayerID               PlayerIdentifier  `json:"player_id"`
+	Result                 *string           `json:"result,omitempty"`
+	Role                   *string           `json:"role,omitempty"`
+	To                     *DateTime         `json:"to,omitempty"`
 }
 
 type StratzListPlayerMatchesData struct {

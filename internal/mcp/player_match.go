@@ -20,6 +20,9 @@ func registerPlayerMatchHandlers(
 	if handlers["stratz_get_player"] == nil {
 		handlers["stratz_get_player"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
+			if err := rejectPlayersDetail(object); err != nil {
+				return nil, err
+			}
 			result, err := service.GetPlayer(ctx, object["player_id"].(string))
 			if err != nil {
 				return nil, playerMatchExecutionError(err)
@@ -30,6 +33,9 @@ func registerPlayerMatchHandlers(
 	if handlers["stratz_batch_get_players"] == nil {
 		handlers["stratz_batch_get_players"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
+			if err := rejectPlayersDetail(object); err != nil {
+				return nil, err
+			}
 			identifiers, err := stringSlice(object["player_ids"])
 			if err != nil {
 				return nil, invalidArgumentsError()
@@ -165,6 +171,13 @@ func detailInput(input map[string]any) contracts.DetailLevel {
 	return contracts.DetailLevelStandard
 }
 
+func rejectPlayersDetail(input map[string]any) error {
+	if detailInput(input) == contracts.DetailLevel("players") {
+		return invalidArgumentsError()
+	}
+	return nil
+}
+
 func includeRaw(input map[string]any) bool {
 	value, _ := input["include_raw"].(bool)
 	return value
@@ -205,6 +218,9 @@ func decodePlayerMatchFilters(
 	}
 	if value, ok := input["include_player"].(bool); ok {
 		filters.IncludePlayer = value
+	}
+	if detailInput(input) == contracts.DetailLevel("players") {
+		filters.IncludePlayer = true
 	}
 	for key, destination := range map[string]**int64{
 		"game_mode_id":             &filters.GameModeID,

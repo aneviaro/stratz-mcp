@@ -45,6 +45,12 @@
       "enum": ["summary", "standard", "full"],
       "default": "standard"
     },
+    "matchDetailLevel": {
+      "type": "string",
+      "enum": ["summary", "players", "standard", "full"],
+      "default": "standard",
+      "description": "Controls normalized match response breadth. players returns summary fields plus player rows without replay-derived objectives or timeline events."
+    },
     "matchId": {
       "type": "string",
       "pattern": "^[0-9]{1,20}$"
@@ -110,7 +116,7 @@
         "detail_level": {
           "oneOf": [
             {
-              "$ref": "#/$defs/detailLevel"
+              "$ref": "#/$defs/matchDetailLevel"
             },
             {
               "type": "null"
@@ -1296,7 +1302,7 @@
           "include_player": {
             "type": "boolean",
             "default": false,
-            "description": "Include the requested player's own match row on each summary when available."
+            "description": "Include the requested player's own match row on each summary when available. Also enabled by detail_level=players."
           },
           "limit": {
             "type": "integer",
@@ -1309,7 +1315,7 @@
             "maxLength": 4096
           },
           "detail_level": {
-            "$ref": "#/$defs/detailLevel"
+            "$ref": "#/$defs/matchDetailLevel"
           },
           "fresh": {
             "type": "boolean",
@@ -1430,7 +1436,7 @@
             "$ref": "#/$defs/matchId"
           },
           "detail_level": {
-            "$ref": "#/$defs/detailLevel"
+            "$ref": "#/$defs/matchDetailLevel"
           },
           "fresh": {
             "type": "boolean",
@@ -1480,7 +1486,7 @@
             }
           },
           "detail_level": {
-            "$ref": "#/$defs/detailLevel"
+            "$ref": "#/$defs/matchDetailLevel"
           },
           "fresh": {
             "type": "boolean",

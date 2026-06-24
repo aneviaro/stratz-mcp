@@ -107,7 +107,7 @@ func requireDetail(value contracts.DetailLevel) (contracts.DetailLevel, error) {
 		return contracts.DetailLevelStandard, nil
 	}
 	switch value {
-	case contracts.DetailLevelSummary, contracts.DetailLevelStandard, contracts.DetailLevelFull:
+	case contracts.DetailLevelSummary, detailLevelPlayers, contracts.DetailLevelStandard, contracts.DetailLevelFull:
 		return value, nil
 	default:
 		return "", invalid(fmt.Sprintf("Unsupported detail level %q", value), nil)

@@ -42,6 +42,9 @@ func cachedToolHandler(
 	}
 	return func(ctx context.Context, input any) (any, error) {
 		arguments, _ := input.(map[string]any)
+		if detailInput(arguments) == contracts.DetailLevel("players") && !playersDetailAllowed(name) {
+			return nil, invalidArgumentsError()
+		}
 		fresh, _ := arguments["fresh"].(bool)
 		includeRaw, _ := arguments["include_raw"].(bool)
 		classification := cache.ResolveClassification(
@@ -116,6 +119,15 @@ func cachedToolHandler(
 			})
 		}
 		return output, nil
+	}
+}
+
+func playersDetailAllowed(name string) bool {
+	switch name {
+	case "stratz_get_match", "stratz_batch_get_matches", "stratz_list_player_matches":
+		return true
+	default:
+		return false
 	}
 }
 

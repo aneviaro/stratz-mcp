@@ -22,6 +22,9 @@ func registerLeagueLiveHandlers(
 	if handlers["stratz_get_league"] == nil {
 		handlers["stratz_get_league"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
+			if err := rejectPlayersDetail(object); err != nil {
+				return nil, err
+			}
 			result, err := service.GetLeague(ctx, object["league_id"].(string))
 			if err != nil {
 				return nil, leagueLiveExecutionError(err)
@@ -46,6 +49,9 @@ func registerLeagueLiveHandlers(
 	if handlers["stratz_list_league_matches"] == nil {
 		handlers["stratz_list_league_matches"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
+			if err := rejectPlayersDetail(object); err != nil {
+				return nil, err
+			}
 			filters, err := decodeLeagueMatchFilters(object)
 			if err != nil {
 				return nil, err
