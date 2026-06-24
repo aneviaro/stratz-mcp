@@ -128,6 +128,7 @@ type Fight struct {
 		AccountID *string `json:"account_id"`
 		Deaths    int64   `json:"deaths"`
 		HeroID    int64   `json:"hero_id"`
+		HeroName  *string `json:"hero_name"`
 		Kills     int64   `json:"kills"`
 		Team      string  `json:"team"`
 	} `json:"participants"`
@@ -239,6 +240,7 @@ type MatchPlayer struct {
 	Assists   int64    `json:"assists"`
 	Deaths    int64    `json:"deaths"`
 	HeroID    int64    `json:"hero_id"`
+	HeroName  *string  `json:"hero_name"`
 	Imp       *float64 `json:"imp"`
 	Kills     int64    `json:"kills"`
 	Level     *int64   `json:"level"`
@@ -346,6 +348,7 @@ type SuccessBase struct {
 type TimelineEvent struct {
 	AccountID   *string `json:"account_id"`
 	HeroID      *int64  `json:"hero_id"`
+	HeroName    *string `json:"hero_name"`
 	Team        *string `json:"team"`
 	TimeSeconds int64   `json:"time_seconds"`
 	Type        string  `json:"type"`

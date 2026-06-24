@@ -205,6 +205,120 @@ func mapMatch(source *upstreamMatch, detail contracts.DetailLevel) contracts.Mat
 	return match
 }
 
+// collectMatchHeroIDs returns the distinct positive hero IDs referenced across a
+// normalized match's players, fight participants, timeline, and objectives, so a
+// single hero-name resolution request can decorate every row.
+func collectMatchHeroIDs(match contracts.Match) []int64 {
+	const estimated = 10
+	ids := make([]int64, 0, estimated)
+	seen := make(map[int64]struct{}, estimated)
+	add := func(id int64) {
+		if id <= 0 {
+			return
+		}
+		if _, duplicate := seen[id]; duplicate {
+			return
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	for _, player := range match.Players {
+		add(player.HeroID)
+	}
+	for _, fight := range match.Fights {
+		for _, participant := range fight.Participants {
+			add(participant.HeroID)
+		}
+	}
+	applyTimeline := func(events []contracts.TimelineEvent) {
+		for _, event := range events {
+			if event.HeroID != nil {
+				add(*event.HeroID)
+			}
+		}
+	}
+	applyTimeline(match.Timeline)
+	applyTimeline(match.Objectives)
+	return ids
+}
+
+// collectBatchHeroIDs deduplicates hero IDs across a batch of normalized matches.
+func collectBatchHeroIDs(matches []contracts.Match) []int64 {
+	ids := make([]int64, 0)
+	seen := make(map[int64]struct{})
+	for _, match := range matches {
+		for _, id := range collectMatchHeroIDs(match) {
+			if _, duplicate := seen[id]; duplicate {
+				continue
+			}
+			seen[id] = struct{}{}
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+// applyMatchHeroNames stamps the resolved localized name onto every hero-bearing
+// row of a normalized match. IDs without a resolved name keep a nil HeroName.
+func applyMatchHeroNames(match *contracts.Match, names map[int64]string) {
+	for index := range match.Players {
+		match.Players[index].HeroName = heroNamePointer(match.Players[index].HeroID, names)
+	}
+	for fi := range match.Fights {
+		for pi := range match.Fights[fi].Participants {
+			match.Fights[fi].Participants[pi].HeroName = heroNamePointer(match.Fights[fi].Participants[pi].HeroID, names)
+		}
+	}
+	applyTimelineHeroNames(match.Timeline, names)
+	applyTimelineHeroNames(match.Objectives, names)
+}
+
+func applyTimelineHeroNames(events []contracts.TimelineEvent, names map[int64]string) {
+	for index := range events {
+		if events[index].HeroID == nil {
+			continue
+		}
+		events[index].HeroName = heroNamePointer(*events[index].HeroID, names)
+	}
+}
+
+// collectSummaryHeroIDs returns the distinct hero IDs from the included player
+// rows of a player-match list page. Items without a player row are skipped.
+func collectSummaryHeroIDs(items []contracts.PlayerMatchSummary) []int64 {
+	ids := make([]int64, 0, len(items))
+	seen := make(map[int64]struct{}, len(items))
+	for _, item := range items {
+		if item.Player == nil {
+			continue
+		}
+		id := item.Player.HeroID
+		if id <= 0 {
+			continue
+		}
+		if _, duplicate := seen[id]; duplicate {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+func applySummaryHeroNames(items []contracts.PlayerMatchSummary, names map[int64]string) {
+	for index := range items {
+		if player := items[index].Player; player != nil {
+			player.HeroName = heroNamePointer(player.HeroID, names)
+		}
+	}
+}
+
+func heroNamePointer(heroID int64, names map[int64]string) *string {
+	if name, ok := names[heroID]; ok {
+		return &name
+	}
+	return nil
+}
+
 func mapObjectives(source *upstreamPlaybackData) []contracts.TimelineEvent {
 	if source == nil {
 		return []contracts.TimelineEvent{}
@@ -337,6 +451,7 @@ func mapFights(source []upstreamFight) []contracts.Fight {
 				AccountID *string `json:"account_id"`
 				Deaths    int64   `json:"deaths"`
 				HeroID    int64   `json:"hero_id"`
+				HeroName  *string `json:"hero_name"`
 				Kills     int64   `json:"kills"`
 				Team      string  `json:"team"`
 			}{

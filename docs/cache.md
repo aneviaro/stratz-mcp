@@ -24,3 +24,7 @@ Keys include the token-derived namespace, operation, normalized arguments, detai
 Use `STRATZ_CACHE_ENABLED=false` to disable caching or `STRATZ_CACHE_DIR` to select a private directory. Directories use mode `0700`; the database and WAL/SHM files use `0600` on POSIX. Docker deployments should mount `/cache` as the writable volume. Cache initialization or operation failures degrade to no-cache behavior and are reported by `doctor`.
 
 With the server stopped, deleting `cache.db`, `cache.db-wal`, and `cache.db-shm` is the definitive manual purge.
+
+## Future direction
+
+Caching currently lives only at the MCP envelope boundary (`cachedToolHandler`), so domain-internal fetches (hero constants, batched lookups) bypass it. A planned shift moves the boundary into the domain services so normalized data and upstream payloads are cached once and reused across calls.
