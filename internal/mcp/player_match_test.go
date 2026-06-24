@@ -87,6 +87,71 @@ func TestDataNotReadyErrorEnvelopeValidates(t *testing.T) {
 	}
 }
 
+func TestNonMatchPlayerToolRejectsPlayersDetail(t *testing.T) {
+	cfg := config.Defaults(t.TempDir())
+	executor := &budgetFixtureExecutor{}
+	heroes, err := heroconstants.New(heroconstants.Options{
+		Executor: executor, MaxUpstreamRequests: cfg.Limits.MaxUpstreamRequests,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	matches, err := playermatch.New(playermatch.Options{
+		Executor: executor, Token: "token", SchemaVersion: "schema-v1",
+		MaxUpstreamRequests: cfg.Limits.MaxUpstreamRequests,
+		MaxBatchSize:        cfg.Limits.MaxBatchSize,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handlers := map[string]ToolHandler{}
+	registerPlayerMatchHandlers(handlers, Options{Config: cfg, SchemaVersion: "schema-v1", Now: time.Now}, matches, heroes)
+
+	_, err = handlers["stratz_get_player"](context.Background(), map[string]any{
+		"player_id":    "1",
+		"detail_level": "players",
+	})
+	var executionErr *ExecutionError
+	if !errors.As(err, &executionErr) || executionErr.Code != contracts.ErrorCodeInvalidArgument {
+		t.Fatalf("error = %#v, want INVALID_ARGUMENT", err)
+	}
+}
+
+func TestPlayerMatchListPlayersDetailIncludesPlayerRows(t *testing.T) {
+	cfg := config.Defaults(t.TempDir())
+	executor := &budgetFixtureExecutor{}
+	heroes, err := heroconstants.New(heroconstants.Options{
+		Executor: executor, MaxUpstreamRequests: cfg.Limits.MaxUpstreamRequests,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	matches, err := playermatch.New(playermatch.Options{
+		Executor: executor, Token: "token", SchemaVersion: "schema-v1",
+		MaxUpstreamRequests: cfg.Limits.MaxUpstreamRequests,
+		MaxBatchSize:        cfg.Limits.MaxBatchSize,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handlers := map[string]ToolHandler{}
+	registerPlayerMatchHandlers(handlers, Options{Config: cfg, SchemaVersion: "schema-v1", Now: time.Now}, matches, heroes)
+
+	output, err := handlers["stratz_list_player_matches"](context.Background(), map[string]any{
+		"player_id":      "1",
+		"limit":          json.Number("1"),
+		"detail_level":   "players",
+		"include_player": false,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := output.(map[string]any)["data"].(contracts.StratzListPlayerMatchesData)
+	if len(data.Items) != 1 || data.Items[0].Player == nil {
+		t.Fatalf("items = %#v, want requested player row", data.Items)
+	}
+}
+
 func TestHeroFilteredPlayerMatchListSharesRequestBudget(t *testing.T) {
 	cfg := config.Defaults(t.TempDir())
 	executor := &budgetFixtureExecutor{}
@@ -145,11 +210,11 @@ func (executor *budgetFixtureExecutor) Execute(
 		return &stratz.Response{Data: json.RawMessage(
 			`{"constants":{"heroes":[{"id":1,"name":"npc_dota_hero_axe","localizedName":"Axe","roles":[]}]}}`,
 		)}, nil
-	case "StratzListPlayerMatches":
+	case "StratzListPlayerMatches", "StratzListPlayerMatchesWithPlayers":
 		items := make([]string, 20)
 		for index := range items {
 			items[index] = fmt.Sprintf(
-				`{"id":%d,"durationSeconds":1,"parseStatus":"parsed","players":[]}`,
+				`{"id":%d,"durationSeconds":1,"parseStatus":"parsed","players":[{"steamAccountId":1,"heroId":1,"isRadiant":true,"playerSlot":0,"kills":1,"deaths":2,"assists":3}]}`,
 				executor.attempts*100+index,
 			)
 		}

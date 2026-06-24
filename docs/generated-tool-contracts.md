@@ -50,7 +50,7 @@ Get up to 25 matches atomically; any item failure fails the entire batch.
 
 | Input | Required | Type and constraints |
 |---|---:|---|
-| `detail_level` | false | `detailLevel` |
+| `detail_level` | false | `matchDetailLevel` |
 | `fresh` | false | `boolean`; default `false` |
 | `include_raw` | false | `boolean`; default `false` |
 | `match_ids` | true | `array`; minItems `1`; maxItems `25` |
@@ -149,7 +149,7 @@ Get a normalized Dota match with detail-level controlled timelines and replay-de
 
 | Input | Required | Type and constraints |
 |---|---:|---|
-| `detail_level` | false | `detailLevel` |
+| `detail_level` | false | `matchDetailLevel` |
 | `fresh` | false | `boolean`; default `false` |
 | `include_raw` | false | `boolean`; default `false` |
 | `match_id` | true | `matchId` |
@@ -234,7 +234,7 @@ List normalized matches for a player using bounded filters and an authenticated 
 | Input | Required | Type and constraints |
 |---|---:|---|
 | `cursor` | false | `string`; maxLength `4096` |
-| `detail_level` | false | `detailLevel` |
+| `detail_level` | false | `matchDetailLevel` |
 | `fresh` | false | `boolean`; default `false` |
 | `from` | false | `dateTime` |
 | `game_mode_id` | false | `integer` |

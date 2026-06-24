@@ -17,6 +17,9 @@ func registerHeroConstantsHandlers(
 	if handlers["stratz_get_hero"] == nil {
 		handlers["stratz_get_hero"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
+			if err := rejectPlayersDetail(object); err != nil {
+				return nil, err
+			}
 			result, err := service.GetHero(ctx, object["hero"])
 			if err != nil {
 				return nil, heroConstantsExecutionError(err)
@@ -27,6 +30,9 @@ func registerHeroConstantsHandlers(
 	if handlers["stratz_batch_get_heroes"] == nil {
 		handlers["stratz_batch_get_heroes"] = func(ctx context.Context, input any) (any, error) {
 			object := input.(map[string]any)
+			if err := rejectPlayersDetail(object); err != nil {
+				return nil, err
+			}
 			identifiers, ok := object["heroes"].([]any)
 			if !ok {
 				return nil, invalidArgumentsError()

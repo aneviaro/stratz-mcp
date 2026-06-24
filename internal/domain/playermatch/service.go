@@ -19,6 +19,7 @@ import (
 const (
 	playerListOperationVersion   = "player-matches/v2"
 	fullMatchAvailabilityWarning = "Fight and economy breakdowns are unavailable from the current STRATZ match playback data"
+	detailLevelPlayers           = contracts.DetailLevel("players")
 )
 
 // Options configures player and match domain execution.
@@ -486,7 +487,7 @@ func listPlayerMatchesOperation(includePlayer bool) (string, string) {
 
 func matchOperation(detail contracts.DetailLevel) (string, string) {
 	switch detail {
-	case contracts.DetailLevelSummary:
+	case contracts.DetailLevelSummary, detailLevelPlayers:
 		return generated.StratzGetMatchSummary_Operation, "StratzGetMatchSummary"
 	case contracts.DetailLevelFull:
 		return generated.StratzGetMatchFull_Operation, "StratzGetMatchFull"
@@ -497,7 +498,7 @@ func matchOperation(detail contracts.DetailLevel) (string, string) {
 
 func batchMatchOperation(detail contracts.DetailLevel) (string, string) {
 	switch detail {
-	case contracts.DetailLevelSummary:
+	case contracts.DetailLevelSummary, detailLevelPlayers:
 		return generated.StratzGetMatchBatchSummary_Operation, "StratzGetMatchBatchSummary"
 	case contracts.DetailLevelFull:
 		return generated.StratzGetMatchBatchFull_Operation, "StratzGetMatchBatchFull"
@@ -507,7 +508,7 @@ func batchMatchOperation(detail contracts.DetailLevel) (string, string) {
 }
 
 func ensureAvailable(match *upstreamMatch, detail contracts.DetailLevel) *Error {
-	if detail == contracts.DetailLevelSummary {
+	if detail == contracts.DetailLevelSummary || detail == detailLevelPlayers {
 		return nil
 	}
 	summary := mapSummary(match)

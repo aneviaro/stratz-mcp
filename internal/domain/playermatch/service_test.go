@@ -215,6 +215,7 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 		wantOperationName string
 	}{
 		{contracts.DetailLevelSummary, false, false, "StratzGetMatchSummary"},
+		{detailLevelPlayers, false, false, "StratzGetMatchSummary"},
 		{contracts.DetailLevelStandard, true, false, "StratzGetMatchStandard"},
 		{contracts.DetailLevelFull, true, true, "StratzGetMatchFull"},
 	} {

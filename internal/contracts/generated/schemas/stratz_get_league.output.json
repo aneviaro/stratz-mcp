@@ -72,8 +72,10 @@
                   "oneOf": [
                     {
                       "default": "standard",
+                      "description": "Controls normalized match response breadth. players returns summary fields plus player rows without replay-derived objectives or timeline events.",
                       "enum": [
                         "summary",
+                        "players",
                         "standard",
                         "full"
                       ],

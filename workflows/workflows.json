@@ -29,7 +29,7 @@
         },
         {
           "name": "detail_level",
-          "description": "summary, standard, or full.",
+          "description": "summary, players, standard, or full. Use players for player rows without objective/timeline noise.",
           "required": false,
           "default": "standard"
         },
@@ -71,7 +71,7 @@
         },
         {
           "name": "detail_level",
-          "description": "summary, standard, or full.",
+          "description": "summary, players, standard, or full. Use players for player rows without objective/timeline noise.",
           "required": false,
           "default": "standard"
         },

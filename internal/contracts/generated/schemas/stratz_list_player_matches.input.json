@@ -9,8 +9,10 @@
     },
     "detail_level": {
       "default": "standard",
+      "description": "Controls normalized match response breadth. players returns summary fields plus player rows without replay-derived objectives or timeline events.",
       "enum": [
         "summary",
+        "players",
         "standard",
         "full"
       ],
@@ -42,7 +44,7 @@
     },
     "include_player": {
       "default": false,
-      "description": "Include the requested player's own match row on each summary when available.",
+      "description": "Include the requested player's own match row on each summary when available. Also enabled by detail_level=players.",
       "type": "boolean"
     },
     "include_raw": {
