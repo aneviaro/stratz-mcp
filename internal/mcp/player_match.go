@@ -203,6 +203,9 @@ func decodePlayerMatchFilters(
 	if value, ok := input["cursor"].(string); ok {
 		filters.Cursor = value
 	}
+	if value, ok := input["include_player"].(bool); ok {
+		filters.IncludePlayer = value
+	}
 	for key, destination := range map[string]**int64{
 		"game_mode_id":             &filters.GameModeID,
 		"lobby_type_id":            &filters.LobbyTypeID,

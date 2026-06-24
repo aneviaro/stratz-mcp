@@ -574,6 +574,69 @@
       ],
       "additionalProperties": false
     },
+    "playerMatchSummary": {
+      "type": "object",
+      "properties": {
+        "match_id": {
+          "$ref": "#/$defs/matchId"
+        },
+        "started_at": {
+          "$ref": "#/$defs/nullableDateTime"
+        },
+        "duration_seconds": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "radiant_win": {
+          "type": ["boolean", "null"]
+        },
+        "radiant_score": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "dire_score": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "game_mode_id": {
+          "type": ["integer", "null"]
+        },
+        "lobby_type_id": {
+          "type": ["integer", "null"]
+        },
+        "region_id": {
+          "type": ["integer", "null"]
+        },
+        "league_id": {
+          "type": ["string", "null"]
+        },
+        "patch_id": {
+          "type": ["string", "null"]
+        },
+        "parse_status": {
+          "type": "string",
+          "enum": ["parsed", "partial", "pending", "unavailable", "unknown"]
+        },
+        "player": {
+          "$ref": "#/$defs/matchPlayer"
+        }
+      },
+      "required": [
+        "match_id",
+        "started_at",
+        "duration_seconds",
+        "radiant_win",
+        "radiant_score",
+        "dire_score",
+        "game_mode_id",
+        "lobby_type_id",
+        "region_id",
+        "league_id",
+        "patch_id",
+        "parse_status"
+      ],
+      "additionalProperties": false
+    },
     "matchAvailabilityContext": {
       "type": "object",
       "properties": {
@@ -1230,6 +1293,11 @@
             "type": "string",
             "maxLength": 64
           },
+          "include_player": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include the requested player's own match row on each summary when available."
+          },
           "limit": {
             "type": "integer",
             "minimum": 1,
@@ -1271,7 +1339,7 @@
                         "type": "array",
                         "maxItems": 100,
                         "items": {
-                          "$ref": "#/$defs/matchSummary"
+                          "$ref": "#/$defs/playerMatchSummary"
                         }
                       },
                       "page": {

@@ -72,6 +72,59 @@ func mapSummary(source *upstreamMatch) contracts.MatchSummary {
 	}
 }
 
+func mapPlayerMatchSummary(source *upstreamMatch, accountID int64, includePlayer bool) contracts.PlayerMatchSummary {
+	summary := mapSummary(source)
+	playerSummary := contracts.PlayerMatchSummary{
+		MatchID:         summary.MatchID,
+		StartedAt:       summary.StartedAt,
+		DurationSeconds: summary.DurationSeconds,
+		RadiantWin:      summary.RadiantWin,
+		RadiantScore:    summary.RadiantScore,
+		DireScore:       summary.DireScore,
+		GameModeID:      summary.GameModeID,
+		LobbyTypeID:     summary.LobbyTypeID,
+		RegionID:        summary.RegionID,
+		LeagueID:        summary.LeagueID,
+		PatchID:         summary.PatchID,
+		ParseStatus:     summary.ParseStatus,
+	}
+	if includePlayer {
+		playerSummary.Player = findMatchPlayer(source, accountID)
+	}
+	return playerSummary
+}
+
+func findMatchPlayer(source *upstreamMatch, accountID int64) *contracts.MatchPlayer {
+	for _, player := range source.Players {
+		if player.SteamAccountID == nil || *player.SteamAccountID != accountID {
+			continue
+		}
+		team := "dire"
+		if player.IsRadiant {
+			team = "radiant"
+		}
+		won := false
+		if source.DidRadiantWin != nil {
+			won = *source.DidRadiantWin == player.IsRadiant
+		}
+		publicAccountID := strconv.FormatInt(accountID, 10)
+		return &contracts.MatchPlayer{
+			AccountID: &publicAccountID,
+			HeroID:    player.HeroID,
+			Team:      team,
+			Position:  normalizedPlayerSlot(player.PlayerSlot),
+			Kills:     maxZero(player.Kills),
+			Deaths:    maxZero(player.Deaths),
+			Assists:   maxZero(player.Assists),
+			Networth:  nonNegative(player.Networth),
+			Level:     nonNegative(player.Level),
+			Imp:       player.IMP,
+			Won:       won,
+		}
+	}
+	return nil
+}
+
 var gameModeIDs = map[string]int64{
 	"NONE": 0, "ALL_PICK": 1, "CAPTAINS_MODE": 2, "RANDOM_DRAFT": 3,
 	"SINGLE_DRAFT": 4, "ALL_RANDOM": 5, "INTRO": 6, "DIRETIDE": 7,
