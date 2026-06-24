@@ -4,6 +4,7 @@ REVISION ?= $(shell git rev-parse --short=12 HEAD)
 SCHEMA_VERSION ?= unavailable
 
 COMMAND_PACKAGE := main
+EXE := $(if $(filter Windows_NT,$(OS)),.exe,)
 LDFLAGS := -X $(COMMAND_PACKAGE).version=$(VERSION) \
 	-X $(COMMAND_PACKAGE).revision=$(REVISION) \
 	-X $(COMMAND_PACKAGE).schemaVersion=$(SCHEMA_VERSION)
@@ -12,7 +13,7 @@ LDFLAGS := -X $(COMMAND_PACKAGE).version=$(VERSION) \
 
 build:
 	mkdir -p dist
-	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o dist/stratz-mcp ./cmd/stratz-mcp
+	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o dist/stratz-mcp$(EXE) ./cmd/stratz-mcp
 
 check: export PAGER := cat
 check: export GIT_PAGER := cat
