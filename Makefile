@@ -8,7 +8,7 @@ LDFLAGS := -X $(COMMAND_PACKAGE).version=$(VERSION) \
 	-X $(COMMAND_PACKAGE).revision=$(REVISION) \
 	-X $(COMMAND_PACKAGE).schemaVersion=$(SCHEMA_VERSION)
 
-.PHONY: build check check-format check-generated check-policies check-restricted cross-build dev generate interop-smoke notices package public-import public-readiness test test-live tools vet verify verify-build-info verify-public-surface
+.PHONY: build check check-format check-generated check-restricted cross-build dev generate interop-smoke notices public-import public-readiness test test-live tools vet verify verify-build-info
 
 build:
 	mkdir -p dist
@@ -16,7 +16,7 @@ build:
 
 check: export PAGER := cat
 check: export GIT_PAGER := cat
-check: verify check-format vet test check-generated public-readiness verify-public-surface check-policies verify-build-info
+check: verify check-format vet test check-generated public-readiness verify-build-info
 
 check-format:
 	@test -z "$$(gofmt -l -- $$(find . -name '*.go' -type f))"
@@ -33,9 +33,6 @@ public-readiness:
 public-import:
 	./scripts/create-public-import.sh
 
-verify-public-surface: build
-	./scripts/verify-public-surface.sh dist/stratz-mcp
-
 cross-build:
 	VERSION="$(VERSION)" REVISION="$(REVISION)" SCHEMA_VERSION="$(SCHEMA_VERSION)" \
 		GO="$(GO)" ./scripts/cross-build.sh
@@ -45,13 +42,6 @@ interop-smoke: build
 
 notices:
 	GO="$(GO)" ./scripts/generate-notices.sh
-
-package:
-	VERSION="$(VERSION)" REVISION="$(REVISION)" SCHEMA_VERSION="$(SCHEMA_VERSION)" \
-		GO="$(GO)" ./scripts/package-release.sh
-
-check-policies:
-	./scripts/check-release-policies.sh
 
 dev:
 	$(GO) run -ldflags "$(LDFLAGS)" ./cmd/stratz-mcp

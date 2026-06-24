@@ -4,7 +4,7 @@
 
 Credentials must come from exactly one source: `STRATZ_API_TOKEN`, an explicit dotenv file, or `--token-file`/`STRATZ_API_TOKEN_FILE`. Token files must be regular, non-symlink files with a bounded single-line value. Restrictive POSIX permissions are strongly recommended; `doctor` warns when a token file is group/other accessible.
 
-Use `stratz-mcp doctor` to validate configuration, permissions, cache initialization, connectivity, schema status, and release clearance. Use `--log-level error|warn|info|debug` and `--log-format text|json`; logs are written to stderr with centralized credential/header redaction.
+Use `stratz-mcp doctor` to validate configuration, permissions, cache initialization, connectivity, and schema status. Use `--log-level error|warn|info|debug` and `--log-format text|json`; logs are written to stderr with centralized credential/header redaction.
 
 Durations use Go syntax such as `20s`, `15m`, or `24h`. Byte values are decimal integers. Demand-control limits and cache size cannot exceed their defaults. The upstream timeout and cache TTLs have separate maxima.
 

@@ -7,7 +7,6 @@ import (
 
 	"github.com/aneviaro/stratz-mcp/internal/cache"
 	"github.com/aneviaro/stratz-mcp/internal/config"
-	"github.com/aneviaro/stratz-mcp/internal/releasegate"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
@@ -80,30 +79,6 @@ func Diagnose(ctx context.Context, options Options) Report {
 		})
 	}
 
-	record, err := releasegate.Current()
-	switch {
-	case err != nil:
-		report.Findings = append(report.Findings, Finding{
-			Severity: SeverityError,
-			Code:     "clearance_record_invalid",
-			Subject:  "release_clearance",
-			Message:  "embedded release-clearance record is invalid",
-		})
-	case releasegate.Check(record) != nil:
-		report.Findings = append(report.Findings, Finding{
-			Severity: SeverityWarning,
-			Code:     "public_release_blocked",
-			Subject:  "release_clearance",
-			Message:  "public release remains blocked pending STRATZ clearance",
-		})
-	default:
-		report.Findings = append(report.Findings, Finding{
-			Severity: SeverityInfo,
-			Code:     "public_release_allowed",
-			Subject:  "release_clearance",
-			Message:  "all required STRATZ clearance decisions are approved",
-		})
-	}
 	return report
 }
 

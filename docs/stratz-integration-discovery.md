@@ -1,7 +1,7 @@
 ---
 Created: 2026-06-18
 Purpose: Record live and documentary discovery of the STRATZ upstream HTTP, authentication, rate-limit, WAF, and API-use contracts.
-Status: HTTP discovery and edge-policy fixtures complete; public release remains blocked on current STRATZ permission
+Status: HTTP discovery and edge-policy fixtures complete; fetched STRATZ artifacts remain local-only
 ---
 
 # STRATZ upstream integration discovery
@@ -215,7 +215,7 @@ Closed by deterministic policy fixture on June 19, 2026:
 - A decoded response above 5 MiB maps to non-retryable `RESPONSE_TOO_LARGE`.
 - A client or context deadline maps to retryable `UPSTREAM_TIMEOUT`.
 
-Remaining external release dependency:
+Remaining external redistribution dependency:
 
 - Current STRATZ API-use, caching, redistribution, attribution, and branding permission.
 
@@ -289,7 +289,7 @@ The documentation and live headers therefore disagree. The server:
 
 ## 10. API-use, attribution, caching, and redistribution
 
-The official sources below were re-reviewed on June 19, 2026. They remained available and retained their historical 2020 wording, but they did not provide sufficiently explicit current permission for all planned product behavior. [release-clearance.json](./release-clearance.json) is the normative machine-checkable record.
+The official sources below were re-reviewed on June 19, 2026. They remained available and retained their historical 2020 wording, but they did not provide sufficiently explicit current permission to redistribute fetched STRATZ schema snapshots, constants, or cached data.
 
 STRATZ's public knowledge base historically states:
 
@@ -305,7 +305,7 @@ Those articles are old and do not establish current permission for:
 - Publishing a general-purpose API wrapper.
 - Using STRATZ names or marks in the project name and documentation.
 
-Before public release, obtain and record current STRATZ terms or written confirmation covering:
+Before publishing any fetched STRATZ-derived artifacts outside a local checkout, obtain and record current STRATZ terms or written confirmation covering:
 
 1. Token tier appropriate for a downloadable local application.
 2. Attribution and referral requirements.
@@ -316,22 +316,21 @@ Before public release, obtain and record current STRATZ terms or written confirm
 
 Current decisions:
 
-| Area | Status | Release behavior |
+| Area | Status | Source-public behavior |
 |---|---|---|
-| General-purpose API wrapper | Pending | Local implementation and private testing only; public release blocked |
-| Persistent local caching and stale serving | Pending | May be developed with safeguards; public release blocked |
+| General-purpose API wrapper | Pending | Source is public; no official binaries, archives, containers, or release tags are published |
+| Persistent local caching and stale serving | Pending | Available only as local user-controlled behavior |
 | GraphQL schema redistribution | Pending | Keep fetched snapshots local; never commit or package them |
 | Constants and badge redistribution | Pending | Keep fetched data local; never commit or package it |
 | Attribution and referral | Pending | Apply conservative linked attribution while exact requirements remain unresolved |
 | Branding and trademarks | Pending | No logos or endorsement claims; identify the project as unofficial |
 
-Until all required fields are explicitly approved:
+Until redistribution permission is explicit:
 
-- Do not commit a fetched STRATZ schema or constants to a public release branch.
+- Do not commit fetched STRATZ schema snapshots or constants.
 - Do not publish cached STRATZ data.
 - Display `Data provided by STRATZ` with a link to `https://stratz.com` in user-facing documentation and generated analyses where practical.
 - State that the project is unofficial and not affiliated with or endorsed by STRATZ.
-- Run `go run ./cmd/release-clearance-check` in every public publishing job. The command must exit non-zero while any required decision is pending or denied.
 
 ## 11. Sources
 

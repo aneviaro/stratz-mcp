@@ -1,10 +1,10 @@
 # STRATZ MCP
 
-Unofficial, local-only MCP server for bounded access to the STRATZ GraphQL API. Public release is currently blocked pending explicit STRATZ API-use, caching, redistribution, attribution, and branding clearance.
+Unofficial, local-only MCP server for bounded access to the STRATZ GraphQL API.
 
 ## Install
 
-Public images and archives are not published while clearance is blocked. Build from a source checkout:
+Build from a source checkout:
 
 ```sh
 git clone <public-source-remote> stratz-mcp
@@ -14,9 +14,9 @@ make build
 
 The executable is written to `./dist/stratz-mcp`. Source builds require Go 1.25 or newer, Make, and Git.
 
-After clearance, signed native archives and the multi-architecture image `ghcr.io/aneviaro/stratz-mcp` become the supported distribution channels.
+This repository does not publish official binaries, archives, containers, or release tags. Build from source.
 
-Before copying the source tree into a public repository, run `make public-readiness` and `make verify-public-surface`. The clean-history import flow is documented in [docs/public-repo-import.md](docs/public-repo-import.md).
+Before copying the source tree into a public repository, run `make public-readiness`. The clean-history import flow is documented in [docs/public-repo-import.md](docs/public-repo-import.md).
 
 ## Configure
 
@@ -87,13 +87,11 @@ Do not commit the dotenv file. Use only one credential source: either forward
 `STRATZ_API_TOKEN` or pass `--env-file`, not both. Restart the MCP client after
 changing its configuration or environment.
 
-For Docker, use `docker` as the command and arguments equivalent to:
+Docker images are not published by this repository. If you build a local image yourself, use `docker` as the command and arguments equivalent to:
 
 ```sh
-docker run --rm -i --read-only -e STRATZ_API_TOKEN -v stratz-cache:/cache IMAGE serve
+docker run --rm -i --read-only -e STRATZ_API_TOKEN -v stratz-cache:/cache LOCAL_IMAGE serve
 ```
-
-Replace `IMAGE` with the approved release image, such as `ghcr.io/aneviaro/stratz-mcp:<version>`, only after clearance.
 
 To avoid an environment secret, mount a token file read-only:
 
@@ -101,7 +99,7 @@ To avoid an environment secret, mount a token file read-only:
 docker run --rm -i --read-only \
   -v "$HOME/.config/stratz/token:/run/secrets/stratz-token:ro" \
   -v stratz-cache:/cache \
-  IMAGE --token-file /run/secrets/stratz-token serve
+  LOCAL_IMAGE --token-file /run/secrets/stratz-token serve
 ```
 
 Do not also set `STRATZ_API_TOKEN`.
@@ -115,23 +113,14 @@ The server exposes 15 tools covering players, matches, heroes, constants, league
 - [Cache operations](docs/cache.md)
 - [CLI reference](docs/cli.md)
 - [Troubleshooting](docs/troubleshooting.md)
-- [Developer and release guide](docs/development.md)
+- [Development guide](docs/development.md)
 
 All MCP traffic is stdio. Stdout is reserved for JSON-RPC; diagnostics go to stderr.
 
 ## Docker
 
-After clearance, the release image will run as UID/GID 65532 with a read-only root filesystem and `/cache` as its only persistent writable volume:
-
-```sh
-docker run --rm -i --read-only \
-  -e STRATZ_API_TOKEN \
-  -v stratz-cache:/cache \
-  IMAGE serve
-```
-
-Replace `IMAGE` with `ghcr.io/aneviaro/stratz-mcp:<version>` only after clearance.
+Local images should run as UID/GID 65532 with a read-only root filesystem and `/cache` as the persistent writable volume. See [development](docs/development.md) for the local Docker smoke sequence.
 
 ## Security and status
 
-Do not publish fetched schema snapshots, constants, cache data, or release artifacts while the clearance record is blocked. See [SECURITY.md](SECURITY.md), [docs/release.md](docs/release.md), and [docs/release-clearance.json](docs/release-clearance.json).
+Do not publish fetched schema snapshots, constants, cache data, or local build artifacts. See [SECURITY.md](SECURITY.md).

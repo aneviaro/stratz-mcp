@@ -37,12 +37,10 @@ jobs:
         run: go test ./...
       - name: Verify generated contracts
         run: make check-generated
-      - name: Reject restricted upstream artifacts
-        run: make check-restricted
+      - name: Public readiness
+        run: make public-readiness
       - name: Verify build metadata
         run: ./scripts/verify-build-info.sh
-      - name: Verify release policies
-        run: make check-policies
       - name: Native interoperability smoke
         run: |
           make build

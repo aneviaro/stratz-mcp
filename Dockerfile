@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# The release workflow supplies a statically linked linux binary in dist/image/.
+# Local image builds supply a statically linked linux binary in dist/image/.
 FROM scratch AS artifact
 ARG TARGETARCH
 COPY dist/image/stratz-mcp-linux-${TARGETARCH} /stratz-mcp

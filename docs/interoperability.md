@@ -23,4 +23,4 @@ CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test
 
 These checks validate initialization, exact tool/resource/prompt discovery, `stratz_server_info`, Draft 2020-12 schema publication, JSON-RPC-only stdout, and credential non-disclosure.
 
-They are deterministic protocol compatibility checks, not claims that a locally installed proprietary client UI was controlled in this repository environment. Real installed-client native and Docker checks remain a protected release-environment responsibility before approval.
+They are deterministic protocol compatibility checks, not claims that a locally installed proprietary client UI was controlled in this repository environment.
