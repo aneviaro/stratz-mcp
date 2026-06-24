@@ -10,7 +10,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.34
 	go.yaml.in/yaml/v3 v3.0.4
 	golang.org/x/sync v0.20.0
-	golang.org/x/sys v0.42.0
+	golang.org/x/sys v0.46.0
 	modernc.org/sqlite v1.52.0
 )
 
