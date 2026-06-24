@@ -116,6 +116,35 @@ func testServer(t *testing.T, logger *slog.Logger) *Server {
 	return server
 }
 
+func TestPublicRateLimitsDedupeAndCap(t *testing.T) {
+	firstRemaining := int64(149)
+	latestRemaining := int64(145)
+	minuteLimit := int64(150)
+	rateLimits := []stratz.RateLimit{
+		{Window: "minute", Limit: &minuteLimit, Remaining: &firstRemaining, Source: "fixture-minute"},
+		{Window: "minute", Limit: &minuteLimit, Remaining: &latestRemaining, Source: "fixture-minute"},
+	}
+	for index := range 10 {
+		limit := int64(100 + index)
+		remaining := int64(90 + index)
+		rateLimits = append(rateLimits, stratz.RateLimit{
+			Window:    "unknown",
+			Limit:     &limit,
+			Remaining: &remaining,
+			Source:    fmt.Sprintf("extra-%d", index),
+		})
+	}
+
+	public := publicRateLimits(rateLimits)
+	if len(public) != maxPublicRateLimits {
+		t.Fatalf("rate limit count = %d, want %d", len(public), maxPublicRateLimits)
+	}
+	first := public[0].(map[string]any)
+	if first["window"] != "minute" || first["remaining"] != &latestRemaining {
+		t.Fatalf("first rate limit = %#v, want latest minute fixture", first)
+	}
+}
+
 func TestSDKConformance(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
