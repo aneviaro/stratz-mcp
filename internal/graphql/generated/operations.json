@@ -97,7 +97,7 @@
     },
     {
       "operationName": "StratzListPlayerMatches",
-      "query": "\nquery StratzListPlayerMatches ($steamAccountId: Long!, $request: PlayerMatchesRequestType!) {\n\tplayer(steamAccountId: $steamAccountId) {\n\t\tsteamAccountId\n\t\tmatches(request: $request) {\n\t\t\t... MatchSummaryFields\n\t\t}\n\t}\n}\nfragment MatchSummaryFields on MatchType {\n\tid\n\tstartDateTime\n\tdurationSeconds\n\tdidRadiantWin\n\tradiantKills\n\tdireKills\n\tgameModeId: gameMode\n\tlobbyTypeId: lobbyType\n\tregionId\n\tleagueId\n\tgameVersionId\n\tparsedDateTime\n\tstatsDateTime\n}\n",
+      "query": "\nquery StratzListPlayerMatches ($steamAccountId: Long!, $request: PlayerMatchesRequestType!) {\n\tplayer(steamAccountId: $steamAccountId) {\n\t\tsteamAccountId\n\t\tmatches(request: $request) {\n\t\t\t... MatchSummaryFields\n\t\t\tplayers {\n\t\t\t\t... MatchPlayerFields\n\t\t\t}\n\t\t}\n\t}\n}\nfragment MatchSummaryFields on MatchType {\n\tid\n\tstartDateTime\n\tdurationSeconds\n\tdidRadiantWin\n\tradiantKills\n\tdireKills\n\tgameModeId: gameMode\n\tlobbyTypeId: lobbyType\n\tregionId\n\tleagueId\n\tgameVersionId\n\tparsedDateTime\n\tstatsDateTime\n}\nfragment MatchPlayerFields on MatchPlayerType {\n\tsteamAccountId\n\theroId\n\tisRadiant\n\tplayerSlot\n\tkills\n\tdeaths\n\tassists\n\tnetworth\n\tlevel\n\timp\n}\n",
       "sourceLocation": "internal/graphql/operations/player.graphql"
     },
     {

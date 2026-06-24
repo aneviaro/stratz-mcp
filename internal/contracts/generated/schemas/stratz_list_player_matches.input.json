@@ -40,6 +40,11 @@
         }
       ]
     },
+    "include_player": {
+      "default": false,
+      "description": "Include the requested player's own match row on each summary when available.",
+      "type": "boolean"
+    },
     "include_raw": {
       "default": false,
       "type": "boolean"

@@ -283,6 +283,22 @@ type Player struct {
 
 type PlayerIdentifier string
 
+type PlayerMatchSummary struct {
+	DireScore       *int64           `json:"dire_score"`
+	DurationSeconds *int64           `json:"duration_seconds"`
+	GameModeID      *int64           `json:"game_mode_id"`
+	LeagueID        *string          `json:"league_id"`
+	LobbyTypeID     *int64           `json:"lobby_type_id"`
+	MatchID         MatchID          `json:"match_id"`
+	ParseStatus     string           `json:"parse_status"`
+	PatchID         *string          `json:"patch_id"`
+	Player          *MatchPlayer     `json:"player,omitempty"`
+	RadiantScore    *int64           `json:"radiant_score"`
+	RadiantWin      *bool            `json:"radiant_win"`
+	RegionID        *int64           `json:"region_id"`
+	StartedAt       NullableDateTime `json:"started_at"`
+}
+
 type Provenance struct {
 	Cache struct {
 		AgeSeconds *int64 `json:"age_seconds"`
@@ -540,6 +556,7 @@ type StratzListPlayerMatchesRequest struct {
 	From                   *DateTime        `json:"from,omitempty"`
 	GameModeID             *int64           `json:"game_mode_id,omitempty"`
 	Hero                   *HeroIdentifier  `json:"hero,omitempty"`
+	IncludePlayer          *bool            `json:"include_player,omitempty"`
 	IncludeRaw             *bool            `json:"include_raw,omitempty"`
 	Limit                  *int64           `json:"limit,omitempty"`
 	LobbyTypeID            *int64           `json:"lobby_type_id,omitempty"`
@@ -552,8 +569,8 @@ type StratzListPlayerMatchesRequest struct {
 }
 
 type StratzListPlayerMatchesData struct {
-	Items []MatchSummary `json:"items"`
-	Page  PageInfo       `json:"page"`
+	Items []PlayerMatchSummary `json:"items"`
+	Page  PageInfo             `json:"page"`
 }
 
 type StratzListPlayerMatchesResponse ToolResult[StratzListPlayerMatchesData]

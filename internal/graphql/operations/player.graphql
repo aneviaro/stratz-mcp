@@ -36,6 +36,9 @@ query StratzListPlayerMatches(
     steamAccountId
     matches(request: $request) {
       ...MatchSummaryFields
+      players {
+        ...MatchPlayerFields
+      }
     }
   }
 }

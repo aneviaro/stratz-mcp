@@ -239,6 +239,7 @@ List normalized matches for a player using bounded filters and an authenticated 
 | `from` | false | `dateTime` |
 | `game_mode_id` | false | `integer` |
 | `hero` | false | `heroIdentifier` |
+| `include_player` | false | `boolean`; default `false` |
 | `include_raw` | false | `boolean`; default `false` |
 | `limit` | false | `integer`; default `20`; minimum `1`; maximum `100` |
 | `lobby_type_id` | false | `integer` |

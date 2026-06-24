@@ -282,6 +282,84 @@
                           "null"
                         ]
                       },
+                      "player": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "account_id": {
+                            "pattern": "^[0-9]{1,10}$",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "assists": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "deaths": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "hero_id": {
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          "imp": {
+                            "description": "STRATZ Individual Match Performance (IMP) for this player when upstream provides it. Null means unavailable for the match/player.",
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "kills": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "level": {
+                            "minimum": 0,
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "networth": {
+                            "minimum": 0,
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "position": {
+                            "maximum": 9,
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "team": {
+                            "enum": [
+                              "radiant",
+                              "dire"
+                            ],
+                            "type": "string"
+                          },
+                          "won": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "account_id",
+                          "hero_id",
+                          "team",
+                          "position",
+                          "kills",
+                          "deaths",
+                          "assists",
+                          "networth",
+                          "level",
+                          "imp",
+                          "won"
+                        ],
+                        "type": "object"
+                      },
                       "radiant_score": {
                         "minimum": 0,
                         "type": [

@@ -6596,6 +6596,12 @@ func (v *StratzListPlayerMatchesPlayerPlayerType) GetMatches() []StratzListPlaye
 // StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType includes the requested fields of the GraphQL type MatchType.
 type StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType struct {
 	MatchSummaryFields `json:"-"`
+	Players            []StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType `json:"players"`
+}
+
+// GetPlayers returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType.Players, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType) GetPlayers() []StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType {
+	return v.Players
 }
 
 // GetId returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType.Id, and is useful for accessing the field via an interface.
@@ -6689,6 +6695,8 @@ func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType) UnmarshalJSON(
 }
 
 type __premarshalStratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType struct {
+	Players []StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType `json:"players"`
+
 	Id int64 `json:"id"`
 
 	StartDateTime *int64 `json:"startDateTime"`
@@ -6727,6 +6735,7 @@ func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType) MarshalJSON() 
 func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType) __premarshalJSON() (*__premarshalStratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType, error) {
 	var retval __premarshalStratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType
 
+	retval.Players = v.Players
 	retval.Id = v.MatchSummaryFields.Id
 	retval.StartDateTime = v.MatchSummaryFields.StartDateTime
 	retval.DurationSeconds = v.MatchSummaryFields.DurationSeconds
@@ -6740,6 +6749,132 @@ func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchType) __premarshalJS
 	retval.GameVersionId = v.MatchSummaryFields.GameVersionId
 	retval.ParsedDateTime = v.MatchSummaryFields.ParsedDateTime
 	retval.StatsDateTime = v.MatchSummaryFields.StatsDateTime
+	return &retval, nil
+}
+
+// StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType includes the requested fields of the GraphQL type MatchPlayerType.
+type StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType struct {
+	MatchPlayerFields `json:"-"`
+}
+
+// GetSteamAccountId returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.SteamAccountId, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetSteamAccountId() *int64 {
+	return v.MatchPlayerFields.SteamAccountId
+}
+
+// GetHeroId returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.HeroId, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetHeroId() int {
+	return v.MatchPlayerFields.HeroId
+}
+
+// GetIsRadiant returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.IsRadiant, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetIsRadiant() bool {
+	return v.MatchPlayerFields.IsRadiant
+}
+
+// GetPlayerSlot returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.PlayerSlot, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetPlayerSlot() int {
+	return v.MatchPlayerFields.PlayerSlot
+}
+
+// GetKills returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetKills() int {
+	return v.MatchPlayerFields.Kills
+}
+
+// GetDeaths returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.Deaths, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetDeaths() int {
+	return v.MatchPlayerFields.Deaths
+}
+
+// GetAssists returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.Assists, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetAssists() int {
+	return v.MatchPlayerFields.Assists
+}
+
+// GetNetworth returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.Networth, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetNetworth() *int {
+	return v.MatchPlayerFields.Networth
+}
+
+// GetLevel returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.Level, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetLevel() *int {
+	return v.MatchPlayerFields.Level
+}
+
+// GetImp returns StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.Imp, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetImp() *float64 {
+	return v.MatchPlayerFields.Imp
+}
+
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.MatchPlayerFields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType struct {
+	SteamAccountId *int64 `json:"steamAccountId"`
+
+	HeroId int `json:"heroId"`
+
+	IsRadiant bool `json:"isRadiant"`
+
+	PlayerSlot int `json:"playerSlot"`
+
+	Kills int `json:"kills"`
+
+	Deaths int `json:"deaths"`
+
+	Assists int `json:"assists"`
+
+	Networth *int `json:"networth"`
+
+	Level *int `json:"level"`
+
+	Imp *float64 `json:"imp"`
+}
+
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) __premarshalJSON() (*__premarshalStratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType, error) {
+	var retval __premarshalStratzListPlayerMatchesPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType
+
+	retval.SteamAccountId = v.MatchPlayerFields.SteamAccountId
+	retval.HeroId = v.MatchPlayerFields.HeroId
+	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
+	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Kills = v.MatchPlayerFields.Kills
+	retval.Deaths = v.MatchPlayerFields.Deaths
+	retval.Assists = v.MatchPlayerFields.Assists
+	retval.Networth = v.MatchPlayerFields.Networth
+	retval.Level = v.MatchPlayerFields.Level
+	retval.Imp = v.MatchPlayerFields.Imp
 	return &retval, nil
 }
 
@@ -8314,6 +8449,9 @@ query StratzListPlayerMatches ($steamAccountId: Long!, $request: PlayerMatchesRe
 		steamAccountId
 		matches(request: $request) {
 			... MatchSummaryFields
+			players {
+				... MatchPlayerFields
+			}
 		}
 	}
 }
@@ -8331,6 +8469,18 @@ fragment MatchSummaryFields on MatchType {
 	gameVersionId
 	parsedDateTime
 	statsDateTime
+}
+fragment MatchPlayerFields on MatchPlayerType {
+	steamAccountId
+	heroId
+	isRadiant
+	playerSlot
+	kills
+	deaths
+	assists
+	networth
+	level
+	imp
 }
 `
 

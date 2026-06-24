@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	playerListOperationVersion   = "player-matches/v1"
+	playerListOperationVersion   = "player-matches/v2"
 	fullMatchAvailabilityWarning = "Fight and economy breakdowns are unavailable from the current STRATZ match playback data"
 )
 
@@ -317,6 +317,7 @@ type PlayerMatchFilters struct {
 	Result                 *string
 	MinimumDurationSeconds *int64
 	PatchID                *string
+	IncludePlayer          bool
 	Limit                  int
 	Cursor                 string
 }
@@ -422,9 +423,9 @@ func (service *Service) ListPlayerMatchesWithBudget(
 	if err != nil {
 		return nil, err
 	}
-	items := make([]contracts.MatchSummary, 0, len(scan.Items))
+	items := make([]contracts.PlayerMatchSummary, 0, len(scan.Items))
 	for index := range scan.Items {
-		items = append(items, mapSummary(&scan.Items[index]))
+		items = append(items, mapPlayerMatchSummary(&scan.Items[index], int64(playerID.AccountID), filters.IncludePlayer))
 	}
 	var nextCursor *string
 	if scan.Next != nil {
@@ -580,6 +581,9 @@ func filterBinding(id PlayerID, filters PlayerMatchFilters) map[string]any {
 	}
 	if filters.PatchID != nil {
 		result["patch_id"] = *filters.PatchID
+	}
+	if filters.IncludePlayer {
+		result["include_player"] = true
 	}
 	return result
 }
