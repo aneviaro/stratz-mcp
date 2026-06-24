@@ -1,7 +1,7 @@
 ---
 Created: 2026-06-18
 Purpose: Define normative MCP wire behavior, detail-level inclusion rules, and examples for the STRATZ MCP tools.
-Status: Normative planning contract; implementation mapping and release permission remain milestone deliverables
+Status: Normative planning contract; implementation mapping remains a milestone deliverable
 ---
 
 # STRATZ MCP tool contracts

@@ -1,6 +1,6 @@
 # Public repository import
 
-A public source import copies the current tracked source snapshot into a new Git repository with clean history and a single initial commit. It is separate from package and image publication. Public tags, archives, and container images stay blocked until `go run ./cmd/release-clearance-check` succeeds and the reviewed clearance record allows publishing.
+A public source import copies the current tracked source snapshot into a new Git repository with clean history and a single initial commit. This repository does not publish official binaries, archives, containers, or release tags; build from source.
 
 ## Required checks
 
@@ -8,12 +8,16 @@ Run these commands from a clean worktree before exporting:
 
 ```sh
 make public-readiness
-make verify-public-surface
 make check
+```
+
+Optional MCP runtime checks:
+
+```sh
 make interop-smoke
 ```
 
-Run the Docker smoke sequence as well:
+Optional Docker smoke sequence:
 
 ```sh
 mkdir -p dist/image/cache
@@ -24,7 +28,7 @@ CLIENT_PROFILE=codex ./scripts/interop-smoke.sh docker stratz-mcp:test
 CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test
 ```
 
-These checks verify public documentation and release disclosures, the registered MCP tools/resources/prompts, generated portable skills, generated installation docs, native protocol behavior, and Docker protocol behavior.
+The required checks verify public-import safety, generated artifacts, formatting, vet, tests, and build metadata. The optional smoke checks verify native and Docker MCP protocol behavior.
 
 ## Content that must stay out of the public import
 
@@ -44,9 +48,9 @@ Generate the clean public repository outside the working tree so the source chec
 make public-import OUTPUT_DIR="$(mktemp -d)/public-import"
 ```
 
-The script archives the tracked `HEAD` snapshot, removes the explicit public-import denylist, initializes a fresh repository, creates a single initial commit, renames the branch to `main`, and reruns `make public-readiness`, `make verify-public-surface`, and `make check` inside the generated repository before returning.
+The script archives the tracked `HEAD` snapshot, removes the explicit public-import denylist, initializes a fresh repository, creates a single initial commit, renames the branch to `main`, and reruns `make public-readiness` and `make check` inside the generated repository before returning.
 
-By default the script refuses dirty tracked or untracked inputs. Use the documented override only when you intentionally want to snapshot a dirty tree:
+By default the script refuses dirty tracked or untracked inputs. Use the documented override only when you intentionally want to ignore dirty files and export the tracked `HEAD` snapshot:
 
 ```sh
 ALLOW_DIRTY=1 make public-import OUTPUT_DIR="$(mktemp -d)/public-import"
@@ -70,4 +74,4 @@ git remote add origin <public-source-remote>
 git push -u origin main
 ```
 
-Only the source repository should be pushed at this stage. Do not create release tags or publish packages or images until the clearance check succeeds and the protected release workflow is allowed to run.
+Only the source repository should be pushed. Do not create release tags or publish packages or images from this repository.

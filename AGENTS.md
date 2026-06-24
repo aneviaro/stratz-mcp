@@ -12,7 +12,7 @@ Status: Current
 - Preserve JSON-RPC-only stdout and centralized secret redaction.
 - Keep the production STRATZ endpoint fixed; inject executors only in tests.
 - Keep MCP handlers as adapters. Put normalization, pagination, validation, and upstream mapping in domain packages.
-- Run `go test -race ./...` for concurrency or security changes, both client-profile smoke tests for MCP changes, and container/release-policy checks for packaging changes.
+- Run `go test -race ./...` for concurrency or security changes, both client-profile smoke tests for MCP changes, and local container checks for Docker changes.
 
 ## Architecture and ownership
 
@@ -56,7 +56,7 @@ Status: Current
 
 - Core libraries: official MCP Go SDK, genqlient, gqlparser, strict YAML v3, modernc SQLite, Zstandard, and `log/slog`.
 - Run `CLIENT_PROFILE=codex ./scripts/interop-smoke.sh native dist/stratz-mcp` and the equivalent `claude` profile after MCP changes.
-- Packaging checks include `make package`, `make check-policies`, `make check-restricted`, and `make notices`.
+- Public-source checks include `make public-readiness`, `make check-restricted`, and `make notices`.
 
 ## Debugging
 

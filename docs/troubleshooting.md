@@ -1,6 +1,6 @@
 # Troubleshooting
 
-- Run `stratz-mcp doctor` first. It reports invalid credentials, permissions, connectivity, local schema availability, cache fallback, and release-clearance state.
+- Run `stratz-mcp doctor` first. It reports invalid credentials, permissions, connectivity, local schema availability, and cache fallback.
 - If the MCP client cannot start the server, use an absolute executable path and confirm the client passes `serve`.
 - If stdout contains non-JSON text, remove shell wrappers that print banners. Server diagnostics belong on stderr.
 - For authentication failures, configure exactly one token source and ensure token files are regular, non-symlink files containing one bounded line. Restrictive permissions are strongly recommended and reported by `doctor`.

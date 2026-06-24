@@ -28,8 +28,8 @@ if [[ -n "$violations" ]]; then
   exit 1
 fi
 
-machine_local_prefix="$(printf '/%s/%s' 'Users' 'alex')"
-local_path_hits="$(git --no-pager grep -nI --fixed-strings "$machine_local_prefix" -- . ':(exclude)README.md' ':(exclude)docs/**' || true)"
+home_path_pattern="$(printf '(/%s/[^/[:space:]]+/|/%s/[^/[:space:]]+/|[A-Za-z]:\\\\%s\\\\[^\\\\[:space:]]+\\\\)' 'Users' 'home' 'Users')"
+local_path_hits="$(git --no-pager grep -nIE "$home_path_pattern" -- . ':(exclude)README.md' ':(exclude)docs/**' || true)"
 if [[ -n "$local_path_hits" ]]; then
   echo "tracked non-doc files contain machine-local absolute home paths:" >&2
   echo "$local_path_hits" >&2
@@ -41,12 +41,7 @@ if ! grep -Fq 'Unofficial, local-only MCP server' README.md; then
   exit 1
 fi
 
-if ! grep -Fq 'Public release is currently blocked' README.md; then
-  echo "README.md must disclose that public release remains blocked" >&2
-  exit 1
-fi
-
-if ! grep -Fq 'Public publishing is disabled until `go run ./cmd/release-clearance-check` succeeds against `docs/release-clearance.json`.' docs/release.md; then
-  echo "docs/release.md must disclose the STRATZ release-clearance block" >&2
+if grep -Eq 'ghcr\.io/aneviaro/stratz-mcp:[^<[:space:]]+|signed native archives|published image|published container' README.md docs/*.md 2>/dev/null; then
+  echo "public documentation must not imply signed archives or published container images exist" >&2
   exit 1
 fi

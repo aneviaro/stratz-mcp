@@ -6,12 +6,12 @@ usage() {
 Usage: scripts/create-public-import.sh [--allow-dirty] [--output-dir PATH]
 
 Options:
-  --allow-dirty      Skip the clean-worktree requirement.
+  --allow-dirty      Skip the clean-worktree requirement. The export still uses tracked HEAD.
   --output-dir PATH  Destination directory for the generated repository.
   -h, --help         Show this help text.
 
 Environment:
-  ALLOW_DIRTY  Truthy values (1, true, yes, on) skip the clean-worktree check.
+  ALLOW_DIRTY  Truthy values (1, true, yes, on) skip the clean-worktree check; uncommitted changes are not exported.
   OUTPUT_DIR   Destination directory. Defaults to dist/public-import.
   MAKE         Make binary to invoke. Defaults to make.
 EOF
@@ -110,6 +110,17 @@ case "$output_dir" in
     ;;
 esac
 
+if [[ -n "$relative_output_dir" ]]; then
+  case "$relative_output_dir" in
+    dist | dist/*)
+      ;;
+    *)
+      echo "output directory inside the source repository must be under dist/: $relative_output_dir" >&2
+      exit 1
+      ;;
+  esac
+fi
+
 path_is_under_output_dir() {
   local path="$1"
   if [[ -z "$relative_output_dir" ]]; then
@@ -144,7 +155,7 @@ require_clean_worktree() {
   done < <(git -C "$repo_root" status --porcelain --untracked-files=all)
 
   if ((${#dirty_lines[@]} > 0)); then
-    echo "public import requires a clean worktree; re-run with ALLOW_DIRTY=1 or --allow-dirty to override" >&2
+    echo "public import requires a clean worktree; re-run with ALLOW_DIRTY=1 or --allow-dirty to ignore dirty files and export tracked HEAD" >&2
     printf '%s\n' "${dirty_lines[@]}" >&2
     exit 1
   fi
@@ -185,7 +196,6 @@ fi
 
 cd "$repo_root"
 "$make_cmd" public-readiness
-"$make_cmd" verify-public-surface
 
 scratch_root="$(mktemp -d "${TMPDIR:-/tmp}/stratz-public-import.XXXXXX")"
 trap 'rm -rf "$scratch_root"' EXIT
@@ -216,7 +226,6 @@ git add .
 git -c user.name="$commit_name" -c user.email="$commit_email" commit -m "Initial public import" >/dev/null
 git branch -M main
 "$make_cmd" public-readiness
-"$make_cmd" verify-public-surface
 "$make_cmd" check
 
 echo "Created clean public import at $output_dir"

@@ -23,7 +23,7 @@ func (executor diagnosticExecutor) Execute(
 	return executor.response, executor.err
 }
 
-func TestDiagnoseReportsReachabilitySchemaCacheAndClearance(t *testing.T) {
+func TestDiagnoseReportsReachabilitySchemaAndCache(t *testing.T) {
 	cfg := config.Defaults(t.TempDir())
 	cfg.Cache.Enabled = false
 	report := Diagnose(context.Background(), Options{
@@ -38,7 +38,6 @@ func TestDiagnoseReportsReachabilitySchemaCacheAndClearance(t *testing.T) {
 	assertFinding(t, report, "upstream_reachable", SeverityInfo)
 	assertFinding(t, report, "schema_available", SeverityInfo)
 	assertFinding(t, report, "cache_disabled", SeverityInfo)
-	assertFinding(t, report, "public_release_blocked", SeverityWarning)
 }
 
 func TestDiagnoseDistinguishesAuthenticationAndWAF(t *testing.T) {

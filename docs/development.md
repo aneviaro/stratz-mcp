@@ -1,6 +1,6 @@
 # Development
 
-Prerequisites: Go 1.25+, Git, and Docker for image checks. `make check` runs module verification, formatting, vet, tests, deterministic-generation checks, public-readiness checks, public-surface verification, release-policy checks, and build metadata validation.
+Prerequisites: Go 1.25+, Git, and Docker for optional local image checks. `make check` runs module verification, formatting, vet, tests, deterministic-generation checks, public-readiness checks, and build metadata validation.
 
 Useful targets:
 
@@ -9,26 +9,21 @@ make generate
 make notices
 make build
 make cross-build
-make package VERSION=v1.0.0 REVISION="$(git rev-parse HEAD)"
 make interop-smoke
 make public-readiness
-make verify-public-surface
 make test
 make vet
 make verify
 make check-format
 make check-generated
 make check-restricted
-make check-policies
 make verify-build-info
 make tools
 ```
 
-`make public-readiness` audits the tracked source tree for private working material, local-only artifacts, restricted STRATZ data, and missing public disclosures.
+`make public-readiness` audits the tracked source tree for private working material, local-only artifacts, restricted STRATZ data, and misleading published-image documentation.
 
-`make verify-public-surface` builds the server, runs the focused MCP and release-pack tests, checks generated artifacts, and exercises the Codex and Claude native interoperability smoke profiles.
-
-Use this repeatable Docker smoke sequence before changing packaging, Docker, or release documentation:
+`make interop-smoke` builds the server and runs a native MCP stdio smoke check. Use this repeatable Docker smoke sequence before changing Docker behavior:
 
 ```sh
 mkdir -p dist/image/cache
@@ -39,7 +34,7 @@ CLIENT_PROFILE=codex ./scripts/interop-smoke.sh docker stratz-mcp:test
 CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test
 ```
 
-Before preparing a public source import, run `make public-readiness`, `make verify-public-surface`, `make interop-smoke`, and the Docker smoke sequence above. Then follow [public repository import](public-repo-import.md) to create a clean-history repository snapshot for the public remote.
+Before preparing a public source import, run `make public-readiness`. Optional MCP runtime checks are `make interop-smoke` and the Docker smoke sequence above. Then follow [public repository import](public-repo-import.md) to create a clean-history repository snapshot for the public remote.
 
 Canonical generation ownership:
 
@@ -53,6 +48,6 @@ The MCP package is a stdio adapter; domain packages own normalization and pagina
 
 Never commit `.env`, tokens, cache databases, introspection responses, fetched schemas, fetched constants, or `.stratz-restricted`.
 
-Tagged releases, signed archives, and published images remain blocked until `go run ./cmd/release-clearance-check` succeeds against the reviewed clearance record.
+This repository does not publish official binaries, archives, containers, or release tags. Build from source.
 
-CI additionally runs vulnerability, license, secret, race, native packaging, Docker, SBOM, and interoperability jobs. Dependency updates are proposed weekly. Security updates can bypass the normal cadence; exceptions require an owner, rationale, compensating controls, and expiry.
+CI additionally runs vulnerability, license, secret, race, Docker, SBOM, and interoperability jobs. Dependency updates are proposed weekly. Security updates can bypass the normal cadence; exceptions require an owner, rationale, compensating controls, and expiry.

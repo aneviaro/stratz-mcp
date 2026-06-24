@@ -1,7 +1,7 @@
 ---
 Created: 2026-06-18
 Purpose: Define the approved v1 architecture and product contract for the STRATZ MCP server and its portable agent skills.
-Status: Implemented locally; release-candidate verification and public STRATZ clearance remain open
+Status: Implemented locally; source-public distribution with local-only fetched STRATZ artifacts
 ---
 
 # STRATZ MCP Server — v1 Architecture Specification
@@ -18,7 +18,7 @@ The server uses a hybrid API design:
 - Parameterized MCP prompts for common analysis workflows.
 - Portable Agent Skills that work with Codex, Claude, and other clients supporting the open `SKILL.md` convention.
 
-The implementation is written in Go and targets native binaries plus a multi-architecture Docker image. Version 1 uses stdio as its only MCP transport.
+The implementation is written in Go and supports source-built native binaries plus local Docker images. Version 1 uses stdio as its only MCP transport.
 
 Normative companion documents:
 
@@ -38,7 +38,7 @@ Where this architecture summary conflicts with a normative companion contract, t
 - Protect agents from upstream schema drift through stable normalized response contracts.
 - Remain compatible with multiple MCP clients and agent platforms.
 - Run locally with explicit credentials and no hosted service requirement.
-- Make Docker the recommended installation while retaining native binaries.
+- Support both native source builds and locally built Docker images.
 - Support deterministic retrieval and aggregation without embedding subjective analysis in the server.
 - Provide portable workflows for match analysis, player review, hero research, league scouting, and advanced GraphQL queries.
 
@@ -56,18 +56,18 @@ Where this architecture summary conflicts with a normative companion contract, t
 ## 3. Repository and distribution identity
 
 - Go module: `github.com/aneviaro/stratz-mcp`
-- Container image: `ghcr.io/aneviaro/stratz-mcp`
+- Container image: none published by this repository; local images may be built from the Dockerfile
 - License: MIT
 - Minimum Go version: Go 1.25
 - CI compatibility targets: Go 1.25 and Go 1.26
 
-Native release targets:
+Source-build targets:
 
 - macOS: `amd64`, `arm64`
 - Linux: `amd64`, `arm64`
 - Windows: `amd64`, `arm64`
 
-Container release targets:
+Local container build targets:
 
 - Linux: `amd64`, `arm64`
 
@@ -451,7 +451,7 @@ Recommended URI shape:
 
 Dynamic, authenticated, or freshness-sensitive player and match data remains tool-only in v1.
 
-Public release of fetched schema snapshots and constants is blocked until current STRATZ redistribution permission is recorded in [stratz-integration-discovery.md](./stratz-integration-discovery.md). Before that clearance, development builds may generate these resources locally from the user's token but must not commit or publish fetched STRATZ material.
+Fetched schema snapshots and constants remain local-only unless current STRATZ redistribution permission is recorded in [stratz-integration-discovery.md](./stratz-integration-discovery.md). Source builds may generate these resources locally from the user's token but must not commit or publish fetched STRATZ material.
 
 ## 7. MCP prompts
 
@@ -734,7 +734,7 @@ The YAML file may configure:
 
 The production endpoint is fixed at `https://api.stratz.com/graphql` and is not user-configurable. Tests may inject a mock endpoint through internal test-only wiring.
 
-Authentication headers, successful media types, rate-limit fields, compression, WAF behavior, and HTTP/error mappings are governed by [stratz-integration-discovery.md](./stratz-integration-discovery.md). The core authenticated HTTP contract was verified on June 18, 2026. Private-profile, runtime-partial, oversized-response, timeout, expired-token, and rate-limit edge behavior was closed with deterministic mock-policy fixtures on June 19, 2026; public release remains blocked on current STRATZ permission.
+Authentication headers, successful media types, rate-limit fields, compression, WAF behavior, and HTTP/error mappings are governed by [stratz-integration-discovery.md](./stratz-integration-discovery.md). The core authenticated HTTP contract was verified on June 18, 2026. Private-profile, runtime-partial, oversized-response, timeout, expired-token, and rate-limit edge behavior was closed with deterministic mock-policy fixtures on June 19, 2026; fetched STRATZ artifacts remain local-only.
 
 ## 13. CLI
 
@@ -762,7 +762,6 @@ Running `stratz-mcp` without a subcommand displays help rather than starting the
 - Cache health and writability.
 - Cache directory and database file permissions.
 - Schema snapshot presence.
-- STRATZ discovery/terms clearance status embedded at build time.
 - Relevant limits and feature flags.
 
 Diagnostics must not reveal secrets.
@@ -934,7 +933,7 @@ Any operation without an explicit classification is non-cacheable.
 
 `include_raw: true` bypasses curated cache reads and writes. This prevents a stable normalized cache entry from silently persisting a broader upstream payload.
 
-Current STRATZ permission for local caching and stale serving must be recorded in [stratz-integration-discovery.md](./stratz-integration-discovery.md) before public release.
+Current STRATZ permission for any non-local cache redistribution must be recorded in [stratz-integration-discovery.md](./stratz-integration-discovery.md).
 
 ### 16.5 Defaults
 
@@ -1041,32 +1040,32 @@ These limits are configurable through strict YAML except:
 - User-facing docs and generated analyses should attribute data to STRATZ with a link while current terms are being confirmed.
 - State prominently that the project is unofficial and is not affiliated with or endorsed by STRATZ.
 
-### 18.1 STRATZ API-use and branding gate
+### 18.1 STRATZ API-use and branding notes
 
 Historical STRATZ knowledge-base material describes token-tier rate limits and attribution/referral expectations, but it is old and contains wording that is not sufficient to establish the current rights required by this project.
 
-Before public release, record current STRATZ terms or written confirmation covering:
+Before publishing fetched STRATZ-derived artifacts outside a local checkout, record current STRATZ terms or written confirmation covering:
 
 - The correct token tier for a downloadable local application.
 - Attribution and referral requirements.
 - Local caching, retention, and stale serving.
 - Redistribution of a fetched GraphQL schema.
 - Redistribution of constants and reference data.
-- Use of the STRATZ name in the repository, binary, image, and MCP tool names.
+- Use of the STRATZ name in the repository, binary, local image, and MCP tool names.
 - Fair-use and rate-limit expectations.
 
-Until that gate is closed:
+Until redistribution permission is explicit:
 
 - The project may scaffold and test with locally generated schema artifacts.
 - Fetched STRATZ schema/constants must not be committed or published.
-- Public cache/distribution behavior remains provisional.
+- Cache data remains user-local and must not be redistributed.
 - Documentation uses nominative reference only, includes attribution, and states non-affiliation.
 
 The evidence, dates, source URLs, and decision are maintained in [stratz-integration-discovery.md](./stratz-integration-discovery.md).
 
 ## 19. Docker
 
-Docker is the recommended installation method.
+Docker is supported through locally built images.
 
 The image must:
 
@@ -1084,55 +1083,35 @@ The image must:
 
 Native binaries remain supported because they start faster and do not require Docker Desktop or another container runtime.
 
-## 20. Build and release
+## 20. Build and public source policy
+
+This repository does not publish official binaries, archives, containers, or release tags. Users build from source.
 
 CI should:
 
 - Format and vet Go code.
 - Run `go mod verify`.
 - Run `govulncheck ./...` and fail on reachable known vulnerabilities unless a documented, time-bounded exception is approved.
-- Scan the module graph and container contents with an OSV-compatible dependency scanner.
+- Scan the module graph and local container contents with an OSV-compatible dependency scanner where practical.
 - Enforce the dependency-license policy and regenerate `THIRD_PARTY_NOTICES` where attribution is required.
-- Run secret scanning against the repository and generated release artifacts.
+- Run secret scanning against the repository.
 - Run unit tests.
 - Run race-sensitive tests where practical.
 - Run mock GraphQL integration tests.
 - Validate generated GraphQL code.
 - Validate Agent Skills.
 - Verify generated prompts and skills are current.
-- Build native release targets.
-- Build the multi-architecture Docker image.
+- Build the native server binary.
 - Run MCP protocol smoke tests over native stdio.
-- Run MCP protocol smoke tests through Docker stdio.
-- Generate SPDX and CycloneDX SBOMs for each native archive and container image.
-- Generate build provenance/attestations for native archives, checksums, and images.
+- Optionally build a local Docker image and run MCP protocol smoke tests through Docker stdio.
 - Verify all GitHub Actions references are pinned to full commit SHAs.
 - Verify container base images are pinned to immutable digests.
 
-Tagged releases publish:
-
-- GitHub Release archives and checksums.
-- SBOMs for every archive and image.
-- `THIRD_PARTY_NOTICES` and dependency-license inventory.
-- `ghcr.io/aneviaro/stratz-mcp:<version>`.
-- A matching immutable commit tag.
-- An optional `latest` tag for stable releases.
-- Keyless Sigstore/Cosign signatures for the checksum manifest and container image.
-- GitHub OIDC-backed build provenance attestations for release artifacts and images.
-
-The repository also supports:
-
-```text
-go install github.com/aneviaro/stratz-mcp/cmd/stratz-mcp@latest
-```
-
 ### 20.1 Supply-chain policy
 
-- GitHub Actions use the minimum required permissions and pin third-party actions to a full commit SHA with the human-readable release tag in a comment.
-- Release jobs run only from protected version tags in the canonical repository.
-- Release signing uses short-lived GitHub OIDC identity through Sigstore/Cosign; no long-lived signing key is stored in the repository.
+- GitHub Actions use the minimum required permissions and pin third-party actions to full commit SHAs where practical.
 - Go dependencies are version-pinned in `go.mod`/`go.sum`; vendoring is optional, but `go mod verify` is mandatory.
-- Runtime images contain no package manager, shell, compiler, source tree, dotenv file, token, or build cache unless a documented debugging image is published separately.
+- Local runtime images contain no package manager, shell, compiler, source tree, dotenv file, token, or build cache unless a documented debugging image is built separately.
 - Base-image digest updates and Go dependency updates are proposed at least weekly by an automated dependency updater.
 - Security updates are prioritized outside the normal update cadence.
 
@@ -1140,20 +1119,19 @@ License policy:
 
 - Automatically allowed: MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC, CC0-1.0, Unlicense, and similarly permissive licenses approved in policy.
 - MPL-2.0 and other file-level reciprocal licenses require explicit review and notices.
-- GPL, AGPL, SSPL, unknown, custom, or unlicensed runtime dependencies block release pending documented legal review.
+- GPL, AGPL, SSPL, unknown, custom, or unlicensed runtime dependencies require documented legal review.
 - Build-only tooling is inventoried separately and still subject to license review.
-- `THIRD_PARTY_NOTICES` is generated deterministically and committed or attached to each release.
+- `THIRD_PARTY_NOTICES` is generated deterministically where notices are required.
 
 ### 20.2 Vulnerability disclosure and support
 
-The repository must include `SECURITY.md` before public release:
+The repository must include `SECURITY.md`:
 
 - Direct reporters to GitHub Private Vulnerability Reporting or a dedicated security contact.
-- Ask reporters not to file public issues for suspected vulnerabilities involving token disclosure, cache exposure, query-limit bypass, or release integrity.
-- Define supported versions as the latest minor release and the immediately previous minor release for 90 days.
+- Ask reporters not to file public issues for suspected vulnerabilities involving token disclosure, cache exposure, or query-limit bypass.
 - Acknowledge reports within five business days.
-- Triage critical token-exposure or signature/provenance failures as urgent.
-- Publish security advisories and patched releases when users must take action.
+- Triage critical token-exposure failures as urgent.
+- Publish security advisories when users must take action.
 
 Automated dependency updates run weekly. Unmaintained or vulnerable dependencies are replaced, upgraded, or covered by a documented exception with owner, rationale, compensating controls, and expiry date.
 
@@ -1305,11 +1283,11 @@ CI rejects stale generated outputs.
 
 ## 24. Implementation milestones
 
-### Milestone 0 — Upstream, feasibility, and permission deliverables
+### Milestone 0 — Upstream, feasibility, and redistribution-permission deliverables
 
 - Maintain the verified authenticated STRATZ request, media type, rate-limit, compression, error, and WAF contract.
 - Maintain the June 18–19, 2026 live evidence and deterministic policy fixtures for private-profile, runtime-partial, oversized-response, timeout, rate-limit, and invalid-token edge behavior.
-- Obtain current STRATZ API-use, caching, redistribution, attribution, and branding clearance.
+- Track current STRATZ API-use, caching, redistribution, attribution, and branding terms.
 - Validate [tool-contracts.json](./tool-contracts.json) against the discovered schema and revise infeasible fields explicitly.
 - Select an MCP Go SDK version proven to support MCP `2025-11-25`, `outputSchema`, `structuredContent`, and execution-error mapping.
 - Produce the approved raw root-field policy validator and schema-drift test fixtures.
@@ -1325,7 +1303,7 @@ CI rejects stale generated outputs.
 - `doctor`, `version`, and `stratz_server_info`.
 - Test harness and local mock GraphQL server.
 
-All milestones are planning-ready. Milestone dependencies govern implementation order and verification, not whether downstream work may be designed or estimated. Local implementation and testing may proceed in parallel with Milestone 0; public release remains blocked until current STRATZ API-use, caching, redistribution, attribution, and branding clearance is recorded.
+All milestones are planning-ready. Milestone dependencies govern implementation order and verification, not whether downstream work may be designed or estimated. Source-public development may proceed while fetched STRATZ schema snapshots, constants, and cache data remain local-only.
 
 ### Milestone 2 — Schema and raw coverage
 
@@ -1361,10 +1339,10 @@ All milestones are planning-ready. Milestone dependencies govern implementation 
 - Five portable Agent Skills.
 - Codex and Claude installation guidance.
 
-### Milestone 6 — Distribution and v1 gate
+### Milestone 6 — Source-public distribution
 
-- Docker image.
-- Native cross-platform releases.
+- Local Docker image support.
+- Native source-build support across supported platforms.
 - CI generation checks.
 - Protocol and interoperability tests.
 - Complete documentation.
@@ -1384,9 +1362,9 @@ The v1 system is ready for full implementation planning because these architectu
 7. The authenticated STRATZ endpoint, bearer auth, mandatory headers, compression, WAF classification, and rate-limit headers are verified.
 8. Core domain and batch feasibility has been demonstrated through live schema introspection; remaining exact field mappings are Milestone 0/curated-operation deliverables.
 9. Skills and prompts treat retrieved content as untrusted data and share canonical workflow definitions.
-10. Docker/native distribution and supply-chain controls are specified.
+10. Docker/native source-build behavior and supply-chain controls are specified.
 
-Open upstream feasibility details and permission clearance are planned deliverables with acceptance tests. Edge-probe policy coverage is complete as of June 19, 2026. Remaining external clearance does not prevent planning or local implementation of downstream milestones.
+Open upstream feasibility details and redistribution-permission questions are planned deliverables with acceptance tests. Edge-probe policy coverage is complete as of June 19, 2026. Remaining external permission questions do not prevent source-public development of downstream milestones.
 
 ### 25.2 Implementation verification criteria
 
@@ -1400,14 +1378,14 @@ A component is complete only when its applicable criteria pass:
 6. Remaining upstream edge probes are resolved or represented by deterministic mock fixtures and documented conservative behavior.
 7. Cache classification, retention, stale behavior, exclusions, permissions, corruption fallback, and purge behavior pass tests.
 8. Skills and prompts pass untrusted-content and prompt-injection tests.
-9. Supply-chain CI passes vulnerability, license, secret, SBOM, signature, provenance, and pinned-dependency checks.
+9. Supply-chain CI passes vulnerability, license, secret, notice-generation, and pinned-dependency checks.
 10. Interoperability smoke tests pass in Codex and Claude for native and Docker stdio.
 
 Failure of an implementation criterion blocks completion of the affected component, not planning of the work required to satisfy it.
 
-### 25.3 Release acceptance
+### 25.3 Source-public acceptance
 
-Version 1 is ready when:
+The source-public project is ready when:
 
 1. A user can configure Codex or Claude to launch the native binary or Docker image over stdio.
 2. Missing credentials fail fast with a safe, useful error.
@@ -1424,13 +1402,12 @@ Version 1 is ready when:
 13. Native and Docker protocol smoke tests pass against MCP `2025-11-25`.
 14. No secrets appear in logs, responses, cache contents, fixtures, or generated artifacts.
 15. Retrieved content is sanitized and treated as untrusted by server outputs, prompts, and skills.
-16. Current STRATZ API-use, caching, redistribution, attribution, and branding clearance is recorded and reflected in product behavior and documentation.
+16. STRATZ API-use, caching, redistribution, attribution, and branding constraints are reflected in product behavior and documentation.
 17. `govulncheck`, dependency/OSV scanning, license policy, secret scanning, and notice generation pass.
-18. Native archives and images publish SBOMs, signed checksums/images, and verifiable build provenance.
-19. `SECURITY.md` and automated dependency-update policy are active.
-20. Release artifacts are published under the agreed GitHub and GHCR identities.
+18. `SECURITY.md` and automated dependency-update policy are active.
+19. The repository does not publish official binaries, archives, containers, or release tags.
 
-Public release remains blocked until criterion 16 is satisfied. That release blocker does not prevent implementation planning or local development/testing.
+Fetched STRATZ schema snapshots, constants, and cache data remain local-only unless redistribution permission is explicit.
 
 ## 26. Implementation choices
 
