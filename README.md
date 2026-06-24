@@ -87,22 +87,79 @@ Do not commit the dotenv file. Use only one credential source: either forward
 `STRATZ_API_TOKEN` or pass `--env-file`, not both. Restart the MCP client after
 changing its configuration or environment.
 
-Docker images are not published by this repository. If you build a local image yourself, use `docker` as the command and arguments equivalent to:
+Docker images are not published by this repository. The MCP client only needs to run `docker run`; build an image only if the referenced image tag does not already exist locally:
 
 ```sh
-docker run --rm -i --read-only -e STRATZ_API_TOKEN -v stratz-cache:/cache LOCAL_IMAGE serve
+ARCH=$(go env GOARCH)
+mkdir -p dist/image/cache
+touch dist/image/cache/.keep
+CGO_ENABLED=0 GOOS=linux GOARCH=$ARCH \
+  go build -trimpath -o dist/image/stratz-mcp-linux-$ARCH ./cmd/stratz-mcp
+docker build --build-arg TARGETARCH=$ARCH -t stratz-mcp:local .
 ```
 
-To avoid an environment secret, mount a token file read-only:
+Configure the MCP client to run `docker` over stdio. Keep `-i`; MCP traffic is line-delimited JSON-RPC on stdin/stdout. Do not publish a port.
+
+Codex native configuration:
+
+```toml
+[mcp_servers.stratz]
+command = "docker"
+args = [
+  "run", "--rm", "-i", "--read-only",
+  "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m",
+  "-e", "STRATZ_API_TOKEN",
+  "-v", "stratz-cache:/cache",
+  "stratz-mcp:local", "serve"
+]
+env_vars = ["STRATZ_API_TOKEN"]
+```
+
+Claude native configuration in `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "stratz": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i", "--read-only",
+        "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m",
+        "-e", "STRATZ_API_TOKEN",
+        "-v", "stratz-cache:/cache",
+        "stratz-mcp:local", "serve"
+      ],
+      "env": {"STRATZ_API_TOKEN": "${STRATZ_API_TOKEN}"}
+    }
+  }
+}
+```
+
+If the client cannot inherit environment variables, pass a private dotenv file to Docker instead:
+
+```toml
+[mcp_servers.stratz]
+command = "docker"
+args = [
+  "run", "--rm", "-i", "--read-only",
+  "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m",
+  "--env-file", "/absolute/path/to/.env",
+  "-v", "stratz-cache:/cache",
+  "stratz-mcp:local", "serve"
+]
+```
+
+To avoid an environment secret entirely, mount a token file read-only:
 
 ```sh
 docker run --rm -i --read-only \
+  --tmpfs /tmp:rw,noexec,nosuid,size=16m \
   -v "$HOME/.config/stratz/token:/run/secrets/stratz-token:ro" \
   -v stratz-cache:/cache \
-  LOCAL_IMAGE --token-file /run/secrets/stratz-token serve
+  stratz-mcp:local --token-file /run/secrets/stratz-token serve
 ```
 
-Do not also set `STRATZ_API_TOKEN`.
+Use exactly one credential source: forwarded `STRATZ_API_TOKEN`, Docker `--env-file`, or `--token-file`. Restart or reconnect the MCP client after changing Docker image tags, configuration, or environment.
 
 ## MCP capabilities
 
