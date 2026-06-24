@@ -77,9 +77,29 @@ func publicLimits(options Options) map[string]any {
 	}
 }
 
+const maxPublicRateLimits = 8
+
 func publicRateLimits(rateLimits []stratz.RateLimit) []any {
-	result := make([]any, 0, len(rateLimits))
+	type rateLimitKey struct {
+		window string
+		source string
+	}
+	ordered := make([]rateLimitKey, 0, min(len(rateLimits), maxPublicRateLimits))
+	latest := make(map[rateLimitKey]stratz.RateLimit, min(len(rateLimits), maxPublicRateLimits))
 	for _, rateLimit := range rateLimits {
+		key := rateLimitKey{window: rateLimit.Window, source: rateLimit.Source}
+		if _, ok := latest[key]; !ok {
+			if len(ordered) >= maxPublicRateLimits {
+				continue
+			}
+			ordered = append(ordered, key)
+		}
+		latest[key] = rateLimit
+	}
+
+	result := make([]any, 0, len(ordered))
+	for _, key := range ordered {
+		rateLimit := latest[key]
 		var resetAt any
 		if rateLimit.ResetAt != nil {
 			resetAt = rateLimit.ResetAt.UTC().Format(time.RFC3339)
