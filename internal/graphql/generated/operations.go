@@ -367,15 +367,16 @@ func (v *MatchLiveRequestType) GetSkip() int { return v.Skip }
 
 // MatchPlayerFields includes the GraphQL fields of MatchPlayerType requested by the fragment MatchPlayerFields.
 type MatchPlayerFields struct {
-	SteamAccountId *int64 `json:"steamAccountId"`
-	HeroId         int    `json:"heroId"`
-	IsRadiant      bool   `json:"isRadiant"`
-	PlayerSlot     int    `json:"playerSlot"`
-	Kills          int    `json:"kills"`
-	Deaths         int    `json:"deaths"`
-	Assists        int    `json:"assists"`
-	Networth       *int   `json:"networth"`
-	Level          *int   `json:"level"`
+	SteamAccountId *int64   `json:"steamAccountId"`
+	HeroId         int      `json:"heroId"`
+	IsRadiant      bool     `json:"isRadiant"`
+	PlayerSlot     int      `json:"playerSlot"`
+	Kills          int      `json:"kills"`
+	Deaths         int      `json:"deaths"`
+	Assists        int      `json:"assists"`
+	Networth       *int     `json:"networth"`
+	Level          *int     `json:"level"`
+	Imp            *float64 `json:"imp"`
 }
 
 // GetSteamAccountId returns MatchPlayerFields.SteamAccountId, and is useful for accessing the field via an interface.
@@ -404,6 +405,9 @@ func (v *MatchPlayerFields) GetNetworth() *int { return v.Networth }
 
 // GetLevel returns MatchPlayerFields.Level, and is useful for accessing the field via an interface.
 func (v *MatchPlayerFields) GetLevel() *int { return v.Level }
+
+// GetImp returns MatchPlayerFields.Imp, and is useful for accessing the field via an interface.
+func (v *MatchPlayerFields) GetImp() *float64 { return v.Imp }
 
 type MatchPlayerPositionType string
 
@@ -699,6 +703,9 @@ func (v *MatchStandardFieldsPlayersMatchPlayerType) GetNetworth() *int {
 // GetLevel returns MatchStandardFieldsPlayersMatchPlayerType.Level, and is useful for accessing the field via an interface.
 func (v *MatchStandardFieldsPlayersMatchPlayerType) GetLevel() *int { return v.MatchPlayerFields.Level }
 
+// GetImp returns MatchStandardFieldsPlayersMatchPlayerType.Imp, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlayersMatchPlayerType) GetImp() *float64 { return v.MatchPlayerFields.Imp }
+
 func (v *MatchStandardFieldsPlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -742,6 +749,8 @@ type __premarshalMatchStandardFieldsPlayersMatchPlayerType struct {
 	Networth *int `json:"networth"`
 
 	Level *int `json:"level"`
+
+	Imp *float64 `json:"imp"`
 }
 
 func (v *MatchStandardFieldsPlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
@@ -764,6 +773,7 @@ func (v *MatchStandardFieldsPlayersMatchPlayerType) __premarshalJSON() (*__prema
 	retval.Assists = v.MatchPlayerFields.Assists
 	retval.Networth = v.MatchPlayerFields.Networth
 	retval.Level = v.MatchPlayerFields.Level
+	retval.Imp = v.MatchPlayerFields.Imp
 	return &retval, nil
 }
 
@@ -3315,6 +3325,11 @@ func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetLev
 	return v.MatchPlayerFields.Level
 }
 
+// GetImp returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.Imp, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetImp() *float64 {
+	return v.MatchPlayerFields.Imp
+}
+
 func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -3358,6 +3373,8 @@ type __premarshalStratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType
 	Networth *int `json:"networth"`
 
 	Level *int `json:"level"`
+
+	Imp *float64 `json:"imp"`
 }
 
 func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
@@ -3380,6 +3397,7 @@ func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) __prem
 	retval.Assists = v.MatchPlayerFields.Assists
 	retval.Networth = v.MatchPlayerFields.Networth
 	retval.Level = v.MatchPlayerFields.Level
+	retval.Imp = v.MatchPlayerFields.Imp
 	return &retval, nil
 }
 
@@ -3590,6 +3608,11 @@ func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetLev
 	return v.MatchPlayerFields.Level
 }
 
+// GetImp returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.Imp, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetImp() *float64 {
+	return v.MatchPlayerFields.Imp
+}
+
 func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -3633,6 +3656,8 @@ type __premarshalStratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType
 	Networth *int `json:"networth"`
 
 	Level *int `json:"level"`
+
+	Imp *float64 `json:"imp"`
 }
 
 func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
@@ -3655,6 +3680,7 @@ func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) __prem
 	retval.Assists = v.MatchPlayerFields.Assists
 	retval.Networth = v.MatchPlayerFields.Networth
 	retval.Level = v.MatchPlayerFields.Level
+	retval.Imp = v.MatchPlayerFields.Imp
 	return &retval, nil
 }
 
@@ -3865,6 +3891,11 @@ func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetLev
 	return v.MatchPlayerFields.Level
 }
 
+// GetImp returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.Imp, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetImp() *float64 {
+	return v.MatchPlayerFields.Imp
+}
+
 func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -3908,6 +3939,8 @@ type __premarshalStratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType
 	Networth *int `json:"networth"`
 
 	Level *int `json:"level"`
+
+	Imp *float64 `json:"imp"`
 }
 
 func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
@@ -3930,6 +3963,7 @@ func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) __prem
 	retval.Assists = v.MatchPlayerFields.Assists
 	retval.Networth = v.MatchPlayerFields.Networth
 	retval.Level = v.MatchPlayerFields.Level
+	retval.Imp = v.MatchPlayerFields.Imp
 	return &retval, nil
 }
 
@@ -4140,6 +4174,11 @@ func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetLev
 	return v.MatchPlayerFields.Level
 }
 
+// GetImp returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.Imp, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetImp() *float64 {
+	return v.MatchPlayerFields.Imp
+}
+
 func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -4183,6 +4222,8 @@ type __premarshalStratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType
 	Networth *int `json:"networth"`
 
 	Level *int `json:"level"`
+
+	Imp *float64 `json:"imp"`
 }
 
 func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
@@ -4205,6 +4246,7 @@ func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) __prem
 	retval.Assists = v.MatchPlayerFields.Assists
 	retval.Networth = v.MatchPlayerFields.Networth
 	retval.Level = v.MatchPlayerFields.Level
+	retval.Imp = v.MatchPlayerFields.Imp
 	return &retval, nil
 }
 
@@ -4415,6 +4457,11 @@ func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetLev
 	return v.MatchPlayerFields.Level
 }
 
+// GetImp returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.Imp, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetImp() *float64 {
+	return v.MatchPlayerFields.Imp
+}
+
 func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -4458,6 +4505,8 @@ type __premarshalStratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType
 	Networth *int `json:"networth"`
 
 	Level *int `json:"level"`
+
+	Imp *float64 `json:"imp"`
 }
 
 func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
@@ -4480,6 +4529,7 @@ func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) __prem
 	retval.Assists = v.MatchPlayerFields.Assists
 	retval.Networth = v.MatchPlayerFields.Networth
 	retval.Level = v.MatchPlayerFields.Level
+	retval.Imp = v.MatchPlayerFields.Imp
 	return &retval, nil
 }
 
@@ -5074,6 +5124,11 @@ func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) GetLevel() *
 	return v.MatchPlayerFields.Level
 }
 
+// GetImp returns StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType.Imp, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) GetImp() *float64 {
+	return v.MatchPlayerFields.Imp
+}
+
 func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -5117,6 +5172,8 @@ type __premarshalStratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType struc
 	Networth *int `json:"networth"`
 
 	Level *int `json:"level"`
+
+	Imp *float64 `json:"imp"`
 }
 
 func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
@@ -5139,6 +5196,7 @@ func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) __premarshal
 	retval.Assists = v.MatchPlayerFields.Assists
 	retval.Networth = v.MatchPlayerFields.Networth
 	retval.Level = v.MatchPlayerFields.Level
+	retval.Imp = v.MatchPlayerFields.Imp
 	return &retval, nil
 }
 
@@ -5711,6 +5769,11 @@ func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) GetLevel
 	return v.MatchPlayerFields.Level
 }
 
+// GetImp returns StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType.Imp, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) GetImp() *float64 {
+	return v.MatchPlayerFields.Imp
+}
+
 func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -5754,6 +5817,8 @@ type __premarshalStratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType s
 	Networth *int `json:"networth"`
 
 	Level *int `json:"level"`
+
+	Imp *float64 `json:"imp"`
 }
 
 func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) MarshalJSON() ([]byte, error) {
@@ -5776,6 +5841,7 @@ func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) __premar
 	retval.Assists = v.MatchPlayerFields.Assists
 	retval.Networth = v.MatchPlayerFields.Networth
 	retval.Level = v.MatchPlayerFields.Level
+	retval.Imp = v.MatchPlayerFields.Imp
 	return &retval, nil
 }
 
@@ -7249,6 +7315,7 @@ fragment MatchPlayerFields on MatchPlayerType {
 	assists
 	networth
 	level
+	imp
 }
 `
 
@@ -7351,6 +7418,7 @@ fragment MatchPlayerFields on MatchPlayerType {
 	assists
 	networth
 	level
+	imp
 }
 `
 
@@ -7446,6 +7514,7 @@ fragment MatchPlayerFields on MatchPlayerType {
 	assists
 	networth
 	level
+	imp
 }
 `
 
@@ -7552,6 +7621,7 @@ fragment MatchPlayerFields on MatchPlayerType {
 	assists
 	networth
 	level
+	imp
 }
 `
 
@@ -7634,6 +7704,7 @@ fragment MatchPlayerFields on MatchPlayerType {
 	assists
 	networth
 	level
+	imp
 }
 `
 
@@ -7697,6 +7768,7 @@ fragment MatchPlayerFields on MatchPlayerType {
 	assists
 	networth
 	level
+	imp
 }
 `
 
@@ -7795,6 +7867,7 @@ fragment MatchPlayerFields on MatchPlayerType {
 	assists
 	networth
 	level
+	imp
 }
 `
 
@@ -7877,6 +7950,7 @@ fragment MatchPlayerFields on MatchPlayerType {
 	assists
 	networth
 	level
+	imp
 }
 `
 
@@ -7940,6 +8014,7 @@ fragment MatchPlayerFields on MatchPlayerType {
 	assists
 	networth
 	level
+	imp
 }
 `
 

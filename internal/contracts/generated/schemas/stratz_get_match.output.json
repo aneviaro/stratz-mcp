@@ -490,6 +490,13 @@
                         "minimum": 1,
                         "type": "integer"
                       },
+                      "imp": {
+                        "description": "STRATZ Individual Match Performance (IMP) for this player when upstream provides it. Null means unavailable for the match/player.",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
                       "kills": {
                         "minimum": 0,
                         "type": "integer"
@@ -534,6 +541,7 @@
                       "assists",
                       "networth",
                       "level",
+                      "imp",
                       "won"
                     ],
                     "type": "object"

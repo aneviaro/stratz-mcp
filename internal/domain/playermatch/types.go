@@ -178,15 +178,16 @@ func (value *upstreamEnumID) UnmarshalJSON(data []byte) error {
 }
 
 type upstreamMatchPlayer struct {
-	SteamAccountID *int64 `json:"steamAccountId"`
-	HeroID         int64  `json:"heroId"`
-	IsRadiant      bool   `json:"isRadiant"`
-	PlayerSlot     int64  `json:"playerSlot"`
-	Kills          int64  `json:"kills"`
-	Deaths         int64  `json:"deaths"`
-	Assists        int64  `json:"assists"`
-	Networth       *int64 `json:"networth"`
-	Level          *int64 `json:"level"`
+	SteamAccountID *int64   `json:"steamAccountId"`
+	HeroID         int64    `json:"heroId"`
+	IsRadiant      bool     `json:"isRadiant"`
+	PlayerSlot     int64    `json:"playerSlot"`
+	Kills          int64    `json:"kills"`
+	Deaths         int64    `json:"deaths"`
+	Assists        int64    `json:"assists"`
+	Networth       *int64   `json:"networth"`
+	Level          *int64   `json:"level"`
+	IMP            *float64 `json:"imp"`
 }
 
 type upstreamEvent struct {

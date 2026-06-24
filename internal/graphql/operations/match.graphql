@@ -24,6 +24,7 @@ fragment MatchPlayerFields on MatchPlayerType {
   assists
   networth
   level
+  imp
 }
 
 fragment MatchStandardFields on MatchType {

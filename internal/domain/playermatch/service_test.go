@@ -199,7 +199,7 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 		"leagueId":null,
 		"gameVersionId":"7.XX",
 		"parsedDateTime":1781728000,
-		"players":[{"steamAccountId":39734272,"heroId":5,"isRadiant":true,"playerSlot":0,"kills":10,"deaths":2,"assists":15,"networth":20000,"level":25}],
+		"players":[{"steamAccountId":39734272,"heroId":5,"isRadiant":true,"playerSlot":0,"kills":10,"deaths":2,"assists":15,"networth":20000,"level":25,"imp":8.75}],
 		"playbackData":{
 			"buildingEvents":[{"time":100,"type":"TOWER","isRadiant":true,"npcId":42}],
 			"roshanEvents":[{"time":200}],
@@ -223,6 +223,9 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 				if request.OperationName != test.wantOperationName {
 					t.Fatalf("operation = %q", request.OperationName)
 				}
+				if !strings.Contains(request.Query, "imp") {
+					t.Fatalf("match query is missing player IMP: %s", request.Query)
+				}
 				if test.wantObjectives && !strings.Contains(request.Query, "buildingEvents") {
 					t.Fatalf("standard query is missing playback objectives: %s", request.Query)
 				}
@@ -239,6 +242,9 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 			if (result.Data.Objectives != nil) != test.wantObjectives ||
 				(result.Data.Timeline != nil) != test.wantFull {
 				t.Fatalf("match detail mapping = %#v", result.Data)
+			}
+			if len(result.Data.Players) != 1 || result.Data.Players[0].Imp == nil || *result.Data.Players[0].Imp != 8.75 {
+				t.Fatalf("player IMP = %#v", result.Data.Players)
 			}
 			if test.wantObjectives && len(result.Data.Objectives) != 3 {
 				t.Fatalf("objectives = %#v", result.Data.Objectives)
