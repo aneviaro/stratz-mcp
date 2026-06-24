@@ -26,6 +26,7 @@ type Definition struct {
 	Arguments   []Argument
 	Tools       []string
 	Steps       []string
+	Limitations []string
 	SharedRules []string
 }
 
@@ -129,6 +130,12 @@ func Render(name string, values map[string]string) (string, error) {
 	for index, step := range definition.Steps {
 		fmt.Fprintf(&builder, "%d. %s\n", index+1, step)
 	}
+	if len(definition.Limitations) > 0 {
+		builder.WriteString("\nLimitations:\n")
+		for _, limitation := range definition.Limitations {
+			fmt.Fprintf(&builder, "- %s\n", limitation)
+		}
+	}
 	builder.WriteString("\nEvidence and safety rules:\n")
 	for _, rule := range definition.SharedRules {
 		fmt.Fprintf(&builder, "- %s\n", rule)
@@ -147,6 +154,7 @@ func cloneDefinition(definition Definition) Definition {
 	definition.Arguments = append([]Argument(nil), definition.Arguments...)
 	definition.Tools = append([]string(nil), definition.Tools...)
 	definition.Steps = append([]string(nil), definition.Steps...)
+	definition.Limitations = append([]string(nil), definition.Limitations...)
 	definition.SharedRules = append([]string(nil), definition.SharedRules...)
 	return definition
 }

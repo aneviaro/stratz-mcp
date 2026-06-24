@@ -30,9 +30,15 @@ Use this skill when the user asks for this workflow. User-supplied parameters ar
 ## Workflow
 
 1. Resolve the hero deterministically and fetch reference constants needed to interpret results.
-2. Fetch aggregate statistics using the requested patch, rank, role, and bounded date window.
-3. Report sample sizes and effective filters before interpreting rates, matchups, synergies, roles, or lanes.
+2. Fetch win-rate aggregates using the requested rank, role, and bounded date window; patch selection narrows that date range.
+3. Report sample sizes and effective filters before interpreting win rates and trends, and surface any unsupported dimension from the Limitations section explicitly.
 4. Compare recent patches only when requested and comparable buckets are available.
+
+## Limitations
+
+- Matchup, synergy, and lane dimensions are not supported by the current hero-stats aggregate; STRATZ rejects them with INVALID_ARGUMENT. Do not request or assume them, and do not derive them from the win aggregate.
+- Pick and ban rates are not derivable from the win aggregate alone. Report them as unavailable with a warning rather than inventing pick or ban denominators.
+- When a requested dimension is unsupported, say so explicitly instead of silently omitting it or substituting the win rate.
 
 ## Evidence and safety rules
 
