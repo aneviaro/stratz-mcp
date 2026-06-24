@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -261,6 +263,161 @@ func TestHeroServiceMapsUpstreamAndProtocolFailures(t *testing.T) {
 	}
 }
 
+func TestConstantsInMemoryCacheDeduplicatesAndExpires(t *testing.T) {
+	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		return response(constantsFixture), nil
+	}}
+	service, err := New(Options{
+		Executor:            executor,
+		MaxUpstreamRequests: 5,
+		ConstantsTTL:        time.Hour,
+		Now:                 func() time.Time { return now },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.GetConstants(context.Background(), "heroes"); err != nil {
+		t.Fatal(err)
+	}
+	if executor.calls != 1 {
+		t.Fatalf("after first call: calls = %d, want 1", executor.calls)
+	}
+	// A repeat within the TTL is served from the in-memory cache.
+	if _, err := service.GetConstants(context.Background(), "heroes"); err != nil {
+		t.Fatal(err)
+	}
+	if executor.calls != 1 {
+		t.Fatalf("after cached call: calls = %d, want 1", executor.calls)
+	}
+	// A different constants consumer shares the same cached snapshot.
+	if _, err := service.GetHero(context.Background(), json.Number("1")); err != nil {
+		t.Fatal(err)
+	}
+	if executor.calls != 1 {
+		t.Fatalf("after cross-consumer cached call: calls = %d, want 1", executor.calls)
+	}
+	// Advancing the clock past the TTL forces one fresh fetch.
+	now = now.Add(2 * time.Hour)
+	if _, err := service.GetConstants(context.Background(), "heroes"); err != nil {
+		t.Fatal(err)
+	}
+	if executor.calls != 2 {
+		t.Fatalf("after TTL expiry: calls = %d, want 2", executor.calls)
+	}
+}
+
+func TestHeroNamesResolvesIDsFromConstants(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		return response(constantsFixture), nil
+	}}
+	service := mustService(t, executor)
+	names, _, err := service.HeroNames(context.Background(), []int64{1, 2, 99}, service.budget())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if names[1] != "Axe" || names[2] != "Queen of Pain" {
+		t.Fatalf("names = %#v", names)
+	}
+	if _, ok := names[99]; ok {
+		t.Fatalf("unknown hero id 99 was present in names")
+	}
+	// Empty input skips the upstream request entirely.
+	executor.calls = 0
+	empty, _, err := service.HeroNames(context.Background(), nil, service.budget())
+	if err != nil || len(empty) != 0 {
+		t.Fatalf("empty HeroNames = %#v, err = %v", empty, err)
+	}
+	if executor.calls != 0 {
+		t.Fatalf("empty HeroNames made %d upstream calls", executor.calls)
+	}
+}
+
+func TestConstantsCacheHitReportsNoRateLimits(t *testing.T) {
+	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		return &stratz.Response{
+			Data:       json.RawMessage(constantsFixture),
+			RateLimits: []stratz.RateLimit{{Window: "minute", Remaining: int64Ptr(120)}},
+		}, nil
+	}}
+	service, err := New(Options{
+		Executor: executor, MaxUpstreamRequests: 5,
+		ConstantsTTL: time.Hour, Now: func() time.Time { return now },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Cold: the live fetch carries rate limits.
+	first, err := service.GetConstants(context.Background(), "heroes")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(first.RateLimits) == 0 {
+		t.Fatalf("cold fetch should report rate limits")
+	}
+	// Warm hit: no upstream request was made, so rate limits must not be
+	// reported (they would be stale quota telemetry, not fresh data).
+	hit, err := service.GetConstants(context.Background(), "heroes")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hit.RateLimits) != 0 {
+		t.Fatalf("cache hit reported stale rate limits %#v", hit.RateLimits)
+	}
+}
+
+// TestConstantsColdCacheCoalescesConcurrentFetches proves that a burst of
+// callers on a cold cache is coalesced into a single upstream fetch instead of
+// one fetch per caller. The gate forces every caller to be in flight at once
+// (a thundering herd without singleflight), so the assertion is deterministic.
+func TestConstantsColdCacheCoalescesConcurrentFetches(t *testing.T) {
+	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+
+	var calls int64
+	gate := make(chan struct{})
+	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, _ stratz.Request) (*stratz.Response, error) {
+		atomic.AddInt64(&calls, 1)
+		<-gate // block until all callers have piled up on the cold cache
+		return response(constantsFixture), nil
+	}}
+	service, err := New(Options{
+		Executor:            executor,
+		MaxUpstreamRequests: 5,
+		ConstantsTTL:        time.Hour,
+		Now:                 func() time.Time { return now },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const goroutines = 16
+	var wg sync.WaitGroup
+	errs := make([]error, goroutines)
+	start := make(chan struct{})
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func(i int) {
+			defer wg.Done()
+			<-start
+			_, errs[i] = service.GetConstants(context.Background(), "heroes")
+		}(i)
+	}
+	close(start)                      // every goroutine races toward loadConstants
+	time.Sleep(20 * time.Millisecond) // let the herd pile up on the cold cache
+	close(gate)                       // release the single coalesced fetch
+
+	wg.Wait()
+	for i, err := range errs {
+		if err != nil {
+			t.Fatalf("goroutine %d error = %v", i, err)
+		}
+	}
+	if got := atomic.LoadInt64(&calls); got != 1 {
+		t.Fatalf("upstream calls = %d, want 1 (cold-cache thundering herd not coalesced)", got)
+	}
+}
+
 func mustService(t *testing.T, executor stratz.Executor) *Service {
 	return mustServiceAt(t, executor, time.Now())
 }
@@ -279,6 +436,8 @@ func mustServiceAt(t *testing.T, executor stratz.Executor, now time.Time) *Servi
 func response(data string) *stratz.Response {
 	return &stratz.Response{Data: json.RawMessage(data)}
 }
+
+func int64Ptr(value int64) *int64 { return &value }
 
 func assertCode(t *testing.T, err error, want contracts.ErrorCode) {
 	t.Helper()

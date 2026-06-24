@@ -19,8 +19,17 @@ import (
 const (
 	playerListOperationVersion   = "player-matches/v2"
 	fullMatchAvailabilityWarning = "Fight and economy breakdowns are unavailable from the current STRATZ match playback data"
+	heroNameUnavailableWarning   = "Hero names are unavailable for this response because the STRATZ constants request failed or the per-call request budget was exhausted"
 	detailLevelPlayers           = contracts.DetailLevel("players")
 )
+
+// HeroNamer resolves numeric hero IDs to localized display names from the
+// STRATZ constants aggregate. It is optional: when a Service is constructed
+// without one, hero-bearing rows serialize hero_name as null rather than
+// failing the call.
+type HeroNamer interface {
+	HeroNames(ctx context.Context, ids []int64, budget *stratz.RequestBudget) (map[int64]string, []stratz.RateLimit, error)
+}
 
 // Options configures player and match domain execution.
 type Options struct {
@@ -29,6 +38,7 @@ type Options struct {
 	SchemaVersion       string
 	MaxUpstreamRequests int
 	MaxBatchSize        int
+	Heroes              HeroNamer
 	Now                 func() time.Time
 }
 
@@ -39,6 +49,7 @@ type Service struct {
 	schemaVersion       string
 	maxUpstreamRequests int
 	maxBatchSize        int
+	heroes              HeroNamer
 	cursor              *pagination.Codec
 }
 
@@ -68,6 +79,7 @@ func New(options Options) (*Service, error) {
 		schemaVersion:       options.SchemaVersion,
 		maxUpstreamRequests: options.MaxUpstreamRequests,
 		maxBatchSize:        options.MaxBatchSize,
+		heroes:              options.Heroes,
 		cursor:              pagination.NewCodec(pagination.Options{Now: options.Now}),
 	}, nil
 }
@@ -186,7 +198,8 @@ func (service *Service) GetMatch(
 		return nil, err
 	}
 	query, operation := matchOperation(detail)
-	response, err := service.execute(ctx, service.budget(), query, operation, map[string]any{"id": id})
+	budget := service.budget()
+	response, err := service.execute(ctx, budget, query, operation, map[string]any{"id": id})
 	if err != nil {
 		return nil, err
 	}
@@ -200,11 +213,20 @@ func (service *Service) GetMatch(
 	if availabilityErr := ensureAvailable(envelope.Match, detail); availabilityErr != nil {
 		return nil, availabilityErr
 	}
+	matchData := mapMatch(envelope.Match, detail)
+	names, nameRateLimits, nameWarnings := service.resolveHeroNames(ctx, budget, collectMatchHeroIDs(matchData))
+	if len(names) > 0 {
+		applyMatchHeroNames(&matchData, names)
+	}
+	rateLimits := append([]stratz.RateLimit(nil), response.RateLimits...)
+	rateLimits = append(rateLimits, nameRateLimits...)
+	warnings := matchWarnings(detail)
+	warnings = append(warnings, nameWarnings...)
 	return &Result[contracts.Match]{
-		Data:       mapMatch(envelope.Match, detail),
+		Data:       matchData,
 		Raw:        rawData(response.Data),
-		RateLimits: response.RateLimits,
-		Warnings:   matchWarnings(detail),
+		RateLimits: rateLimits,
+		Warnings:   warnings,
 	}, nil
 }
 
@@ -291,11 +313,22 @@ func (service *Service) BatchMatches(
 		}
 		return nil, protocol("STRATZ returned an incomplete match batch")
 	}
+	warnings := matchWarnings(detail)
+	if heroIDs := collectBatchHeroIDs(items); len(heroIDs) > 0 {
+		names, nameRateLimits, nameWarnings := service.resolveHeroNames(ctx, budget, heroIDs)
+		if len(names) > 0 {
+			for index := range items {
+				applyMatchHeroNames(&items[index], names)
+			}
+		}
+		rateLimits = append(rateLimits, nameRateLimits...)
+		warnings = append(warnings, nameWarnings...)
+	}
 	return &Result[[]contracts.Match]{
 		Data:       items,
 		Raw:        map[string]any{"matches": rawMatches},
 		RateLimits: rateLimits,
-		Warnings:   matchWarnings(detail),
+		Warnings:   warnings,
 	}, nil
 }
 
@@ -429,6 +462,15 @@ func (service *Service) ListPlayerMatchesWithBudget(
 	for index := range scan.Items {
 		items = append(items, mapPlayerMatchSummary(&scan.Items[index], int64(playerID.AccountID), filters.IncludePlayer))
 	}
+	warnings := []string{}
+	if heroIDs := collectSummaryHeroIDs(items); len(heroIDs) > 0 {
+		names, nameRateLimits, nameWarnings := service.resolveHeroNames(ctx, budget, heroIDs)
+		if len(names) > 0 {
+			applySummaryHeroNames(items, names)
+		}
+		rateLimits = append(rateLimits, nameRateLimits...)
+		warnings = append(warnings, nameWarnings...)
+	}
 	var nextCursor *string
 	if scan.Next != nil {
 		encoded, encodeErr := service.cursor.Encode(binding, pagination.LifetimeRecent, scan.Next)
@@ -447,12 +489,32 @@ func (service *Service) ListPlayerMatchesWithBudget(
 		},
 		Raw:        rawPages,
 		RateLimits: rateLimits,
+		Warnings:   warnings,
 	}, nil
 }
 
 func (service *Service) budget() *stratz.RequestBudget {
 	budget, _ := stratz.NewRequestBudget(service.maxUpstreamRequests)
 	return budget
+}
+
+// resolveHeroNames best-effort resolves hero display names using the shared
+// per-call budget. A nil namer or empty input yields no names. An upstream or
+// budget failure yields nil names plus a warning so callers still return hero
+// identifiers without the localized name.
+func (service *Service) resolveHeroNames(
+	ctx context.Context,
+	budget *stratz.RequestBudget,
+	ids []int64,
+) (map[int64]string, []stratz.RateLimit, []string) {
+	if service.heroes == nil || len(ids) == 0 {
+		return nil, nil, nil
+	}
+	names, rateLimits, err := service.heroes.HeroNames(ctx, ids, budget)
+	if err != nil {
+		return nil, rateLimits, []string{heroNameUnavailableWarning}
+	}
+	return names, rateLimits, nil
 }
 
 func (service *Service) execute(

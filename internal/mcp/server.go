@@ -130,6 +130,7 @@ func New(options Options) (*Server, error) {
 		Executor:            options.Executor,
 		MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
 		MaxBatchSize:        options.Config.Limits.MaxBatchSize,
+		ConstantsTTL:        options.Config.Cache.PublicReferenceTTL,
 		Now:                 options.Now,
 	})
 	if err != nil {
@@ -142,6 +143,7 @@ func New(options Options) (*Server, error) {
 			SchemaVersion:       options.SchemaVersion,
 			MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
 			MaxBatchSize:        options.Config.Limits.MaxBatchSize,
+			Heroes:              heroConstantsService,
 			Now:                 options.Now,
 		})
 		if err != nil {

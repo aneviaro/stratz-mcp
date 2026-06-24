@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -16,20 +17,33 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/domain/batch"
 	"github.com/aneviaro/stratz-mcp/internal/graphql/generated"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
+	"golang.org/x/sync/singleflight"
 )
 
 type Options struct {
 	Executor            stratz.Executor
 	MaxUpstreamRequests int
 	MaxBatchSize        int
-	Now                 func() time.Time
+	// ConstantsTTL enables a process-local in-memory cache of the parsed STRATZ
+	// constants aggregate for this duration. A value of zero (the default)
+	// disables caching so every loadConstants call fetches upstream, preserving
+	// exact request-count semantics for tests. Heroes, items, and abilities are
+	// public reference data that changes only with Dota patches, so a long TTL
+	// is safe in production.
+	ConstantsTTL time.Duration
+	Now          func() time.Time
 }
 
 type Service struct {
 	executor            stratz.Executor
 	maxUpstreamRequests int
 	maxBatchSize        int
+	constantsTTL        time.Duration
 	now                 func() time.Time
+
+	constantsMu    sync.Mutex
+	constants      *cachedConstants
+	constantsGroup singleflight.Group
 }
 
 func New(options Options) (*Service, error) {
@@ -52,6 +66,7 @@ func New(options Options) (*Service, error) {
 		executor:            options.Executor,
 		maxUpstreamRequests: options.MaxUpstreamRequests,
 		maxBatchSize:        options.MaxBatchSize,
+		constantsTTL:        options.ConstantsTTL,
 		now:                 options.Now,
 	}, nil
 }
@@ -108,6 +123,42 @@ func (service *Service) BatchHeroes(ctx context.Context, identifiers []any) (*Re
 // ResolveHeroID resolves any public hero identifier to its canonical numeric ID.
 func (service *Service) ResolveHeroID(ctx context.Context, identifier any) (int64, error) {
 	return service.ResolveHeroIDWithBudget(ctx, identifier, service.budget())
+}
+
+// HeroNames resolves the localized display name for each requested numeric hero
+// ID from a single STRATZ constants request, charging the caller's shared
+// per-MCP-call budget. IDs absent from the upstream constants are omitted from
+// the returned map (callers treat a missing entry as an unknown name). An empty
+// input skips the upstream request entirely and returns an empty map.
+func (service *Service) HeroNames(
+	ctx context.Context,
+	ids []int64,
+	budget *stratz.RequestBudget,
+) (map[int64]string, []stratz.RateLimit, error) {
+	if len(ids) == 0 {
+		return map[int64]string{}, nil, nil
+	}
+	response, constants, err := service.loadConstants(ctx, budget)
+	if err != nil {
+		return nil, nil, err
+	}
+	wanted := make(map[int64]struct{}, len(ids))
+	for _, id := range ids {
+		if id > 0 {
+			wanted[id] = struct{}{}
+		}
+	}
+	names := make(map[int64]string, len(wanted))
+	for index := range constants.Heroes {
+		hero := &constants.Heroes[index]
+		if _, ok := wanted[hero.ID]; !ok {
+			continue
+		}
+		if name := cleanPointer(hero.LocalizedName, 128); name != nil {
+			names[hero.ID] = *name
+		}
+	}
+	return names, response.RateLimits, nil
 }
 
 // ResolveHeroIDWithBudget resolves a hero while charging the caller's shared
@@ -304,7 +355,67 @@ func (service *Service) resolveStatsHero(ctx context.Context, budget *stratz.Req
 	return hero.ID, response, nil
 }
 
+// cachedConstants is a single-entry in-memory snapshot of the STRATZ constants
+// aggregate. It lets the many callers of loadConstants (hero resolve, hero-name
+// decoration, the public constants/hero tools) share one upstream fetch for the
+// lifetime of the TTL instead of re-hitting STRATZ on every call. The snapshot
+// is treated as read-only by all consumers. Rate limits are deliberately not
+// cached: they describe a specific request instant (current quota state), not
+// durable data, so serving them from a long-lived entry would misrepresent
+// fresh provenance. A cache hit therefore reports no rate limits.
+type cachedConstants struct {
+	data      upstreamConstants
+	raw       json.RawMessage
+	fetchedAt time.Time
+}
+
 func (service *Service) loadConstants(ctx context.Context, budget *stratz.RequestBudget) (*stratz.Response, upstreamConstants, error) {
+	if cached := service.readConstantsCache(); cached != nil {
+		return &stratz.Response{HTTPStatus: 200, Data: cached.raw}, cached.data, nil
+	}
+	// With caching enabled, coalesce concurrent cold-cache misses into a single
+	// upstream fetch via singleflight. Without this, a burst of callers on a cold
+	// cache each miss, each fetch, and each write (no race, but one request per
+	// caller). When caching is disabled (ConstantsTTL <= 0) tests expect exact
+	// per-call request counts, so fetch directly without coalescing.
+	if service.constantsTTL <= 0 {
+		return service.fetchConstants(ctx, budget)
+	}
+	result, err, _ := service.constantsGroup.Do(constantsFlightKey, func() (any, error) {
+		// Double-checked fill: a prior leader that just finished may have
+		// populated the cache before this flight started.
+		if cached := service.readConstantsCache(); cached != nil {
+			return &constantsLoadResult{
+				response: &stratz.Response{HTTPStatus: 200, Data: cached.raw},
+				data:     cached.data,
+			}, nil
+		}
+		response, data, ferr := service.fetchConstants(ctx, budget)
+		if ferr != nil {
+			return nil, ferr
+		}
+		return &constantsLoadResult{response: response, data: data}, nil
+	})
+	if err != nil {
+		return nil, upstreamConstants{}, err
+	}
+	loaded := result.(*constantsLoadResult)
+	return loaded.response, loaded.data, nil
+}
+
+// constantsFlightKey is the singleflight key for the constants aggregate; there
+// is exactly one constants payload per process, so a single key is sufficient.
+const constantsFlightKey = "constants"
+
+// constantsLoadResult carries a fetched constants snapshot out of singleflight.
+type constantsLoadResult struct {
+	response *stratz.Response
+	data     upstreamConstants
+}
+
+// fetchConstants executes the STRATZ constants aggregate, validates it, and
+// writes the snapshot to the in-memory cache when enabled.
+func (service *Service) fetchConstants(ctx context.Context, budget *stratz.RequestBudget) (*stratz.Response, upstreamConstants, error) {
 	response, err := service.execute(ctx, budget, generated.StratzGetConstants_Operation, "StratzGetConstants", nil)
 	if err != nil {
 		return nil, upstreamConstants{}, err
@@ -313,7 +424,37 @@ func (service *Service) loadConstants(ctx context.Context, budget *stratz.Reques
 	if json.Unmarshal(response.Data, &envelope) != nil {
 		return nil, upstreamConstants{}, protocol("STRATZ returned an invalid constants payload")
 	}
+	service.writeConstantsCache(envelope.Constants, response.Data)
 	return response, envelope.Constants, nil
+}
+
+// readConstantsCache returns the cached constants when the in-memory cache is
+// enabled and the entry is fresh. It returns nil when caching is disabled
+// (ConstantsTTL <= 0), the cache is cold, or the entry has expired, so callers
+// always fall back to a live fetch. On a hit no budget is charged.
+func (service *Service) readConstantsCache() *cachedConstants {
+	if service.constantsTTL <= 0 {
+		return nil
+	}
+	service.constantsMu.Lock()
+	defer service.constantsMu.Unlock()
+	if service.constants == nil || service.now().Sub(service.constants.fetchedAt) > service.constantsTTL {
+		return nil
+	}
+	return service.constants
+}
+
+func (service *Service) writeConstantsCache(data upstreamConstants, raw json.RawMessage) {
+	if service.constantsTTL <= 0 {
+		return
+	}
+	service.constantsMu.Lock()
+	defer service.constantsMu.Unlock()
+	service.constants = &cachedConstants{
+		data:      data,
+		raw:       raw,
+		fetchedAt: service.now(),
+	}
 }
 
 func (service *Service) execute(ctx context.Context, budget *stratz.RequestBudget, query, operation string, variables any) (*stratz.Response, error) {

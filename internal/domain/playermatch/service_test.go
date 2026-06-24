@@ -523,6 +523,147 @@ func TestBatchMatchesFitsTwentyFiveIDsWithinRequestBudget(t *testing.T) {
 	}
 }
 
+type fakeHeroNamer struct {
+	names      map[int64]string
+	rateLimits []stratz.RateLimit
+	err        error
+}
+
+func (namer *fakeHeroNamer) HeroNames(context.Context, []int64, *stratz.RequestBudget) (map[int64]string, []stratz.RateLimit, error) {
+	if namer.err != nil {
+		return nil, namer.rateLimits, namer.err
+	}
+	return namer.names, namer.rateLimits, nil
+}
+
+func serviceWithHeroes(t *testing.T, executor stratz.Executor, namer HeroNamer) *Service {
+	t.Helper()
+	service, err := New(Options{
+		Executor:            executor,
+		Token:               "fixture-token",
+		SchemaVersion:       "sha256:fixture",
+		MaxUpstreamRequests: 5,
+		Heroes:              namer,
+		Now: func() time.Time {
+			return time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return service
+}
+
+func TestGetMatchDecoratesPlayersWithHeroNames(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		return response(`{"match":{
+			"id":8000000000,"startDateTime":1781724600,"durationSeconds":2430,
+			"didRadiantWin":true,"radiantKills":42,"direKills":31,"gameModeId":22,
+			"lobbyTypeId":7,"regionId":3,"leagueId":null,"gameVersionId":"7.XX",
+			"parsedDateTime":1781728000,
+			"players":[
+				{"steamAccountId":1,"heroId":5,"isRadiant":true,"playerSlot":0,"kills":10,"deaths":2,"assists":15,"networth":20000,"level":25,"imp":8.75},
+				{"steamAccountId":2,"heroId":7,"isRadiant":false,"playerSlot":128,"kills":1,"deaths":5,"assists":2,"networth":4000,"level":12,"imp":null}
+			]
+		}}`), nil
+	}}
+	service := serviceWithHeroes(t, executor, &fakeHeroNamer{names: map[int64]string{5: "Crystal Maiden", 7: "Earthshaker"}})
+	result, err := service.GetMatch(context.Background(), "8000000000", contracts.DetailLevelSummary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Data.Players) != 2 {
+		t.Fatalf("players = %#v", result.Data.Players)
+	}
+	if result.Data.Players[0].HeroName == nil || *result.Data.Players[0].HeroName != "Crystal Maiden" {
+		t.Fatalf("player0 hero name = %#v", result.Data.Players[0].HeroName)
+	}
+	if result.Data.Players[1].HeroName == nil || *result.Data.Players[1].HeroName != "Earthshaker" {
+		t.Fatalf("player1 hero name = %#v", result.Data.Players[1].HeroName)
+	}
+	if len(result.Warnings) != 0 {
+		t.Fatalf("warnings = %#v", result.Warnings)
+	}
+}
+
+func TestGetMatchWarnsWhenHeroNamesUnavailable(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		return response(`{"match":{"id":1,"parsedDateTime":10,"players":[{"steamAccountId":1,"heroId":5,"isRadiant":true,"playerSlot":0,"kills":1,"deaths":1,"assists":1}]}}`), nil
+	}}
+	service := serviceWithHeroes(t, executor, &fakeHeroNamer{err: errors.New("upstream unavailable")})
+	result, err := service.GetMatch(context.Background(), "1", contracts.DetailLevelSummary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Data.Players[0].HeroName != nil {
+		t.Fatalf("hero name should be nil on namer failure, got %#v", result.Data.Players[0].HeroName)
+	}
+	if len(result.Warnings) != 1 || result.Warnings[0] != heroNameUnavailableWarning {
+		t.Fatalf("warnings = %#v", result.Warnings)
+	}
+}
+
+func TestListPlayerMatchesDecoratesIncludedPlayerHeroNames(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		return response(`{"player":{"steamAccountId":1,"matches":[{
+			"id":123,"didRadiantWin":true,"parseStatus":"parsed",
+			"players":[{"steamAccountId":1,"heroId":7,"isRadiant":true,"playerSlot":2,"kills":11,"deaths":1,"assists":14,"networth":21000,"level":25,"imp":9.25}]
+		}]}}`), nil
+	}}
+	service := serviceWithHeroes(t, executor, &fakeHeroNamer{names: map[int64]string{7: "Earthshaker"}})
+	result, err := service.ListPlayerMatches(context.Background(), PlayerMatchFilters{
+		PlayerID:      "1",
+		Limit:         2,
+		IncludePlayer: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Data.Items) != 1 || result.Data.Items[0].Player == nil {
+		t.Fatalf("items = %#v", result.Data.Items)
+	}
+	player := result.Data.Items[0].Player
+	if player.HeroName == nil || *player.HeroName != "Earthshaker" {
+		t.Fatalf("hero name = %#v", player.HeroName)
+	}
+}
+
+func TestGetMatchMergesHeroNameRateLimits(t *testing.T) {
+	matchRemaining := int64(140)
+	constantsRemaining := int64(138)
+	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		return responseWithRates(`{"match":{"id":1,"parsedDateTime":10,"players":[{"steamAccountId":1,"heroId":5,"isRadiant":true,"playerSlot":0,"kills":1,"deaths":1,"assists":1}]}}`, matchRemaining), nil
+	}}
+	namer := &fakeHeroNamer{
+		names: map[int64]string{5: "Crystal Maiden"},
+		rateLimits: []stratz.RateLimit{{
+			Window: "minute", Limit: int64Ptr(5000), Remaining: &constantsRemaining,
+		}},
+	}
+	result, err := serviceWithHeroes(t, executor, namer).GetMatch(context.Background(), "1", contracts.DetailLevelSummary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Both the match fetch and the hero-name resolution must be reflected.
+	var sawMatch, sawConstants bool
+	for _, rate := range result.RateLimits {
+		if rate.Window == "minute" && rate.Remaining != nil {
+			if *rate.Remaining == matchRemaining {
+				sawMatch = true
+			}
+			if *rate.Remaining == constantsRemaining {
+				sawConstants = true
+			}
+		}
+	}
+	if !sawMatch {
+		t.Fatalf("match fetch rate limit missing from %#v", result.RateLimits)
+	}
+	if !sawConstants {
+		t.Fatalf("hero-name rate limit was dropped from %#v", result.RateLimits)
+	}
+}
+
 func mustService(t *testing.T, executor stratz.Executor, maximum int) *Service {
 	t.Helper()
 	service, err := New(Options{
@@ -543,6 +684,18 @@ func mustService(t *testing.T, executor stratz.Executor, maximum int) *Service {
 func response(data string) *stratz.Response {
 	return &stratz.Response{HTTPStatus: 200, Data: json.RawMessage(data)}
 }
+
+func responseWithRates(data string, minuteRemaining int64) *stratz.Response {
+	return &stratz.Response{
+		HTTPStatus: 200,
+		Data:       json.RawMessage(data),
+		RateLimits: []stratz.RateLimit{{
+			Window: "minute", Remaining: &minuteRemaining,
+		}},
+	}
+}
+
+func int64Ptr(value int64) *int64 { return &value }
 
 func assertCode(t *testing.T, err error, want contracts.ErrorCode) {
 	t.Helper()

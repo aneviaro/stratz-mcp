@@ -99,7 +99,9 @@ func registerPlayerMatchHandlers(
 			if filters.From == nil && filters.To == nil {
 				dateRange = nil
 			}
-			return curatedEnvelope(options, "list_player_matches", detailInput(object), result.Data, result.Raw, includeRaw(object), result.RateLimits, dateRange), nil
+			output := curatedEnvelope(options, "list_player_matches", detailInput(object), result.Data, result.Raw, includeRaw(object), result.RateLimits, dateRange)
+			output["warnings"] = result.Warnings
+			return output, nil
 		}
 	}
 }

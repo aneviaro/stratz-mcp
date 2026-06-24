@@ -410,6 +410,10 @@
           "type": "integer",
           "minimum": 1
         },
+        "hero_name": {
+          "type": ["string", "null"],
+          "description": "Localized hero display name resolved from the STRATZ constants aggregate. Null when the name cannot be resolved for this response (for example, when the per-call upstream budget is exhausted)."
+        },
         "team": {
           "type": "string",
           "enum": ["radiant", "dire"]
@@ -450,6 +454,7 @@
       "required": [
         "account_id",
         "hero_id",
+        "hero_name",
         "team",
         "position",
         "kills",
@@ -687,6 +692,10 @@
         "hero_id": {
           "type": ["integer", "null"]
         },
+        "hero_name": {
+          "type": ["string", "null"],
+          "description": "Localized hero display name resolved from the STRATZ constants aggregate. Null when hero_id is null or the name cannot be resolved for this response."
+        },
         "value": {
           "type": ["integer", "number", "string", "boolean", "null"]
         }
@@ -697,6 +706,7 @@
         "team",
         "account_id",
         "hero_id",
+        "hero_name",
         "value"
       ],
       "additionalProperties": false
@@ -736,6 +746,10 @@
                 "type": "integer",
                 "minimum": 1
               },
+              "hero_name": {
+                "type": ["string", "null"],
+                "description": "Localized hero display name resolved from the STRATZ constants aggregate. Null when the name cannot be resolved for this response."
+              },
               "team": {
                 "type": "string",
                 "enum": ["radiant", "dire"]
@@ -752,6 +766,7 @@
             "required": [
               "account_id",
               "hero_id",
+              "hero_name",
               "team",
               "kills",
               "deaths"
