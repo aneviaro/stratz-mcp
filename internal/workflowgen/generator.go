@@ -32,6 +32,7 @@ type Workflow struct {
 	Arguments   []Argument `json:"arguments"`
 	Tools       []string   `json:"tools"`
 	Steps       []string   `json:"steps"`
+	Limitations []string   `json:"limitations,omitempty"`
 }
 
 type Argument struct {
@@ -174,6 +175,10 @@ func renderGo(registry Registry) ([]byte, error) {
 		for _, step := range workflow.Steps {
 			fmt.Fprintf(&builder, "\t\t\t%q,\n", step)
 		}
+		builder.WriteString("\t\t},\n\t\tLimitations: []string{\n")
+		for _, limitation := range workflow.Limitations {
+			fmt.Fprintf(&builder, "\t\t\t%q,\n", limitation)
+		}
 		builder.WriteString("\t\t},\n\t\tSharedRules: []string{\n")
 		for _, rule := range registry.SharedRules {
 			fmt.Fprintf(&builder, "\t\t\t%q,\n", rule)
@@ -214,6 +219,12 @@ func renderSkill(registry Registry, workflow Workflow) []byte {
 	builder.WriteString("\n## Workflow\n\n")
 	for index, step := range workflow.Steps {
 		fmt.Fprintf(&builder, "%d. %s\n", index+1, step)
+	}
+	if len(workflow.Limitations) > 0 {
+		builder.WriteString("\n## Limitations\n\n")
+		for _, limitation := range workflow.Limitations {
+			fmt.Fprintf(&builder, "- %s\n", limitation)
+		}
 	}
 	builder.WriteString("\n## Evidence and safety rules\n\n")
 	for _, rule := range registry.SharedRules {

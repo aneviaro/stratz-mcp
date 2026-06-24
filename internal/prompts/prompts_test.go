@@ -40,6 +40,29 @@ func TestDefinitionsAndRendering(t *testing.T) {
 	}
 }
 
+func TestResearchHeroHeroStatsLimitationsAreReported(t *testing.T) {
+	text, err := Render("research_dota_hero", map[string]string{"hero": "Axe"})
+	if err != nil {
+		t.Fatalf("render research_dota_hero: %v", err)
+	}
+	if !strings.Contains(text, "Limitations:") {
+		t.Fatal("research_dota_hero prompt omits the Limitations section")
+	}
+	for _, want := range []string{
+		"Matchup, synergy, and lane dimensions are not supported",
+		"INVALID_ARGUMENT",
+		"Pick and ban rates are not derivable from the win aggregate",
+		"instead of silently omitting",
+	} {
+		if !strings.Contains(text, want) {
+			t.Errorf("research_dota_hero prompt missing hero-stats limitation %q", want)
+		}
+	}
+	if strings.Contains(text, "rates, matchups, synergies, roles, or lanes") {
+		t.Fatal("research_dota_hero prompt still assumes matchup/synergy/lane dimensions exist")
+	}
+}
+
 func TestRenderRejectsMissingAndUnknownArguments(t *testing.T) {
 	if _, err := Render("analyze_dota_match", nil); err == nil {
 		t.Fatal("missing required argument was accepted")
