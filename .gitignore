@@ -4,6 +4,9 @@
 /dist/
 /docs/plans/
 /docs/implementation-plan.md
+public-repo-import.md
+stratz-integration-discovery.md
+create-public-import
 /.stratz-local/
 **/cache.db
 **/cache.db-shm
