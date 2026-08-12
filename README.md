@@ -20,7 +20,7 @@ make build
 
 The executable is written to `./dist/stratz-mcp`. Source builds require Go 1.25 or newer, Make, and Git.
 
-This repository does not publish official binaries, archives, containers, or release tags. Build from source.
+Semantic version tags and GitHub-generated source archives are published on the [releases page](https://github.com/aneviaro/stratz-mcp/releases). Prebuilt binaries and container images are not published; build from source.
 
 ## Configure
 
