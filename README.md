@@ -91,6 +91,37 @@ Do not commit the dotenv file. Use only one credential source: either forward
 `STRATZ_API_TOKEN` or pass `--env-file`, not both. Restart the MCP client after
 changing its configuration or environment.
 
+### Pi
+
+Pi uses the [`pi-mcp-adapter`](https://www.npmjs.com/package/pi-mcp-adapter)
+package to connect to MCP servers:
+
+```sh
+pi install npm:pi-mcp-adapter
+```
+
+Restart Pi, then create the ignored project-local `.mcp.json` file:
+
+```json
+{
+  "mcpServers": {
+    "stratz": {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -a && source /absolute/path/to/stratz-mcp/.env && set +a && exec /absolute/path/to/stratz-mcp/dist/stratz-mcp serve"
+      ],
+      "cwd": "/absolute/path/to/stratz-mcp",
+      "lifecycle": "lazy"
+    }
+  }
+}
+```
+
+The `set -a` and `set +a` pair exports the sourced token to the server
+process without placing the secret in MCP configuration. Run `/reload` in Pi
+after changing `.mcp.json`.
+
 Docker images are not published by this repository. The MCP client only needs to run `docker run`; build an image only if the referenced image tag does not already exist locally:
 
 ```sh

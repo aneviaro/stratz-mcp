@@ -86,3 +86,4 @@ Every response must end with either:
 - Start with `stratz-mcp doctor`; use `cache stats`, `schema pull`, and debug-level stderr logs for the relevant subsystem.
 - Raw GraphQL is unavailable without a valid local schema bundle.
 - Cache failures intentionally degrade to uncached execution. Preserve the reported reason before clearing data.
+- If Go reports `GOPROXY list is not empty, but contains no entries`, build with `GOPROXY=https://proxy.golang.org,direct GOSUMDB=sum.golang.org`.
