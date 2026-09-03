@@ -53,7 +53,7 @@ type Service struct {
 	cursor              *pagination.Codec
 }
 
-// New constructs the player and match domain service.
+// New constructs the player and match domain s.
 func New(options Options) (*Service, error) {
 	if options.Executor == nil {
 		return nil, errors.New("STRATZ executor is required")
@@ -84,8 +84,8 @@ func New(options Options) (*Service, error) {
 	}, nil
 }
 
-// GetPlayer returns one normalized player.
-func (service *Service) GetPlayer(
+// FetchPlayer returns one normalized player.
+func (s *Service) FetchPlayer(
 	ctx context.Context,
 	identifier string,
 ) (*Result[contracts.Player], error) {
@@ -93,8 +93,8 @@ func (service *Service) GetPlayer(
 	if err != nil {
 		return nil, err
 	}
-	budget := service.budget()
-	response, err := service.execute(ctx, budget, generated.StratzGetPlayer_Operation, "StratzGetPlayer", map[string]any{
+	budget := s.budget()
+	response, err := s.execute(ctx, budget, generated.StratzGetPlayer_Operation, "StratzGetPlayer", map[string]any{
 		"steamAccountId": int64(id.AccountID),
 	})
 	if err != nil {
@@ -118,11 +118,11 @@ func (service *Service) GetPlayer(
 }
 
 // BatchPlayers gets up to 25 players atomically in caller order.
-func (service *Service) BatchPlayers(
+func (s *Service) BatchPlayers(
 	ctx context.Context,
 	identifiers []string,
 ) (*Result[[]contracts.Player], error) {
-	plan, err := batch.NewPlan(identifiers, service.maxBatchSize, func(value string) (string, error) {
+	plan, err := batch.NewPlan(identifiers, s.maxBatchSize, func(value string) (string, error) {
 		id, normalizeErr := NormalizePlayerID(value)
 		if normalizeErr != nil {
 			return "", normalizeErr
@@ -142,7 +142,7 @@ func (service *Service) BatchPlayers(
 		}
 		ids = append(ids, int64(id.AccountID))
 	}
-	response, err := service.execute(ctx, service.budget(), generated.StratzGetPlayers_Operation, "StratzGetPlayers", map[string]any{
+	response, err := s.execute(ctx, s.budget(), generated.StratzGetPlayers_Operation, "StratzGetPlayers", map[string]any{
 		"steamAccountIds": ids,
 	})
 	if err != nil {
@@ -183,8 +183,8 @@ func (service *Service) BatchPlayers(
 	}, nil
 }
 
-// GetMatch returns one normalized match at the requested detail level.
-func (service *Service) GetMatch(
+// FetchMatch returns one normalized match at the requested detail level.
+func (s *Service) FetchMatch(
 	ctx context.Context,
 	identifier string,
 	detail contracts.DetailLevel,
@@ -198,8 +198,8 @@ func (service *Service) GetMatch(
 		return nil, err
 	}
 	query, operation := matchOperation(detail)
-	budget := service.budget()
-	response, err := service.execute(ctx, budget, query, operation, map[string]any{"id": id})
+	budget := s.budget()
+	response, err := s.execute(ctx, budget, query, operation, map[string]any{"id": id})
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func (service *Service) GetMatch(
 		return nil, availabilityErr
 	}
 	matchData := mapMatch(envelope.Match, detail)
-	names, nameRateLimits, nameWarnings := service.resolveHeroNames(ctx, budget, collectMatchHeroIDs(matchData))
+	names, nameRateLimits, nameWarnings := s.resolveHeroNames(ctx, budget, collectMatchHeroIDs(matchData))
 	if len(names) > 0 {
 		applyMatchHeroNames(&matchData, names)
 	}
@@ -231,7 +231,7 @@ func (service *Service) GetMatch(
 }
 
 // BatchMatches gets up to 25 matches atomically in caller order.
-func (service *Service) BatchMatches(
+func (s *Service) BatchMatches(
 	ctx context.Context,
 	identifiers []string,
 	detail contracts.DetailLevel,
@@ -240,7 +240,7 @@ func (service *Service) BatchMatches(
 	if err != nil {
 		return nil, err
 	}
-	plan, err := batch.NewPlan(identifiers, service.maxBatchSize, func(value string) (string, error) {
+	plan, err := batch.NewPlan(identifiers, s.maxBatchSize, func(value string) (string, error) {
 		id, normalizeErr := NormalizeMatchID(value)
 		if normalizeErr != nil {
 			return "", normalizeErr
@@ -256,7 +256,7 @@ func (service *Service) BatchMatches(
 		ids = append(ids, id)
 	}
 	query, operation := batchMatchOperation(detail)
-	budget := service.budget()
+	budget := s.budget()
 	results := make(map[string]contracts.Match, len(ids))
 	rawMatches := make([]any, 0, len(ids))
 	var rateLimits []stratz.RateLimit
@@ -269,7 +269,7 @@ func (service *Service) BatchMatches(
 			id := chunk[min(index, len(chunk)-1)]
 			variables[fmt.Sprintf("id%d", index)] = id
 		}
-		response, executeErr := service.execute(
+		response, executeErr := s.execute(
 			ctx,
 			budget,
 			query,
@@ -315,7 +315,7 @@ func (service *Service) BatchMatches(
 	}
 	warnings := matchWarnings(detail)
 	if heroIDs := collectBatchHeroIDs(items); len(heroIDs) > 0 {
-		names, nameRateLimits, nameWarnings := service.resolveHeroNames(ctx, budget, heroIDs)
+		names, nameRateLimits, nameWarnings := s.resolveHeroNames(ctx, budget, heroIDs)
 		if len(names) > 0 {
 			for index := range items {
 				applyMatchHeroNames(&items[index], names)
@@ -357,16 +357,16 @@ type PlayerMatchFilters struct {
 }
 
 // ListPlayerMatches returns a bounded filtered page and authenticated continuation.
-func (service *Service) ListPlayerMatches(
+func (s *Service) ListPlayerMatches(
 	ctx context.Context,
 	filters PlayerMatchFilters,
 ) (*Result[contracts.StratzListPlayerMatchesData], error) {
-	return service.ListPlayerMatchesWithBudget(ctx, filters, service.budget())
+	return s.ListPlayerMatchesWithBudget(ctx, filters, s.budget())
 }
 
 // ListPlayerMatchesWithBudget executes the list using the caller's shared
 // per-MCP-call request budget.
-func (service *Service) ListPlayerMatchesWithBudget(
+func (s *Service) ListPlayerMatchesWithBudget(
 	ctx context.Context,
 	filters PlayerMatchFilters,
 	budget *stratz.RequestBudget,
@@ -392,17 +392,17 @@ func (service *Service) ListPlayerMatchesWithBudget(
 		Tool:             "stratz_list_player_matches",
 		Filters:          filterBinding(playerID, filters),
 		PageSize:         filters.Limit,
-		Token:            service.token,
-		SchemaVersion:    service.schemaVersion,
+		Token:            s.token,
+		SchemaVersion:    s.schemaVersion,
 		OperationVersion: playerListOperationVersion,
 	}
 	var state pagination.ScanState[int64]
 	if filters.Cursor != "" {
-		if _, err := service.cursor.Decode(filters.Cursor, binding, &state); err != nil {
+		if _, err := s.cursor.Decode(filters.Cursor, binding, &state); err != nil {
 			return nil, cursorError(err)
 		}
 	}
-	rawPages := make([]any, 0, service.maxUpstreamRequests)
+	rawPages := make([]any, 0, s.maxUpstreamRequests)
 	var rateLimits []stratz.RateLimit
 	query, operation := listPlayerMatchesOperation(filters.IncludePlayer)
 	pageSize := filters.Limit
@@ -411,7 +411,7 @@ func (service *Service) ListPlayerMatchesWithBudget(
 	}
 	scan, err := pagination.Scan(ctx, pagination.ScanOptions[int64, upstreamMatch]{
 		Limit:    filters.Limit,
-		MaxPages: service.maxUpstreamRequests,
+		MaxPages: s.maxUpstreamRequests,
 		State:    optionalState(filters.Cursor, &state),
 		Fetch: func(ctx context.Context, skip *int64) (pagination.Page[int64, upstreamMatch], error) {
 			offset := int64(0)
@@ -422,7 +422,7 @@ func (service *Service) ListPlayerMatchesWithBudget(
 				"steamAccountId": int64(playerID.AccountID),
 				"request":        nativePlayerMatchRequest(filters, pageSize, offset),
 			}
-			response, executeErr := service.execute(ctx, budget, query, operation, variables)
+			response, executeErr := s.execute(ctx, budget, query, operation, variables)
 			if executeErr != nil {
 				return pagination.Page[int64, upstreamMatch]{}, executeErr
 			}
@@ -464,7 +464,7 @@ func (service *Service) ListPlayerMatchesWithBudget(
 	}
 	warnings := []string{}
 	if heroIDs := collectSummaryHeroIDs(items); len(heroIDs) > 0 {
-		names, nameRateLimits, nameWarnings := service.resolveHeroNames(ctx, budget, heroIDs)
+		names, nameRateLimits, nameWarnings := s.resolveHeroNames(ctx, budget, heroIDs)
 		if len(names) > 0 {
 			applySummaryHeroNames(items, names)
 		}
@@ -473,7 +473,7 @@ func (service *Service) ListPlayerMatchesWithBudget(
 	}
 	var nextCursor *string
 	if scan.Next != nil {
-		encoded, encodeErr := service.cursor.Encode(binding, pagination.LifetimeRecent, scan.Next)
+		encoded, encodeErr := s.cursor.Encode(binding, pagination.LifetimeRecent, scan.Next)
 		if encodeErr != nil {
 			return nil, &Error{Code: contracts.ErrorCodeInternalError, Message: "Failed to create pagination cursor", Details: map[string]any{}}
 		}
@@ -493,8 +493,8 @@ func (service *Service) ListPlayerMatchesWithBudget(
 	}, nil
 }
 
-func (service *Service) budget() *stratz.RequestBudget {
-	budget, _ := stratz.NewRequestBudget(service.maxUpstreamRequests)
+func (s *Service) budget() *stratz.RequestBudget {
+	budget, _ := stratz.NewRequestBudget(s.maxUpstreamRequests)
 	return budget
 }
 
@@ -502,29 +502,29 @@ func (service *Service) budget() *stratz.RequestBudget {
 // per-call budget. A nil namer or empty input yields no names. An upstream or
 // budget failure yields nil names plus a warning so callers still return hero
 // identifiers without the localized name.
-func (service *Service) resolveHeroNames(
+func (s *Service) resolveHeroNames(
 	ctx context.Context,
 	budget *stratz.RequestBudget,
 	ids []int64,
 ) (map[int64]string, []stratz.RateLimit, []string) {
-	if service.heroes == nil || len(ids) == 0 {
+	if s.heroes == nil || len(ids) == 0 {
 		return nil, nil, nil
 	}
-	names, rateLimits, err := service.heroes.HeroNames(ctx, ids, budget)
+	names, rateLimits, err := s.heroes.HeroNames(ctx, ids, budget)
 	if err != nil {
 		return nil, rateLimits, []string{heroNameUnavailableWarning}
 	}
 	return names, rateLimits, nil
 }
 
-func (service *Service) execute(
+func (s *Service) execute(
 	ctx context.Context,
 	budget *stratz.RequestBudget,
 	query string,
 	operation string,
 	variables any,
 ) (*stratz.Response, error) {
-	response, err := service.executor.Execute(ctx, budget, stratz.Request{
+	response, err := s.executor.Execute(ctx, budget, stratz.Request{
 		Query:         query,
 		OperationName: operation,
 		Variables:     variables,

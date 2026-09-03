@@ -154,7 +154,7 @@ func Generate(document Document) (map[string][]byte, Manifest, error) {
 
 // WriteBundle atomically replaces generated files while preserving a clear
 // restricted-data marker and owner-only permissions.
-func WriteBundle(directory string, files map[string][]byte) error {
+func WriteBundle(directory string, files map[string][]byte) (returnErr error) {
 	directory = filepath.Clean(strings.TrimSpace(directory))
 	if directory == "." || directory == "" {
 		return errors.New("schema output directory is required")
@@ -173,7 +173,16 @@ func WriteBundle(directory string, files map[string][]byte) error {
 	if err != nil {
 		return fmt.Errorf("create schema staging directory: %w", err)
 	}
-	defer os.RemoveAll(staging)
+	defer func() {
+		if cleanupErr := os.RemoveAll(staging); cleanupErr != nil {
+			cleanupErr = fmt.Errorf("remove schema staging directory: %w", cleanupErr)
+			if returnErr == nil {
+				returnErr = cleanupErr
+				return
+			}
+			returnErr = errors.Join(returnErr, cleanupErr)
+		}
+	}()
 	if err := os.Chmod(staging, 0o700); err != nil {
 		return fmt.Errorf("secure schema staging directory: %w", err)
 	}
@@ -193,23 +202,27 @@ func WriteBundle(directory string, files map[string][]byte) error {
 		ok := false
 		defer func() {
 			if !ok {
-				_ = os.Remove(temporaryName)
+				if cleanupErr := os.Remove(temporaryName); cleanupErr != nil && !os.IsNotExist(cleanupErr) {
+					cleanupErr = fmt.Errorf("remove temporary schema artifact: %w", cleanupErr)
+					if returnErr == nil {
+						returnErr = cleanupErr
+						return
+					}
+					returnErr = errors.Join(returnErr, cleanupErr)
+				}
 			}
 		}()
 		if err := temporary.Chmod(0o600); err != nil {
-			temporary.Close()
-			return err
+			return closeTemporaryArtifact(temporary, fmt.Errorf("secure temporary schema artifact: %w", err))
 		}
 		if _, err := temporary.Write(files[path]); err != nil {
-			temporary.Close()
-			return err
+			return closeTemporaryArtifact(temporary, fmt.Errorf("write temporary schema artifact: %w", err))
 		}
 		if err := temporary.Sync(); err != nil {
-			temporary.Close()
-			return err
+			return closeTemporaryArtifact(temporary, fmt.Errorf("sync temporary schema artifact: %w", err))
 		}
 		if err := temporary.Close(); err != nil {
-			return err
+			return fmt.Errorf("close temporary schema artifact: %w", err)
 		}
 		if err := os.Rename(temporaryName, target); err != nil {
 			return fmt.Errorf("install schema artifact %s: %w", path, err)
@@ -230,10 +243,16 @@ func WriteBundle(directory string, files map[string][]byte) error {
 		return fmt.Errorf("inspect existing schema bundle: %w", err)
 	}
 	if err := os.Rename(staging, directory); err != nil {
+		installErr := fmt.Errorf("install schema bundle: %w", err)
 		if hadExisting {
-			_ = os.Rename(backup, directory)
+			if restoreErr := os.Rename(backup, directory); restoreErr != nil {
+				return errors.Join(
+					installErr,
+					fmt.Errorf("restore previous schema bundle: %w", restoreErr),
+				)
+			}
 		}
-		return fmt.Errorf("install schema bundle: %w", err)
+		return installErr
 	}
 	if hadExisting {
 		if err := os.RemoveAll(backup); err != nil {
@@ -241,6 +260,16 @@ func WriteBundle(directory string, files map[string][]byte) error {
 		}
 	}
 	return nil
+}
+
+func closeTemporaryArtifact(file *os.File, operationErr error) error {
+	if closeErr := file.Close(); closeErr != nil {
+		return errors.Join(
+			operationErr,
+			fmt.Errorf("close temporary schema artifact: %w", closeErr),
+		)
+	}
+	return operationErr
 }
 
 func normalize(document Document) Document {

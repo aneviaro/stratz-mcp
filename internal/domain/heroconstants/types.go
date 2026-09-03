@@ -12,6 +12,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
+// Error is a stable hero-constants domain failure.
 type Error struct {
 	Code        contracts.ErrorCode
 	Message     string
@@ -28,6 +29,7 @@ func (err *Error) Error() string {
 	return err.Message
 }
 
+// Result carries normalized hero-constants data and safe response metadata.
 type Result[T any] struct {
 	Data           T
 	Raw            any
@@ -37,11 +39,13 @@ type Result[T any] struct {
 	PatchID        *string
 }
 
+// DateRange is the effective half-open interval used for aggregate statistics.
 type DateRange struct {
 	From time.Time
 	To   time.Time
 }
 
+// StatsFilters contains the bounded filters supported by hero statistics.
 type StatsFilters struct {
 	Hero             any
 	From             *time.Time

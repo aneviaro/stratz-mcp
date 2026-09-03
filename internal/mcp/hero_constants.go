@@ -16,11 +16,14 @@ func registerHeroConstantsHandlers(
 ) {
 	if handlers["stratz_get_hero"] == nil {
 		handlers["stratz_get_hero"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
 			if err := rejectPlayersDetail(object); err != nil {
 				return nil, err
 			}
-			result, err := service.GetHero(ctx, object["hero"])
+			result, err := service.FetchHero(ctx, object["hero"])
 			if err != nil {
 				return nil, heroConstantsExecutionError(err)
 			}
@@ -29,7 +32,10 @@ func registerHeroConstantsHandlers(
 	}
 	if handlers["stratz_batch_get_heroes"] == nil {
 		handlers["stratz_batch_get_heroes"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
 			if err := rejectPlayersDetail(object); err != nil {
 				return nil, err
 			}
@@ -50,8 +56,15 @@ func registerHeroConstantsHandlers(
 	}
 	if handlers["stratz_get_constants"] == nil {
 		handlers["stratz_get_constants"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
-			result, err := service.GetConstants(ctx, object["type"].(string))
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
+			constantType, err := requiredString(object, "type")
+			if err != nil {
+				return nil, err
+			}
+			result, err := service.FetchConstants(ctx, constantType)
 			if err != nil {
 				return nil, heroConstantsExecutionError(err)
 			}
@@ -60,12 +73,15 @@ func registerHeroConstantsHandlers(
 	}
 	if handlers["stratz_get_hero_stats"] == nil {
 		handlers["stratz_get_hero_stats"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
 			filters, err := decodeHeroStatsFilters(object)
 			if err != nil {
 				return nil, err
 			}
-			result, domainErr := service.GetHeroStats(ctx, filters)
+			result, domainErr := service.FetchHeroStats(ctx, filters)
 			if domainErr != nil {
 				return nil, heroConstantsExecutionError(domainErr)
 			}
@@ -134,8 +150,12 @@ func decodeHeroStatsFilters(input map[string]any) (heroconstants.StatsFilters, e
 			*destination = &copy
 		}
 	}
-	filters.IncludeMatchups, _ = input["include_matchups"].(bool)
-	filters.IncludeSynergies, _ = input["include_synergies"].(bool)
+	if value, ok := input["include_matchups"].(bool); ok {
+		filters.IncludeMatchups = value
+	}
+	if value, ok := input["include_synergies"].(bool); ok {
+		filters.IncludeSynergies = value
+	}
 	return filters, nil
 }
 

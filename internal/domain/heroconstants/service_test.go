@@ -52,16 +52,16 @@ func TestHeroResolutionByIDNameSlugAmbiguityAndBatchDuplicates(t *testing.T) {
 		{"axe", 1},
 		{"queen-of-pain", 2},
 	} {
-		result, err := service.GetHero(context.Background(), test.input)
+		result, err := service.FetchHero(context.Background(), test.input)
 		if err != nil {
-			t.Fatalf("GetHero(%v): %T %#v", test.input, err, err)
+			t.Fatalf("FetchHero(%v): %T %#v", test.input, err, err)
 		}
 		if result.Data.HeroID != test.id {
-			t.Fatalf("GetHero(%v) id = %d, want %d", test.input, result.Data.HeroID, test.id)
+			t.Fatalf("FetchHero(%v) id = %d, want %d", test.input, result.Data.HeroID, test.id)
 		}
 	}
 
-	_, err := service.GetHero(context.Background(), "Twin")
+	_, err := service.FetchHero(context.Background(), "Twin")
 	var domainErr *Error
 	if !errors.As(err, &domainErr) ||
 		domainErr.Code != contracts.ErrorCodeInvalidArgument ||
@@ -106,7 +106,7 @@ func TestConstantsTypesExplicitAllAndMissingRanks(t *testing.T) {
 		"heroes": 4, "items": 1, "abilities": 1, "game_modes": 1, "regions": 1, "ranks": 0, "all": 8,
 	}
 	for kind, count := range expected {
-		result, err := service.GetConstants(context.Background(), kind)
+		result, err := service.FetchConstants(context.Background(), kind)
 		if err != nil {
 			t.Fatalf("%s: %v", kind, err)
 		}
@@ -146,7 +146,7 @@ func TestHeroStatisticsBucketsApplyDateRankAndRoleFilters(t *testing.T) {
 	to := time.Date(2026, 6, 19, 10, 0, 0, 0, time.UTC)
 	rank := "immortal"
 	role := "core"
-	result, err := service.GetHeroStats(context.Background(), StatsFilters{
+	result, err := service.FetchHeroStats(context.Background(), StatsFilters{
 		Hero: json.Number("1"), From: &from, To: &to, RankBracket: &rank, Role: &role,
 	})
 	if err != nil {
@@ -166,12 +166,12 @@ func TestHeroStatisticsRejectUnsupportedDimensions(t *testing.T) {
 		return nil, nil
 	}}, time.Date(2026, 6, 19, 0, 0, 0, 0, time.UTC))
 	lane := "mid"
-	_, err := service.GetHeroStats(context.Background(), StatsFilters{Hero: 1, Lane: &lane})
+	_, err := service.FetchHeroStats(context.Background(), StatsFilters{Hero: 1, Lane: &lane})
 	assertCode(t, err, contracts.ErrorCodeInvalidArgument)
-	_, err = service.GetHeroStats(context.Background(), StatsFilters{Hero: 1, IncludeMatchups: true})
+	_, err = service.FetchHeroStats(context.Background(), StatsFilters{Hero: 1, IncludeMatchups: true})
 	assertCode(t, err, contracts.ErrorCodeInvalidArgument)
 	patch := "7.39"
-	_, err = service.GetHeroStats(context.Background(), StatsFilters{Hero: 1, PatchID: &patch})
+	_, err = service.FetchHeroStats(context.Background(), StatsFilters{Hero: 1, PatchID: &patch})
 	assertCode(t, err, contracts.ErrorCodeInvalidArgument)
 	if err == nil {
 		t.Fatal("expected unsupported filter error")
@@ -186,7 +186,7 @@ func TestPatchStatisticsRejectIncompatibleBucket(t *testing.T) {
 	from := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	to := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
 	patch := "7.39"
-	_, err := service.GetHeroStats(context.Background(), StatsFilters{
+	_, err := service.FetchHeroStats(context.Background(), StatsFilters{
 		Hero: json.Number("1"), From: &from, To: &to, PatchID: &patch,
 	})
 	var domainErr *Error
@@ -254,7 +254,7 @@ func TestHeroServiceMapsUpstreamAndProtocolFailures(t *testing.T) {
 			service := mustService(t, &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
 				return test.response, test.err
 			}})
-			_, err := service.GetHero(context.Background(), json.Number("1"))
+			_, err := service.FetchHero(context.Background(), json.Number("1"))
 			var domainErr *Error
 			if !errors.As(err, &domainErr) || domainErr.Code != test.want {
 				t.Fatalf("error = %#v", err)
@@ -277,21 +277,21 @@ func TestConstantsInMemoryCacheDeduplicatesAndExpires(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := service.GetConstants(context.Background(), "heroes"); err != nil {
+	if _, err := service.FetchConstants(context.Background(), "heroes"); err != nil {
 		t.Fatal(err)
 	}
 	if executor.calls != 1 {
 		t.Fatalf("after first call: calls = %d, want 1", executor.calls)
 	}
 	// A repeat within the TTL is served from the in-memory cache.
-	if _, err := service.GetConstants(context.Background(), "heroes"); err != nil {
+	if _, err := service.FetchConstants(context.Background(), "heroes"); err != nil {
 		t.Fatal(err)
 	}
 	if executor.calls != 1 {
 		t.Fatalf("after cached call: calls = %d, want 1", executor.calls)
 	}
 	// A different constants consumer shares the same cached snapshot.
-	if _, err := service.GetHero(context.Background(), json.Number("1")); err != nil {
+	if _, err := service.FetchHero(context.Background(), json.Number("1")); err != nil {
 		t.Fatal(err)
 	}
 	if executor.calls != 1 {
@@ -299,7 +299,7 @@ func TestConstantsInMemoryCacheDeduplicatesAndExpires(t *testing.T) {
 	}
 	// Advancing the clock past the TTL forces one fresh fetch.
 	now = now.Add(2 * time.Hour)
-	if _, err := service.GetConstants(context.Background(), "heroes"); err != nil {
+	if _, err := service.FetchConstants(context.Background(), "heroes"); err != nil {
 		t.Fatal(err)
 	}
 	if executor.calls != 2 {
@@ -349,7 +349,7 @@ func TestConstantsCacheHitReportsNoRateLimits(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Cold: the live fetch carries rate limits.
-	first, err := service.GetConstants(context.Background(), "heroes")
+	first, err := service.FetchConstants(context.Background(), "heroes")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -358,7 +358,7 @@ func TestConstantsCacheHitReportsNoRateLimits(t *testing.T) {
 	}
 	// Warm hit: no upstream request was made, so rate limits must not be
 	// reported (they would be stale quota telemetry, not fresh data).
-	hit, err := service.GetConstants(context.Background(), "heroes")
+	hit, err := service.FetchConstants(context.Background(), "heroes")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -400,7 +400,7 @@ func TestConstantsColdCacheCoalescesConcurrentFetches(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 			<-start
-			_, errs[i] = service.GetConstants(context.Background(), "heroes")
+			_, errs[i] = service.FetchConstants(context.Background(), "heroes")
 		}(i)
 	}
 	close(start)                      // every goroutine races toward loadConstants

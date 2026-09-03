@@ -10,6 +10,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
+// Error is a stable league-live domain failure.
 type Error struct {
 	Code       contracts.ErrorCode
 	Message    string
@@ -25,6 +26,7 @@ func (err *Error) Error() string {
 	return err.Message
 }
 
+// Result carries normalized league-live data and safe response metadata.
 type Result[T any] struct {
 	Data       T
 	Raw        any
@@ -32,6 +34,7 @@ type Result[T any] struct {
 	Warnings   []string
 }
 
+// LeagueFilters contains the bounded filters for league listing.
 type LeagueFilters struct {
 	Query  *string
 	Status *string
@@ -42,6 +45,7 @@ type LeagueFilters struct {
 	Cursor string
 }
 
+// LeagueMatchFilters contains the bounded filters for league-match listing.
 type LeagueMatchFilters struct {
 	LeagueID string
 	From     *time.Time
@@ -51,6 +55,7 @@ type LeagueMatchFilters struct {
 	Cursor   string
 }
 
+// LiveFilters contains the bounded filters for live-match listing.
 type LiveFilters struct {
 	PlayerID          *int64
 	TeamID            *int64

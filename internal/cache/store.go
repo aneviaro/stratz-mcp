@@ -111,7 +111,9 @@ func Open(options Options) (*Store, error) {
 		writeSlots:      make(chan struct{}, maxPendingWrites),
 	}
 	if err := store.initialize(context.Background()); err != nil {
-		_ = database.Close()
+		if closeErr := database.Close(); closeErr != nil {
+			return nil, errors.Join(err, fmt.Errorf("close cache database: %w", closeErr))
+		}
 		return nil, err
 	}
 	return store, nil
@@ -461,7 +463,10 @@ func (store *Store) Clear(ctx context.Context, options ClearOptions) (ClearResul
 		return ClearResult{}, store.fail(err, "commit cache clear")
 	}
 	committed = true
-	deleted, _ := result.RowsAffected()
+	deleted, err := result.RowsAffected()
+	if err != nil {
+		return ClearResult{}, fmt.Errorf("read cleared cache entry count: %w", err)
+	}
 	return ClearResult{Deleted: deleted}, nil
 }
 

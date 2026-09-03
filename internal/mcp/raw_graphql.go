@@ -75,9 +75,9 @@ func rawGraphQLHandler(
 }
 
 func decodeRawGraphQLRequest(input any) (rawgraphql.RawRequest, error) {
-	object, ok := input.(map[string]any)
-	if !ok {
-		return rawgraphql.RawRequest{}, invalidArgumentsError()
+	object, err := inputObject(input)
+	if err != nil {
+		return rawgraphql.RawRequest{}, err
 	}
 	query, ok := object["query"].(string)
 	if !ok {

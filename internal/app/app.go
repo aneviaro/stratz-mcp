@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -19,9 +20,12 @@ import (
 )
 
 const (
+	// DevelopmentVersion is used when no release version is injected.
 	DevelopmentVersion = "dev"
-	UnknownRevision    = "unknown"
-	UnknownSchema      = "unavailable"
+	// UnknownRevision is used when no source revision is injected.
+	UnknownRevision = "unknown"
+	// UnknownSchema is used when no schema manifest is available.
+	UnknownSchema = "unavailable"
 )
 
 // BuildInfo contains metadata supplied by the build pipeline.
@@ -94,7 +98,9 @@ func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 	})
 	if err != nil {
 		if cacheStore != nil {
-			_ = cacheStore.Close()
+			if closeErr := cacheStore.Close(); closeErr != nil {
+				err = errors.Join(err, fmt.Errorf("close cache store: %w", closeErr))
+			}
 		}
 		return nil, fmt.Errorf("construct MCP server: %w", err)
 	}
@@ -107,16 +113,16 @@ func NewRuntime(options RuntimeOptions) (*Runtime, error) {
 }
 
 // Build returns the effective runtime metadata, including a pulled schema hash.
-func (runtime *Runtime) Build() BuildInfo {
-	return runtime.build
+func (r *Runtime) Build() BuildInfo {
+	return r.build
 }
 
 // Close flushes asynchronous cache writes and releases runtime resources.
-func (runtime *Runtime) Close() error {
-	if runtime == nil || runtime.cache == nil {
+func (r *Runtime) Close() error {
+	if r == nil || r.cache == nil {
 		return nil
 	}
-	return runtime.cache.Close()
+	return r.cache.Close()
 }
 
 func schemaDirectory(cacheDirectory string) string {
@@ -127,23 +133,23 @@ func schemaDirectory(cacheDirectory string) string {
 }
 
 // Executor returns the bounded upstream dependency used by runtime commands.
-func (runtime *Runtime) Executor() stratz.Executor {
-	return runtime.executor
+func (r *Runtime) Executor() stratz.Executor {
+	return r.executor
 }
 
 // Cache returns the process cache backend state.
-func (runtime *Runtime) Cache() *cache.Store {
-	return runtime.cache
+func (r *Runtime) Cache() *cache.Store {
+	return r.cache
 }
 
 // Server returns the configured MCP adapter.
-func (runtime *Runtime) Server() *mcpserver.Server {
-	return runtime.server
+func (r *Runtime) Server() *mcpserver.Server {
+	return r.server
 }
 
 // Serve runs the stdio server. The output wrapper deliberately has a no-op
 // close so the process owns stdout for its full lifetime.
-func (runtime *Runtime) Serve(
+func (r *Runtime) Serve(
 	ctx context.Context,
 	stdin io.Reader,
 	stdout io.Writer,
@@ -152,7 +158,7 @@ func (runtime *Runtime) Serve(
 	if !ok {
 		reader = io.NopCloser(stdin)
 	}
-	return runtime.server.Run(ctx, reader, writerCloser{Writer: stdout})
+	return r.server.Run(ctx, reader, writerCloser{Writer: stdout})
 }
 
 type writerCloser struct {
