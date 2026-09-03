@@ -19,11 +19,18 @@ func registerPlayerMatchHandlers(
 ) {
 	if handlers["stratz_get_player"] == nil {
 		handlers["stratz_get_player"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
 			if err := rejectPlayersDetail(object); err != nil {
 				return nil, err
 			}
-			result, err := service.GetPlayer(ctx, object["player_id"].(string))
+			playerID, err := requiredString(object, "player_id")
+			if err != nil {
+				return nil, err
+			}
+			result, err := service.FetchPlayer(ctx, playerID)
 			if err != nil {
 				return nil, playerMatchExecutionError(err)
 			}
@@ -32,7 +39,10 @@ func registerPlayerMatchHandlers(
 	}
 	if handlers["stratz_batch_get_players"] == nil {
 		handlers["stratz_batch_get_players"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
 			if err := rejectPlayersDetail(object); err != nil {
 				return nil, err
 			}
@@ -50,8 +60,15 @@ func registerPlayerMatchHandlers(
 	}
 	if handlers["stratz_get_match"] == nil {
 		handlers["stratz_get_match"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
-			result, err := service.GetMatch(ctx, object["match_id"].(string), detailInput(object))
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
+			matchID, err := requiredString(object, "match_id")
+			if err != nil {
+				return nil, err
+			}
+			result, err := service.FetchMatch(ctx, matchID, detailInput(object))
 			if err != nil {
 				return nil, playerMatchExecutionError(err)
 			}
@@ -62,7 +79,10 @@ func registerPlayerMatchHandlers(
 	}
 	if handlers["stratz_batch_get_matches"] == nil {
 		handlers["stratz_batch_get_matches"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
 			identifiers, err := stringSlice(object["match_ids"])
 			if err != nil {
 				return nil, invalidArgumentsError()
@@ -79,8 +99,14 @@ func registerPlayerMatchHandlers(
 	}
 	if handlers["stratz_list_player_matches"] == nil {
 		handlers["stratz_list_player_matches"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
-			budget, _ := stratz.NewRequestBudget(options.Config.Limits.MaxUpstreamRequests)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
+			budget, budgetErr := stratz.NewRequestBudget(options.Config.Limits.MaxUpstreamRequests)
+			if budgetErr != nil {
+				return nil, budgetErr
+			}
 			filters, err := decodePlayerMatchFilters(ctx, object, heroes, budget)
 			if err != nil {
 				return nil, err

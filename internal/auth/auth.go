@@ -5,19 +5,24 @@ package auth
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
 	"github.com/aneviaro/stratz-mcp/internal/securefile"
 )
 
+// MaxTokenFileBytes bounds token-file reads before validation.
 const MaxTokenFileBytes = 16 << 10
 
+// Source identifies the non-sensitive origin of a credential.
 type Source string
 
 const (
+	// SourceEnvironment identifies a token loaded from STRATZ_API_TOKEN.
 	SourceEnvironment Source = "environment"
-	SourceFile        Source = "file"
+	// SourceFile identifies a token loaded from a file.
+	SourceFile Source = "file"
 )
 
 // Credential contains the active token and its non-sensitive source type.
@@ -26,6 +31,7 @@ type Credential struct {
 	Source Source
 }
 
+// LoadOptions configures credential loading.
 type LoadOptions struct {
 	Environment map[string]string
 	TokenFile   string
@@ -63,10 +69,17 @@ func readTokenFile(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
-	data, err := io.ReadAll(io.LimitReader(file, MaxTokenFileBytes+1))
-	if err != nil {
-		return "", errors.New("cannot read file")
+	data, readErr := io.ReadAll(io.LimitReader(file, MaxTokenFileBytes+1))
+	closeErr := file.Close()
+	if readErr != nil {
+		readError := errors.New("cannot read file")
+		if closeErr != nil {
+			return "", errors.Join(readError, fmt.Errorf("close token file: %w", closeErr))
+		}
+		return "", readError
+	}
+	if closeErr != nil {
+		return "", fmt.Errorf("close token file: %w", closeErr)
 	}
 	if len(data) > MaxTokenFileBytes {
 		return "", errors.New("file exceeds 16 KiB")

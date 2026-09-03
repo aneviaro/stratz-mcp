@@ -41,7 +41,10 @@ func cachedToolHandler(
 		return handler
 	}
 	return func(ctx context.Context, input any) (any, error) {
-		arguments, _ := input.(map[string]any)
+		arguments, err := inputObject(input)
+		if err != nil {
+			return nil, err
+		}
 		if detailInput(arguments) == contracts.DetailLevel("players") && !playersDetailAllowed(name) {
 			return nil, invalidArgumentsError()
 		}

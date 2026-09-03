@@ -21,11 +21,18 @@ func registerLeagueLiveHandlers(
 ) {
 	if handlers["stratz_get_league"] == nil {
 		handlers["stratz_get_league"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
 			if err := rejectPlayersDetail(object); err != nil {
 				return nil, err
 			}
-			result, err := service.GetLeague(ctx, object["league_id"].(string))
+			leagueID, err := requiredString(object, "league_id")
+			if err != nil {
+				return nil, err
+			}
+			result, err := service.FetchLeague(ctx, leagueID)
 			if err != nil {
 				return nil, leagueLiveExecutionError(err)
 			}
@@ -34,7 +41,10 @@ func registerLeagueLiveHandlers(
 	}
 	if handlers["stratz_list_leagues"] == nil {
 		handlers["stratz_list_leagues"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
 			filters, err := decodeLeagueFilters(object)
 			if err != nil {
 				return nil, err
@@ -48,7 +58,10 @@ func registerLeagueLiveHandlers(
 	}
 	if handlers["stratz_list_league_matches"] == nil {
 		handlers["stratz_list_league_matches"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
 			if err := rejectPlayersDetail(object); err != nil {
 				return nil, err
 			}
@@ -65,8 +78,14 @@ func registerLeagueLiveHandlers(
 	}
 	if handlers["stratz_list_live_matches"] == nil {
 		handlers["stratz_list_live_matches"] = func(ctx context.Context, input any) (any, error) {
-			object := input.(map[string]any)
-			budget, _ := stratz.NewRequestBudget(options.Config.Limits.MaxUpstreamRequests)
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
+			budget, budgetErr := stratz.NewRequestBudget(options.Config.Limits.MaxUpstreamRequests)
+			if budgetErr != nil {
+				return nil, budgetErr
+			}
 			filters, err := decodeLiveFilters(ctx, object, heroes, budget)
 			if err != nil {
 				return nil, err
@@ -127,8 +146,12 @@ func decodeLiveFilters(
 		}
 		filters.Limit = int(number)
 	}
-	filters.Cursor, _ = input["cursor"].(string)
-	filters.Sort, _ = input["sort"].(string)
+	if value, ok := input["cursor"].(string); ok {
+		filters.Cursor = value
+	}
+	if value, ok := input["sort"].(string); ok {
+		filters.Sort = value
+	}
 	for key, destination := range map[string]**int64{
 		"game_mode_id": &filters.GameModeID, "minimum_spectators": &filters.MinimumSpectators,
 	} {
@@ -187,7 +210,9 @@ func decodeListFields(input map[string]any, limit *int, cursor *string, from, to
 		}
 		*limit = int(number)
 	}
-	*cursor, _ = input["cursor"].(string)
+	if value, ok := input["cursor"].(string); ok {
+		*cursor = value
+	}
 	for key, destination := range map[string]**time.Time{"from": from, "to": to} {
 		if value, ok := input[key].(string); ok {
 			parsed, err := time.Parse(time.RFC3339, value)

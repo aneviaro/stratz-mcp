@@ -20,6 +20,7 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
+// Options configures hero constants and statistics execution.
 type Options struct {
 	Executor            stratz.Executor
 	MaxUpstreamRequests int
@@ -34,6 +35,7 @@ type Options struct {
 	Now          func() time.Time
 }
 
+// Service executes curated hero constants and statistics operations.
 type Service struct {
 	executor            stratz.Executor
 	maxUpstreamRequests int
@@ -46,6 +48,7 @@ type Service struct {
 	constantsGroup singleflight.Group
 }
 
+// New constructs the hero constants service.
 func New(options Options) (*Service, error) {
 	if options.Executor == nil {
 		return nil, errors.New("STRATZ executor is required")
@@ -71,8 +74,9 @@ func New(options Options) (*Service, error) {
 	}, nil
 }
 
-func (service *Service) GetHero(ctx context.Context, identifier any) (*Result[contracts.Hero], error) {
-	response, constants, err := service.loadConstants(ctx, service.budget())
+// FetchHero resolves and returns one normalized hero.
+func (s *Service) FetchHero(ctx context.Context, identifier any) (*Result[contracts.Hero], error) {
+	response, constants, err := s.loadConstants(ctx, s.budget())
 	if err != nil {
 		return nil, err
 	}
@@ -87,15 +91,16 @@ func (service *Service) GetHero(ctx context.Context, identifier any) (*Result[co
 	}, nil
 }
 
-func (service *Service) BatchHeroes(ctx context.Context, identifiers []any) (*Result[[]contracts.Hero], error) {
-	if len(identifiers) == 0 || len(identifiers) > service.maxBatchSize {
-		return nil, invalid(fmt.Sprintf("Hero batch size must be between 1 and %d", service.maxBatchSize), nil)
+// BatchHeroes resolves up to the configured number of heroes atomically.
+func (s *Service) BatchHeroes(ctx context.Context, identifiers []any) (*Result[[]contracts.Hero], error) {
+	if len(identifiers) == 0 || len(identifiers) > s.maxBatchSize {
+		return nil, invalid(fmt.Sprintf("Hero batch size must be between 1 and %d", s.maxBatchSize), nil)
 	}
-	response, constants, err := service.loadConstants(ctx, service.budget())
+	response, constants, err := s.loadConstants(ctx, s.budget())
 	if err != nil {
 		return nil, err
 	}
-	plan, err := batch.NewPlan(identifiers, service.maxBatchSize, canonicalIdentifier)
+	plan, err := batch.NewPlan(identifiers, s.maxBatchSize, canonicalIdentifier)
 	if err != nil {
 		return nil, invalid("Hero batch input is invalid", map[string]any{"reason": err.Error()})
 	}
@@ -121,8 +126,8 @@ func (service *Service) BatchHeroes(ctx context.Context, identifiers []any) (*Re
 }
 
 // ResolveHeroID resolves any public hero identifier to its canonical numeric ID.
-func (service *Service) ResolveHeroID(ctx context.Context, identifier any) (int64, error) {
-	return service.ResolveHeroIDWithBudget(ctx, identifier, service.budget())
+func (s *Service) ResolveHeroID(ctx context.Context, identifier any) (int64, error) {
+	return s.ResolveHeroIDWithBudget(ctx, identifier, s.budget())
 }
 
 // HeroNames resolves the localized display name for each requested numeric hero
@@ -130,7 +135,7 @@ func (service *Service) ResolveHeroID(ctx context.Context, identifier any) (int6
 // per-MCP-call budget. IDs absent from the upstream constants are omitted from
 // the returned map (callers treat a missing entry as an unknown name). An empty
 // input skips the upstream request entirely and returns an empty map.
-func (service *Service) HeroNames(
+func (s *Service) HeroNames(
 	ctx context.Context,
 	ids []int64,
 	budget *stratz.RequestBudget,
@@ -138,7 +143,7 @@ func (service *Service) HeroNames(
 	if len(ids) == 0 {
 		return map[int64]string{}, nil, nil
 	}
-	response, constants, err := service.loadConstants(ctx, budget)
+	response, constants, err := s.loadConstants(ctx, budget)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -163,12 +168,12 @@ func (service *Service) HeroNames(
 
 // ResolveHeroIDWithBudget resolves a hero while charging the caller's shared
 // per-MCP-call request budget.
-func (service *Service) ResolveHeroIDWithBudget(
+func (s *Service) ResolveHeroIDWithBudget(
 	ctx context.Context,
 	identifier any,
 	budget *stratz.RequestBudget,
 ) (int64, error) {
-	_, constants, err := service.loadConstants(ctx, budget)
+	_, constants, err := s.loadConstants(ctx, budget)
 	if err != nil {
 		return 0, err
 	}
@@ -179,11 +184,12 @@ func (service *Service) ResolveHeroIDWithBudget(
 	return hero.ID, nil
 }
 
-func (service *Service) GetConstants(ctx context.Context, requested string) (*Result[contracts.StratzGetConstantsData], error) {
+// FetchConstants returns the requested normalized constants collection.
+func (s *Service) FetchConstants(ctx context.Context, requested string) (*Result[contracts.StratzGetConstantsData], error) {
 	if !validConstantType(requested) {
 		return nil, invalid("Unsupported constants type", map[string]any{"type": requested})
 	}
-	response, constants, err := service.loadConstants(ctx, service.budget())
+	response, constants, err := s.loadConstants(ctx, s.budget())
 	if err != nil {
 		return nil, err
 	}
@@ -199,13 +205,14 @@ func (service *Service) GetConstants(ctx context.Context, requested string) (*Re
 	}, nil
 }
 
-func (service *Service) GetHeroStats(ctx context.Context, filters StatsFilters) (*Result[contracts.StratzGetHeroStatsData], error) {
-	budget := service.budget()
-	heroID, constantsResponse, err := service.resolveStatsHero(ctx, budget, filters.Hero)
+// FetchHeroStats returns bounded aggregate statistics for one hero.
+func (s *Service) FetchHeroStats(ctx context.Context, filters StatsFilters) (*Result[contracts.StratzGetHeroStatsData], error) {
+	budget := s.budget()
+	heroID, constantsResponse, err := s.resolveStatsHero(ctx, budget, filters.Hero)
 	if err != nil {
 		return nil, err
 	}
-	bucket, effective, rangeErr := translateRange(service.now(), filters.From, filters.To)
+	bucket, effective, rangeErr := translateRange(s.now(), filters.From, filters.To)
 	if rangeErr != nil {
 		return nil, rangeErr
 	}
@@ -234,7 +241,7 @@ func (service *Service) GetHeroStats(ctx context.Context, filters StatsFilters) 
 		variables["positionIds"] = positions
 	}
 	query, operation := statisticsOperation(bucket)
-	response, err := service.execute(ctx, budget, query, operation, variables)
+	response, err := s.execute(ctx, budget, query, operation, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -340,11 +347,11 @@ func heroStatsPositions(value string) ([]string, bool) {
 	}
 }
 
-func (service *Service) resolveStatsHero(ctx context.Context, budget *stratz.RequestBudget, identifier any) (int64, *stratz.Response, error) {
+func (s *Service) resolveStatsHero(ctx context.Context, budget *stratz.RequestBudget, identifier any) (int64, *stratz.Response, error) {
 	if id, ok := numericHeroID(identifier); ok {
 		return id, nil, nil
 	}
-	response, constants, err := service.loadConstants(ctx, budget)
+	response, constants, err := s.loadConstants(ctx, budget)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -369,8 +376,8 @@ type cachedConstants struct {
 	fetchedAt time.Time
 }
 
-func (service *Service) loadConstants(ctx context.Context, budget *stratz.RequestBudget) (*stratz.Response, upstreamConstants, error) {
-	if cached := service.readConstantsCache(); cached != nil {
+func (s *Service) loadConstants(ctx context.Context, budget *stratz.RequestBudget) (*stratz.Response, upstreamConstants, error) {
+	if cached := s.readConstantsCache(); cached != nil {
 		return &stratz.Response{HTTPStatus: 200, Data: cached.raw}, cached.data, nil
 	}
 	// With caching enabled, coalesce concurrent cold-cache misses into a single
@@ -378,19 +385,19 @@ func (service *Service) loadConstants(ctx context.Context, budget *stratz.Reques
 	// cache each miss, each fetch, and each write (no race, but one request per
 	// caller). When caching is disabled (ConstantsTTL <= 0) tests expect exact
 	// per-call request counts, so fetch directly without coalescing.
-	if service.constantsTTL <= 0 {
-		return service.fetchConstants(ctx, budget)
+	if s.constantsTTL <= 0 {
+		return s.fetchConstants(ctx, budget)
 	}
-	result, err, _ := service.constantsGroup.Do(constantsFlightKey, func() (any, error) {
+	result, err, _ := s.constantsGroup.Do(constantsFlightKey, func() (any, error) {
 		// Double-checked fill: a prior leader that just finished may have
 		// populated the cache before this flight started.
-		if cached := service.readConstantsCache(); cached != nil {
+		if cached := s.readConstantsCache(); cached != nil {
 			return &constantsLoadResult{
 				response: &stratz.Response{HTTPStatus: 200, Data: cached.raw},
 				data:     cached.data,
 			}, nil
 		}
-		response, data, ferr := service.fetchConstants(ctx, budget)
+		response, data, ferr := s.fetchConstants(ctx, budget)
 		if ferr != nil {
 			return nil, ferr
 		}
@@ -415,8 +422,8 @@ type constantsLoadResult struct {
 
 // fetchConstants executes the STRATZ constants aggregate, validates it, and
 // writes the snapshot to the in-memory cache when enabled.
-func (service *Service) fetchConstants(ctx context.Context, budget *stratz.RequestBudget) (*stratz.Response, upstreamConstants, error) {
-	response, err := service.execute(ctx, budget, generated.StratzGetConstants_Operation, "StratzGetConstants", nil)
+func (s *Service) fetchConstants(ctx context.Context, budget *stratz.RequestBudget) (*stratz.Response, upstreamConstants, error) {
+	response, err := s.execute(ctx, budget, generated.StratzGetConstants_Operation, "StratzGetConstants", nil)
 	if err != nil {
 		return nil, upstreamConstants{}, err
 	}
@@ -424,7 +431,7 @@ func (service *Service) fetchConstants(ctx context.Context, budget *stratz.Reque
 	if json.Unmarshal(response.Data, &envelope) != nil {
 		return nil, upstreamConstants{}, protocol("STRATZ returned an invalid constants payload")
 	}
-	service.writeConstantsCache(envelope.Constants, response.Data)
+	s.writeConstantsCache(envelope.Constants, response.Data)
 	return response, envelope.Constants, nil
 }
 
@@ -432,33 +439,33 @@ func (service *Service) fetchConstants(ctx context.Context, budget *stratz.Reque
 // enabled and the entry is fresh. It returns nil when caching is disabled
 // (ConstantsTTL <= 0), the cache is cold, or the entry has expired, so callers
 // always fall back to a live fetch. On a hit no budget is charged.
-func (service *Service) readConstantsCache() *cachedConstants {
-	if service.constantsTTL <= 0 {
+func (s *Service) readConstantsCache() *cachedConstants {
+	if s.constantsTTL <= 0 {
 		return nil
 	}
-	service.constantsMu.Lock()
-	defer service.constantsMu.Unlock()
-	if service.constants == nil || service.now().Sub(service.constants.fetchedAt) > service.constantsTTL {
+	s.constantsMu.Lock()
+	defer s.constantsMu.Unlock()
+	if s.constants == nil || s.now().Sub(s.constants.fetchedAt) > s.constantsTTL {
 		return nil
 	}
-	return service.constants
+	return s.constants
 }
 
-func (service *Service) writeConstantsCache(data upstreamConstants, raw json.RawMessage) {
-	if service.constantsTTL <= 0 {
+func (s *Service) writeConstantsCache(data upstreamConstants, raw json.RawMessage) {
+	if s.constantsTTL <= 0 {
 		return
 	}
-	service.constantsMu.Lock()
-	defer service.constantsMu.Unlock()
-	service.constants = &cachedConstants{
+	s.constantsMu.Lock()
+	defer s.constantsMu.Unlock()
+	s.constants = &cachedConstants{
 		data:      data,
 		raw:       raw,
-		fetchedAt: service.now(),
+		fetchedAt: s.now(),
 	}
 }
 
-func (service *Service) execute(ctx context.Context, budget *stratz.RequestBudget, query, operation string, variables any) (*stratz.Response, error) {
-	response, err := service.executor.Execute(ctx, budget, stratz.Request{
+func (s *Service) execute(ctx context.Context, budget *stratz.RequestBudget, query, operation string, variables any) (*stratz.Response, error) {
+	response, err := s.executor.Execute(ctx, budget, stratz.Request{
 		Query: query, OperationName: operation, Variables: variables, Mode: stratz.ModeCurated, AllowRetries: true,
 	})
 	if err != nil {
@@ -470,8 +477,8 @@ func (service *Service) execute(ctx context.Context, budget *stratz.RequestBudge
 	return response, nil
 }
 
-func (service *Service) budget() *stratz.RequestBudget {
-	budget, _ := stratz.NewRequestBudget(service.maxUpstreamRequests)
+func (s *Service) budget() *stratz.RequestBudget {
+	budget, _ := stratz.NewRequestBudget(s.maxUpstreamRequests)
 	return budget
 }
 

@@ -20,6 +20,7 @@ const (
 	liveListOperationVersion    = "live-matches/v1"
 )
 
+// Options configures league and live-match execution.
 type Options struct {
 	Executor            stratz.Executor
 	Token               string
@@ -28,6 +29,7 @@ type Options struct {
 	Now                 func() time.Time
 }
 
+// Service executes curated league and live-match operations.
 type Service struct {
 	executor            stratz.Executor
 	token               string
@@ -37,6 +39,7 @@ type Service struct {
 	cursor              *pagination.Codec
 }
 
+// New constructs the league-live service.
 func New(options Options) (*Service, error) {
 	if options.Executor == nil {
 		return nil, errors.New("STRATZ executor is required")
@@ -60,12 +63,13 @@ func New(options Options) (*Service, error) {
 	}, nil
 }
 
-func (service *Service) GetLeague(ctx context.Context, identifier string) (*Result[contracts.League], error) {
+// FetchLeague returns one normalized league.
+func (s *Service) FetchLeague(ctx context.Context, identifier string) (*Result[contracts.League], error) {
 	id, domainErr := parseID(identifier, "league_id")
 	if domainErr != nil {
 		return nil, domainErr
 	}
-	response, err := service.execute(ctx, service.budget(), generated.StratzGetLeague_Operation, "StratzGetLeague", map[string]any{"id": id})
+	response, err := s.execute(ctx, s.budget(), generated.StratzGetLeague_Operation, "StratzGetLeague", map[string]any{"id": id})
 	if err != nil {
 		return nil, err
 	}
@@ -76,10 +80,11 @@ func (service *Service) GetLeague(ctx context.Context, identifier string) (*Resu
 	if envelope.League == nil {
 		return nil, notFound("League was not found", map[string]any{"league_id": identifier})
 	}
-	return &Result[contracts.League]{Data: mapLeague(envelope.League, service.now()), Raw: rawData(response.Data), RateLimits: response.RateLimits}, nil
+	return &Result[contracts.League]{Data: mapLeague(envelope.League, s.now()), Raw: rawData(response.Data), RateLimits: response.RateLimits}, nil
 }
 
-func (service *Service) ListLeagues(ctx context.Context, filters LeagueFilters) (*Result[contracts.StratzListLeaguesData], error) {
+// ListLeagues returns a bounded page of normalized leagues.
+func (s *Service) ListLeagues(ctx context.Context, filters LeagueFilters) (*Result[contracts.StratzListLeaguesData], error) {
 	if err := validateList(filters.Limit, filters.From, filters.To); err != nil {
 		return nil, err
 	}
@@ -93,22 +98,22 @@ func (service *Service) ListLeagues(ctx context.Context, filters LeagueFilters) 
 		}
 	}
 	filters.Limit = defaultLimit(filters.Limit)
-	binding := service.binding("stratz_list_leagues", leagueBinding(filters), filters.Limit, leagueListOperationVersion)
+	binding := s.binding("stratz_list_leagues", leagueBinding(filters), filters.Limit, leagueListOperationVersion)
 	var state pagination.ScanState[int64]
 	if filters.Cursor != "" {
-		if _, err := service.cursor.Decode(filters.Cursor, binding, &state); err != nil {
+		if _, err := s.cursor.Decode(filters.Cursor, binding, &state); err != nil {
 			return nil, cursorError(err)
 		}
 	}
-	budget := service.budget()
+	budget := s.budget()
 	rawPages := []any{}
 	var rates []stratz.RateLimit
 	pageSize := max(filters.Limit, 20)
 	scan, err := pagination.Scan(ctx, pagination.ScanOptions[int64, upstreamLeague]{
-		Limit: filters.Limit, MaxPages: service.maxUpstreamRequests, State: stateIf(filters.Cursor, &state),
+		Limit: filters.Limit, MaxPages: s.maxUpstreamRequests, State: stateIf(filters.Cursor, &state),
 		Fetch: func(ctx context.Context, skip *int64) (pagination.Page[int64, upstreamLeague], error) {
 			offset := pointerValue(skip)
-			response, executeErr := service.execute(ctx, budget, generated.StratzListLeagues_Operation, "StratzListLeagues", map[string]any{
+			response, executeErr := s.execute(ctx, budget, generated.StratzListLeagues_Operation, "StratzListLeagues", map[string]any{
 				"request": nativeLeagueRequest(filters, pageSize, offset),
 			})
 			if executeErr != nil {
@@ -133,20 +138,21 @@ func (service *Service) ListLeagues(ctx context.Context, filters LeagueFilters) 
 	}
 	items := make([]contracts.League, 0, len(scan.Items))
 	for index := range scan.Items {
-		items = append(items, mapLeague(&scan.Items[index], service.now()))
+		items = append(items, mapLeague(&scan.Items[index], s.now()))
 	}
-	next, err := service.encode(binding, pagination.LifetimeHistorical, scan.Next)
+	next, err := s.encode(binding, pagination.LifetimeHistorical, scan.Next)
 	if err != nil {
 		return nil, err
 	}
-	warnings := incompleteWarning(scan.HasMore && scan.PagesScanned == service.maxUpstreamRequests, "League name search")
+	warnings := incompleteWarning(scan.HasMore && scan.PagesScanned == s.maxUpstreamRequests, "League name search")
 	return &Result[contracts.StratzListLeaguesData]{
 		Data: contracts.StratzListLeaguesData{Items: items, Page: contracts.PageInfo{NextCursor: next, HasMore: next != nil}},
 		Raw:  rawPages, RateLimits: rates, Warnings: warnings,
 	}, nil
 }
 
-func (service *Service) ListLeagueMatches(ctx context.Context, filters LeagueMatchFilters) (*Result[contracts.StratzListLeagueMatchesData], error) {
+// ListLeagueMatches returns a bounded page of matches for one league.
+func (s *Service) ListLeagueMatches(ctx context.Context, filters LeagueMatchFilters) (*Result[contracts.StratzListLeagueMatchesData], error) {
 	id, domainErr := parseID(filters.LeagueID, "league_id")
 	if domainErr != nil {
 		return nil, domainErr
@@ -155,14 +161,14 @@ func (service *Service) ListLeagueMatches(ctx context.Context, filters LeagueMat
 		return nil, err
 	}
 	filters.Limit = defaultLimit(filters.Limit)
-	binding := service.binding("stratz_list_league_matches", leagueMatchBinding(filters), filters.Limit, leagueMatchOperationVersion)
+	binding := s.binding("stratz_list_league_matches", leagueMatchBinding(filters), filters.Limit, leagueMatchOperationVersion)
 	var offset int64
 	if filters.Cursor != "" {
-		if _, err := service.cursor.Decode(filters.Cursor, binding, &offset); err != nil {
+		if _, err := s.cursor.Decode(filters.Cursor, binding, &offset); err != nil {
 			return nil, cursorError(err)
 		}
 	}
-	response, err := service.execute(ctx, service.budget(), generated.StratzListLeagueMatches_Operation, "StratzListLeagueMatches", map[string]any{
+	response, err := s.execute(ctx, s.budget(), generated.StratzListLeagueMatches_Operation, "StratzListLeagueMatches", map[string]any{
 		"id": id, "request": nativeLeagueMatchRequest(filters, filters.Limit, offset),
 	})
 	if err != nil {
@@ -182,7 +188,7 @@ func (service *Service) ListLeagueMatches(ctx context.Context, filters LeagueMat
 	var next *string
 	if len(items) == filters.Limit {
 		nextOffset := offset + int64(len(items))
-		encoded, encodeErr := service.encode(binding, pagination.LifetimeHistorical, &nextOffset)
+		encoded, encodeErr := s.encode(binding, pagination.LifetimeHistorical, &nextOffset)
 		if encodeErr != nil {
 			return nil, encodeErr
 		}
@@ -194,13 +200,14 @@ func (service *Service) ListLeagueMatches(ctx context.Context, filters LeagueMat
 	}, nil
 }
 
-func (service *Service) ListLiveMatches(ctx context.Context, filters LiveFilters) (*Result[contracts.StratzListLiveMatchesData], error) {
-	return service.ListLiveMatchesWithBudget(ctx, filters, service.budget())
+// ListLiveMatches returns a bounded page of live matches.
+func (s *Service) ListLiveMatches(ctx context.Context, filters LiveFilters) (*Result[contracts.StratzListLiveMatchesData], error) {
+	return s.ListLiveMatchesWithBudget(ctx, filters, s.budget())
 }
 
 // ListLiveMatchesWithBudget executes the list using the caller's shared
 // per-MCP-call request budget.
-func (service *Service) ListLiveMatchesWithBudget(
+func (s *Service) ListLiveMatchesWithBudget(
 	ctx context.Context,
 	filters LiveFilters,
 	budget *stratz.RequestBudget,
@@ -209,10 +216,10 @@ func (service *Service) ListLiveMatchesWithBudget(
 		return nil, err
 	}
 	filters.Limit = defaultLimit(filters.Limit)
-	binding := service.binding("stratz_list_live_matches", liveBinding(filters), filters.Limit, liveListOperationVersion)
+	binding := s.binding("stratz_list_live_matches", liveBinding(filters), filters.Limit, liveListOperationVersion)
 	var state pagination.ScanState[int64]
 	if filters.Cursor != "" {
-		if _, err := service.cursor.Decode(filters.Cursor, binding, &state); err != nil {
+		if _, err := s.cursor.Decode(filters.Cursor, binding, &state); err != nil {
 			return nil, cursorError(err)
 		}
 	}
@@ -220,10 +227,10 @@ func (service *Service) ListLiveMatchesWithBudget(
 	var rates []stratz.RateLimit
 	pageSize := max(filters.Limit, 20)
 	scan, err := pagination.Scan(ctx, pagination.ScanOptions[int64, upstreamLiveMatch]{
-		Limit: filters.Limit, MaxPages: service.maxUpstreamRequests, State: stateIf(filters.Cursor, &state),
+		Limit: filters.Limit, MaxPages: s.maxUpstreamRequests, State: stateIf(filters.Cursor, &state),
 		Fetch: func(ctx context.Context, skip *int64) (pagination.Page[int64, upstreamLiveMatch], error) {
 			offset := pointerValue(skip)
-			response, executeErr := service.execute(ctx, budget, generated.StratzListLiveMatches_Operation, "StratzListLiveMatches", map[string]any{
+			response, executeErr := s.execute(ctx, budget, generated.StratzListLiveMatches_Operation, "StratzListLiveMatches", map[string]any{
 				"request": nativeLiveRequest(filters, pageSize, offset),
 			})
 			if executeErr != nil {
@@ -246,9 +253,9 @@ func (service *Service) ListLiveMatchesWithBudget(
 	}
 	items := make([]contracts.LiveMatch, 0, len(scan.Items))
 	for index := range scan.Items {
-		items = append(items, mapLive(&scan.Items[index], service.now()))
+		items = append(items, mapLive(&scan.Items[index], s.now()))
 	}
-	next, err := service.encode(binding, pagination.LifetimeLive, scan.Next)
+	next, err := s.encode(binding, pagination.LifetimeLive, scan.Next)
 	if err != nil {
 		return nil, err
 	}
@@ -270,8 +277,8 @@ func advanceOffset(offset *int64, consumed int) *int64 {
 	return &value
 }
 
-func (service *Service) execute(ctx context.Context, budget *stratz.RequestBudget, query, operation string, variables any) (*stratz.Response, error) {
-	response, err := service.executor.Execute(ctx, budget, stratz.Request{
+func (s *Service) execute(ctx context.Context, budget *stratz.RequestBudget, query, operation string, variables any) (*stratz.Response, error) {
+	response, err := s.executor.Execute(ctx, budget, stratz.Request{
 		Query: query, OperationName: operation, Variables: variables, Mode: stratz.ModeCurated, AllowRetries: true,
 	})
 	if err != nil {
@@ -283,20 +290,20 @@ func (service *Service) execute(ctx context.Context, budget *stratz.RequestBudge
 	return response, nil
 }
 
-func (service *Service) budget() *stratz.RequestBudget {
-	budget, _ := stratz.NewRequestBudget(service.maxUpstreamRequests)
+func (s *Service) budget() *stratz.RequestBudget {
+	budget, _ := stratz.NewRequestBudget(s.maxUpstreamRequests)
 	return budget
 }
 
-func (service *Service) binding(tool string, filters any, size int, version string) pagination.Binding {
-	return pagination.Binding{Tool: tool, Filters: filters, PageSize: size, Token: service.token, SchemaVersion: service.schemaVersion, OperationVersion: version}
+func (s *Service) binding(tool string, filters any, size int, version string) pagination.Binding {
+	return pagination.Binding{Tool: tool, Filters: filters, PageSize: size, Token: s.token, SchemaVersion: s.schemaVersion, OperationVersion: version}
 }
 
-func (service *Service) encode(binding pagination.Binding, lifetime pagination.Lifetime, state any) (*string, error) {
+func (s *Service) encode(binding pagination.Binding, lifetime pagination.Lifetime, state any) (*string, error) {
 	if state == nil {
 		return nil, nil
 	}
-	value, err := service.cursor.Encode(binding, lifetime, state)
+	value, err := s.cursor.Encode(binding, lifetime, state)
 	if err != nil {
 		return nil, &Error{Code: contracts.ErrorCodeInternalError, Message: "Failed to create pagination cursor", Details: map[string]any{}}
 	}

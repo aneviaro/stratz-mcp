@@ -52,7 +52,7 @@ func TestLeagueMappingDerivesDeterministicStatus(t *testing.T) {
 	}
 }
 
-func TestGetLeagueMapsSuccessAndNotFound(t *testing.T) {
+func TestFetchLeagueMapsSuccessAndNotFound(t *testing.T) {
 	executor := &fixtureExecutor{execute: func(request stratz.Request) (*stratz.Response, error) {
 		if request.OperationName != "StratzGetLeague" {
 			t.Fatalf("operation = %q", request.OperationName)
@@ -62,7 +62,7 @@ func TestGetLeagueMapsSuccessAndNotFound(t *testing.T) {
 		}
 		return response(`{"league":{"id":42,"name":"fixture","displayName":"Fixture League","isLive":true}}`), nil
 	}}
-	result, err := mustService(t, executor).GetLeague(context.Background(), "42")
+	result, err := mustService(t, executor).FetchLeague(context.Background(), "42")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestGetLeagueMapsSuccessAndNotFound(t *testing.T) {
 	executor.execute = func(stratz.Request) (*stratz.Response, error) {
 		return response(`{"league":null}`), nil
 	}
-	if _, err := mustService(t, executor).GetLeague(context.Background(), "42"); err == nil {
+	if _, err := mustService(t, executor).FetchLeague(context.Background(), "42"); err == nil {
 		t.Fatal("expected not-found error")
 	} else if domainErr, ok := err.(*Error); !ok || domainErr.Code != contracts.ErrorCodeNotFound {
 		t.Fatalf("not-found error = %#v", err)
@@ -206,7 +206,7 @@ func TestLeagueServiceMapsUpstreamAndProtocolFailures(t *testing.T) {
 			service := mustService(t, &fixtureExecutor{execute: func(stratz.Request) (*stratz.Response, error) {
 				return test.response, test.err
 			}})
-			_, err := service.GetLeague(context.Background(), "1")
+			_, err := service.FetchLeague(context.Background(), "1")
 			var domainErr *Error
 			if !errors.As(err, &domainErr) || domainErr.Code != test.want {
 				t.Fatalf("error = %#v", err)

@@ -65,7 +65,7 @@ func TestNormalizePlayerIDForms(t *testing.T) {
 	}
 }
 
-func TestGetPlayerMappingPrivateMissingAndPartial(t *testing.T) {
+func TestFetchPlayerMappingPrivateMissingAndPartial(t *testing.T) {
 	t.Run("mapped", func(t *testing.T) {
 		executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
 			if request.OperationName != "StratzGetPlayer" {
@@ -81,7 +81,7 @@ func TestGetPlayerMappingPrivateMissingAndPartial(t *testing.T) {
 				"ranks":[{"rank":65,"leaderboardRank":null}]
 			}}`), nil
 		}}
-		result, err := mustService(t, executor, 5).GetPlayer(context.Background(), "76561198000000000")
+		result, err := mustService(t, executor, 5).FetchPlayer(context.Background(), "76561198000000000")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -101,7 +101,7 @@ func TestGetPlayerMappingPrivateMissingAndPartial(t *testing.T) {
 		executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
 			return response(`{"player":null}`), nil
 		}}
-		_, err := mustService(t, executor, 5).GetPlayer(context.Background(), "1")
+		_, err := mustService(t, executor, 5).FetchPlayer(context.Background(), "1")
 		assertCode(t, err, contracts.ErrorCodeNotFound)
 	})
 
@@ -113,7 +113,7 @@ func TestGetPlayerMappingPrivateMissingAndPartial(t *testing.T) {
 				Details: map[string]any{},
 			}
 		}}
-		_, err := mustService(t, executor, 5).GetPlayer(context.Background(), "1")
+		_, err := mustService(t, executor, 5).FetchPlayer(context.Background(), "1")
 		assertCode(t, err, contracts.ErrorCodePrivate)
 	})
 
@@ -125,7 +125,7 @@ func TestGetPlayerMappingPrivateMissingAndPartial(t *testing.T) {
 				Details: map[string]any{"graphql_codes": []string{"PARTIAL"}},
 			}
 		}}
-		_, err := mustService(t, executor, 5).GetPlayer(context.Background(), "1")
+		_, err := mustService(t, executor, 5).FetchPlayer(context.Background(), "1")
 		assertCode(t, err, contracts.ErrorCodeUpstreamPartialError)
 	})
 }
@@ -236,7 +236,7 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 				}
 				return response(payload), nil
 			}}
-			result, err := mustService(t, executor, 5).GetMatch(context.Background(), "8000000000", test.detail)
+			result, err := mustService(t, executor, 5).FetchMatch(context.Background(), "8000000000", test.detail)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -269,7 +269,7 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 	pending := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
 		return response(`{"match":{"id":9,"parseStatus":"pending","players":[]}}`), nil
 	}}
-	_, err := mustService(t, pending, 5).GetMatch(context.Background(), "9", contracts.DetailLevelFull)
+	_, err := mustService(t, pending, 5).FetchMatch(context.Background(), "9", contracts.DetailLevelFull)
 	var domainErr *Error
 	if !errors.As(err, &domainErr) ||
 		domainErr.Code != contracts.ErrorCodeDataNotReady ||
@@ -281,7 +281,7 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 	missingPlayback := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
 		return response(`{"match":{"id":10,"parsedDateTime":10,"players":[],"playbackData":null}}`), nil
 	}}
-	_, err = mustService(t, missingPlayback, 5).GetMatch(
+	_, err = mustService(t, missingPlayback, 5).FetchMatch(
 		context.Background(),
 		"10",
 		contracts.DetailLevelStandard,
@@ -554,7 +554,7 @@ func serviceWithHeroes(t *testing.T, executor stratz.Executor, namer HeroNamer) 
 	return service
 }
 
-func TestGetMatchDecoratesPlayersWithHeroNames(t *testing.T) {
+func TestFetchMatchDecoratesPlayersWithHeroNames(t *testing.T) {
 	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
 		return response(`{"match":{
 			"id":8000000000,"startDateTime":1781724600,"durationSeconds":2430,
@@ -568,7 +568,7 @@ func TestGetMatchDecoratesPlayersWithHeroNames(t *testing.T) {
 		}}`), nil
 	}}
 	service := serviceWithHeroes(t, executor, &fakeHeroNamer{names: map[int64]string{5: "Crystal Maiden", 7: "Earthshaker"}})
-	result, err := service.GetMatch(context.Background(), "8000000000", contracts.DetailLevelSummary)
+	result, err := service.FetchMatch(context.Background(), "8000000000", contracts.DetailLevelSummary)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -586,12 +586,12 @@ func TestGetMatchDecoratesPlayersWithHeroNames(t *testing.T) {
 	}
 }
 
-func TestGetMatchWarnsWhenHeroNamesUnavailable(t *testing.T) {
+func TestFetchMatchWarnsWhenHeroNamesUnavailable(t *testing.T) {
 	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
 		return response(`{"match":{"id":1,"parsedDateTime":10,"players":[{"steamAccountId":1,"heroId":5,"isRadiant":true,"playerSlot":0,"kills":1,"deaths":1,"assists":1}]}}`), nil
 	}}
 	service := serviceWithHeroes(t, executor, &fakeHeroNamer{err: errors.New("upstream unavailable")})
-	result, err := service.GetMatch(context.Background(), "1", contracts.DetailLevelSummary)
+	result, err := service.FetchMatch(context.Background(), "1", contracts.DetailLevelSummary)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -628,7 +628,7 @@ func TestListPlayerMatchesDecoratesIncludedPlayerHeroNames(t *testing.T) {
 	}
 }
 
-func TestGetMatchMergesHeroNameRateLimits(t *testing.T) {
+func TestFetchMatchMergesHeroNameRateLimits(t *testing.T) {
 	matchRemaining := int64(140)
 	constantsRemaining := int64(138)
 	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
@@ -640,7 +640,7 @@ func TestGetMatchMergesHeroNameRateLimits(t *testing.T) {
 			Window: "minute", Limit: int64Ptr(5000), Remaining: &constantsRemaining,
 		}},
 	}
-	result, err := serviceWithHeroes(t, executor, namer).GetMatch(context.Background(), "1", contracts.DetailLevelSummary)
+	result, err := serviceWithHeroes(t, executor, namer).FetchMatch(context.Background(), "1", contracts.DetailLevelSummary)
 	if err != nil {
 		t.Fatal(err)
 	}
