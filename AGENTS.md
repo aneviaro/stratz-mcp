@@ -4,28 +4,6 @@ Purpose: Provide shared project-local guidance for AI-assisted changes.
 Status: Current
 ---
 
-Be concise, decisive, and implementation-first.
-
-When uncertain, make the most reasonable assumption and proceed. Ask only if blocked.
-
-Use this loop:
-1. Inspect the minimum necessary context.
-2. Choose one path.
-3. Make the change.
-4. Run the smallest relevant test.
-5. Report result.
-
-Avoid:
-- brainstorming
-- hedging
-- repeated summaries
-- explaining obvious steps
-- offering multiple options unless asked
-
-Every response must end with either:
-- DONE
-- NEXT: <one concrete action>
-
 # Project guidance
 
 - Treat `docs/tool-contracts.json`, `internal/graphql/operations/*.graphql`, `internal/graphql/schema/bootstrap.graphql`, and `workflows/workflows.json` as canonical sources. Do not edit generated outputs directly.
