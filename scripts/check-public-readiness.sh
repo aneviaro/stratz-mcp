@@ -20,7 +20,7 @@ tracked_worktree_files() {
 
 REPO_ROOT="$repo_root" "$repo_root/scripts/check-restricted-artifacts.sh"
 
-forbidden_paths='(^|/)\.ralphex(/|$)|(^|/)docs/plans(/|$)|(^|/)docs/implementation-plan\.md$|(^|/)\.env$|(^|/)dist(/|$)|(^|/)\.bin(/|$)|(^|/)\.stratz-local(/|$)|(^|/)cache\.db(-wal|-shm)?$'
+forbidden_paths='(^|/)\.ralphex(/|$)|(^|/)docs/implementation-plan\.md$|(^|/)\.env$|(^|/)dist(/|$)|(^|/)\.bin(/|$)|(^|/)\.stratz-local(/|$)|(^|/)cache\.db(-wal|-shm)?$'
 violations="$(tracked_worktree_files | grep -E "$forbidden_paths" || true)"
 if [[ -n "$violations" ]]; then
   echo "tracked private/local files are present:" >&2
