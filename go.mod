@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/Khan/genqlient v0.8.1
-	github.com/klauspost/compress v1.18.5
+	github.com/klauspost/compress v1.18.6
 	github.com/modelcontextprotocol/go-sdk v1.6.1
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/vektah/gqlparser/v2 v2.5.34
