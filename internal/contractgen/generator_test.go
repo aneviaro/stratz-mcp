@@ -75,6 +75,84 @@ func TestValidateRegistryRejectsContractVersionDrift(t *testing.T) {
 	}
 }
 
+func TestValidateRegistryRejectsInvalidProtocolMetadata(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*registry)
+	}{
+		{
+			name: "empty",
+			mutate: func(reg *registry) {
+				reg.SupportedMCPProtocolVersions = nil
+			},
+		},
+		{
+			name: "duplicate",
+			mutate: func(reg *registry) {
+				reg.SupportedMCPProtocolVersions[1] = reg.SupportedMCPProtocolVersions[0]
+			},
+		},
+		{
+			name: "misordered",
+			mutate: func(reg *registry) {
+				reg.SupportedMCPProtocolVersions[0], reg.SupportedMCPProtocolVersions[1] = reg.SupportedMCPProtocolVersions[1], reg.SupportedMCPProtocolVersions[0]
+			},
+		},
+		{
+			name: "unsupported",
+			mutate: func(reg *registry) {
+				reg.SupportedMCPProtocolVersions[1] = "1999-01-01"
+			},
+		},
+		{
+			name: "preferred mismatch",
+			mutate: func(reg *registry) {
+				reg.MCPProtocolVersion = "2025-11-25"
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			reg := readTestRegistry(t)
+			test.mutate(&reg)
+			if err := validateRegistry(reg); err == nil {
+				t.Fatal("validateRegistry() unexpectedly succeeded")
+			}
+		})
+	}
+}
+
+func TestValidateRegistryRejectsServerInfoSchemaDrift(t *testing.T) {
+	reg := readTestRegistry(t)
+	tool := reg.Tools["stratz_server_info"]
+	output := tool.OutputSchema.(map[string]any)
+	alternatives := output["oneOf"].([]any)
+	allOf := alternatives[0].(map[string]any)["allOf"].([]any)
+	properties := allOf[1].(map[string]any)["properties"].(map[string]any)
+	data := properties["data"].(map[string]any)
+	dataProperties := data["properties"].(map[string]any)
+	dataProperties["mcp_protocol_version"].(map[string]any)["const"] = "2025-11-25"
+	if err := validateRegistry(reg); err == nil || !strings.Contains(err.Error(), "mcp_protocol_version schema") {
+		t.Fatalf("validateRegistry() error = %v", err)
+	}
+}
+
+func TestValidateRegistryRejectsSupportedProtocolSchemaDrift(t *testing.T) {
+	reg := readTestRegistry(t)
+	tool := reg.Tools["stratz_server_info"]
+	output := tool.OutputSchema.(map[string]any)
+	alternatives := output["oneOf"].([]any)
+	allOf := alternatives[0].(map[string]any)["allOf"].([]any)
+	properties := allOf[1].(map[string]any)["properties"].(map[string]any)
+	data := properties["data"].(map[string]any)
+	dataProperties := data["properties"].(map[string]any)
+	items := dataProperties["supported_mcp_protocol_versions"].(map[string]any)["items"].(map[string]any)
+	items["enum"].([]any)[1] = "1999-01-01"
+	if err := validateRegistry(reg); err == nil || !strings.Contains(err.Error(), "supported protocol schema") {
+		t.Fatalf("validateRegistry() error = %v", err)
+	}
+}
+
 func TestValidateRegistryRejectsUnsafeRawGraphQLPolicy(t *testing.T) {
 	reg := readTestRegistry(t)
 	reg.RawGraphQLPolicy.RootFieldDefault = "allow"

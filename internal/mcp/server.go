@@ -182,6 +182,7 @@ func New(options Options) (*Server, error) {
 			},
 		},
 	)
+	server.AddReceivingMiddleware(protocolMiddleware)
 
 	for _, definition := range contracts.Definitions() {
 		inputSchema, err := contracts.Schema(definition.Name, contracts.InputSchema)
@@ -217,8 +218,8 @@ func (server *Server) SDK() *sdk.Server {
 	return server.sdk
 }
 
-// Run serves one persistent MCP session until EOF, cancellation, or protocol
-// failure.
+// Run serves the stdio stream until EOF, cancellation, or protocol failure.
+// The SDK handles legacy session negotiation and modern per-request metadata.
 func (server *Server) Run(
 	ctx context.Context,
 	reader io.ReadCloser,
@@ -227,10 +228,7 @@ func (server *Server) Run(
 	if reader == nil || writer == nil {
 		return errors.New("stdio reader and writer are required")
 	}
-	return server.sdk.Run(ctx, &sdk.IOTransport{
-		Reader: reader,
-		Writer: writer,
-	})
+	return server.sdk.Run(ctx, newStdioTransport(reader, writer))
 }
 
 func toolAdapter(name string, handler ToolHandler) sdk.ToolHandler {

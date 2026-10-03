@@ -1,8 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/aneviaro/stratz-mcp/docs/tool-contracts.json",
-  "contractVersion": "1.0.0-draft.3",
-  "mcpProtocolVersion": "2025-11-25",
+  "contractVersion": "1.0.0-draft.4",
+  "mcpProtocolVersion": "2026-07-28",
+  "supportedMcpProtocolVersions": [
+    "2026-07-28",
+    "2025-11-25",
+    "2025-06-18",
+    "2025-03-26",
+    "2024-11-05"
+  ],
   "description": "Canonical machine-readable MCP tool contract registry. Build tooling dereferences shared definitions before publishing each MCP Tool.inputSchema and Tool.outputSchema.",
   "rawGraphqlPolicy": {
     "operationTypes": {
@@ -1183,7 +1190,25 @@
                         "type": "string"
                       },
                       "mcp_protocol_version": {
-                        "const": "2025-11-25"
+                        "const": "2026-07-28",
+                        "description": "Preferred MCP protocol version for this server."
+                      },
+                      "supported_mcp_protocol_versions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "2026-07-28",
+                            "2025-11-25",
+                            "2025-06-18",
+                            "2025-03-26",
+                            "2024-11-05"
+                          ]
+                        },
+                        "minItems": 5,
+                        "maxItems": 5,
+                        "uniqueItems": true,
+                        "description": "Complete ordered set of MCP protocol versions advertised by this server."
                       },
                       "schema_version": {
                         "type": "string"
@@ -1212,6 +1237,7 @@
                     "required": [
                       "server_version",
                       "mcp_protocol_version",
+                      "supported_mcp_protocol_versions",
                       "schema_version",
                       "cache_status",
                       "upstream_status",

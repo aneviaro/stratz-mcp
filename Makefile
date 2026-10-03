@@ -39,7 +39,10 @@ cross-build:
 		GO="$(GO)" ./scripts/cross-build.sh
 
 interop-smoke: build
-	./scripts/interop-smoke.sh native dist/stratz-mcp
+	MCP_PROTOCOL_PROFILE=modern CLIENT_PROFILE=codex ./scripts/interop-smoke.sh native dist/stratz-mcp
+	MCP_PROTOCOL_PROFILE=legacy CLIENT_PROFILE=codex ./scripts/interop-smoke.sh native dist/stratz-mcp
+	MCP_PROTOCOL_PROFILE=modern CLIENT_PROFILE=claude ./scripts/interop-smoke.sh native dist/stratz-mcp
+	MCP_PROTOCOL_PROFILE=legacy CLIENT_PROFILE=claude ./scripts/interop-smoke.sh native dist/stratz-mcp
 
 notices:
 	GO="$(GO)" ./scripts/generate-notices.sh

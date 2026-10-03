@@ -23,18 +23,30 @@ make tools
 
 `make public-readiness` audits the tracked source tree for private working material, local-only artifacts, restricted STRATZ data, and misleading published-image documentation.
 
-`make interop-smoke` builds the server and runs a native MCP stdio smoke check. Use this repeatable Docker smoke sequence before changing Docker behavior:
+`make interop-smoke` builds the server and runs the complete native modern/legacy Codex/Claude MCP stdio matrix. The equivalent explicit commands are:
+
+```sh
+make build
+MCP_PROTOCOL_PROFILE=modern CLIENT_PROFILE=codex ./scripts/interop-smoke.sh native dist/stratz-mcp
+MCP_PROTOCOL_PROFILE=legacy CLIENT_PROFILE=codex ./scripts/interop-smoke.sh native dist/stratz-mcp
+MCP_PROTOCOL_PROFILE=modern CLIENT_PROFILE=claude ./scripts/interop-smoke.sh native dist/stratz-mcp
+MCP_PROTOCOL_PROFILE=legacy CLIENT_PROFILE=claude ./scripts/interop-smoke.sh native dist/stratz-mcp
+```
+
+Use this repeatable Docker smoke sequence before changing Docker behavior:
 
 ```sh
 mkdir -p dist/image/cache
 touch dist/image/cache/.keep
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o dist/image/stratz-mcp-linux-amd64 ./cmd/stratz-mcp
 docker build --build-arg TARGETARCH=amd64 -t stratz-mcp:test .
-CLIENT_PROFILE=codex ./scripts/interop-smoke.sh docker stratz-mcp:test
-CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test
+MCP_PROTOCOL_PROFILE=modern CLIENT_PROFILE=codex ./scripts/interop-smoke.sh docker stratz-mcp:test
+MCP_PROTOCOL_PROFILE=legacy CLIENT_PROFILE=codex ./scripts/interop-smoke.sh docker stratz-mcp:test
+MCP_PROTOCOL_PROFILE=modern CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test
+MCP_PROTOCOL_PROFILE=legacy CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test
 ```
 
-Before preparing a public source import, run `make public-readiness`. Optional MCP runtime checks are `make interop-smoke` and the Docker smoke sequence above. Then follow [public repository import](public-repo-import.md) to create a clean-history repository snapshot for the public remote.
+Before preparing a public source import, run `make public-readiness`. Optional MCP runtime checks are `make interop-smoke` (or the equivalent explicit native commands) and the Docker smoke sequence above. Then follow [public repository import](public-repo-import.md) to create a clean-history repository snapshot for the public remote.
 
 Canonical generation ownership:
 

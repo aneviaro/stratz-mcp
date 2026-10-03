@@ -2,9 +2,19 @@
 
 package contracts
 
-const ContractVersion = "1.0.0-draft.3"
-const MCPProtocolVersion = "2025-11-25"
+const ContractVersion = "1.0.0-draft.4"
+const MCPProtocolVersion = "2026-07-28"
 const SchemaDraft = "https://json-schema.org/draft/2020-12/schema"
+
+func SupportedMCPProtocolVersions() []string {
+	return []string{
+		"2026-07-28",
+		"2025-11-25",
+		"2025-06-18",
+		"2025-03-26",
+		"2024-11-05",
+	}
+}
 
 func RawGraphQLAllowedRootFields() []string {
 	return []string{
@@ -590,12 +600,13 @@ type StratzListPlayerMatchesResponse ToolResult[StratzListPlayerMatchesData]
 type StratzServerInfoRequest struct{}
 
 type StratzServerInfoData struct {
-	CacheStatus        string         `json:"cache_status"`
-	Limits             map[string]any `json:"limits"`
-	MCPProtocolVersion string         `json:"mcp_protocol_version"`
-	SchemaVersion      string         `json:"schema_version"`
-	ServerVersion      string         `json:"server_version"`
-	UpstreamStatus     string         `json:"upstream_status"`
+	CacheStatus                  string         `json:"cache_status"`
+	Limits                       map[string]any `json:"limits"`
+	MCPProtocolVersion           string         `json:"mcp_protocol_version"`
+	SchemaVersion                string         `json:"schema_version"`
+	ServerVersion                string         `json:"server_version"`
+	SupportedMCPProtocolVersions []string       `json:"supported_mcp_protocol_versions"`
+	UpstreamStatus               string         `json:"upstream_status"`
 }
 
 type StratzServerInfoResponse ToolResult[StratzServerInfoData]

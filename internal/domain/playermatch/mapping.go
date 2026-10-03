@@ -341,7 +341,11 @@ func mapObjectives(source *upstreamPlaybackData) []contracts.TimelineEvent {
 		})
 	}
 	sort.SliceStable(events, func(i, j int) bool { return events[i].Time < events[j].Time })
-	return mapEvents(events)
+	result := mapEvents(events)
+	if len(result) > 500 {
+		result = result[:500]
+	}
+	return result
 }
 
 func mapTimeline(source *upstreamPlaybackData) []contracts.TimelineEvent {

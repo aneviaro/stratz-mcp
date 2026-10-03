@@ -293,6 +293,83 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 	}
 }
 
+func TestMapObjectivesSortsAndBoundsPublicOutput(t *testing.T) {
+	buildingEvents := make([]map[string]any, 500)
+	for index := range buildingEvents {
+		buildingEvents[index] = map[string]any{
+			"time":      1000 - index,
+			"type":      "TOWER",
+			"isRadiant": true,
+			"npcId":     index + 1,
+		}
+	}
+	roshanEvents := make([]map[string]any, 10)
+	for index := range roshanEvents {
+		roshanEvents[index] = map[string]any{"time": index + 1}
+	}
+	payload, err := json.Marshal(map[string]any{
+		"buildingEvents": buildingEvents,
+		"roshanEvents":   roshanEvents,
+	})
+	if err != nil {
+		t.Fatalf("json.Marshal(objective fixture): %v", err)
+	}
+	var playback upstreamPlaybackData
+	if err := json.Unmarshal(payload, &playback); err != nil {
+		t.Fatalf("json.Unmarshal(objective fixture): %v", err)
+	}
+	parsedAt := int64(1)
+	source := &upstreamMatch{
+		ID:             8000000000,
+		ParsedDateTime: &parsedAt,
+		PlaybackData:   &playback,
+	}
+
+	got := mapMatch(source, contracts.DetailLevelStandard)
+	if len(got.Objectives) != 500 {
+		t.Fatalf("mapMatch(510 objectives) objective count = %d, want 500", len(got.Objectives))
+	}
+	for index := 1; index < len(got.Objectives); index++ {
+		if got.Objectives[index].TimeSeconds < got.Objectives[index-1].TimeSeconds {
+			t.Fatalf(
+				"mapMatch(510 objectives) objective times at indexes %d and %d = %d, %d, want nondecreasing",
+				index-1,
+				index,
+				got.Objectives[index-1].TimeSeconds,
+				got.Objectives[index].TimeSeconds,
+			)
+		}
+	}
+	if got.Objectives[9].TimeSeconds != 10 || got.Objectives[10].TimeSeconds != 501 || got.Objectives[499].TimeSeconds != 990 {
+		t.Fatalf(
+			"mapMatch(510 objectives) truncation boundary = (%d, %d, %d), want (10, 501, 990)",
+			got.Objectives[9].TimeSeconds,
+			got.Objectives[10].TimeSeconds,
+			got.Objectives[499].TimeSeconds,
+		)
+	}
+	if repeated := mapMatch(source, contracts.DetailLevelStandard); !reflect.DeepEqual(repeated.Objectives, got.Objectives) {
+		t.Fatal("mapMatch(510 objectives) produced nondeterministic objective truncation")
+	}
+
+	encodedMatch, err := json.Marshal(got)
+	if err != nil {
+		t.Fatalf("json.Marshal(mapped match): %v", err)
+	}
+	var publicMatch any
+	if err := json.Unmarshal(encodedMatch, &publicMatch); err != nil {
+		t.Fatalf("json.Unmarshal(mapped match): %v", err)
+	}
+	output, err := contracts.Example("stratz_get_match", contracts.OutputSchema)
+	if err != nil {
+		t.Fatalf("contracts.Example(stratz_get_match): %v", err)
+	}
+	output.(map[string]any)["data"] = publicMatch
+	if err := contracts.ValidateOutput("stratz_get_match", output); err != nil {
+		t.Fatalf("contracts.ValidateOutput(stratz_get_match, 500 objectives): %v", err)
+	}
+}
+
 func TestListPlayerMatchesBoundedContinuation(t *testing.T) {
 	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
 		variables := request.Variables.(map[string]any)

@@ -6,7 +6,7 @@ Run `make interop-smoke` from a source checkout to exercise native MCP discovery
 
 Schema URIs are `stratz://schema/full`, `/player`, `/match`, `/hero`, `/league`, `/live`, and `/constants` with MIME type `application/graphql`. Constants URIs are `stratz://constants/heroes`, `/items`, `/abilities`, `/game-modes`, `/regions`, and `/ranks` with MIME type `application/json`.
 
-Discovery always lists all 13 resources. Reads are local-only, reject symlinks, and are capped at 5 MiB. A missing local artifact returns MCP resource-not-found.
+Discovery always lists all 13 resources. Catalog list results are public MCP client-cache hints with a 5-minute TTL because the catalog shape is static for a running process. Resource reads are local-only, reject symlinks, and are capped at 5 MiB. They return private MCP cache hints with `ttlMs: 0`, so clients should treat the content as immediately stale and re-read after local `schema pull` or constants updates. A missing local artifact returns MCP resource-not-found.
 
 Guarded raw GraphQL is fail-closed until this local schema metadata exists; run `schema pull` before using `stratz_execute_graphql`.
 

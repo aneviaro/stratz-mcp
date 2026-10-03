@@ -1,7 +1,14 @@
 {
-  "contract_version": "1.0.0-draft.3",
-  "mcp_protocol_version": "2025-11-25",
+  "contract_version": "1.0.0-draft.4",
+  "mcp_protocol_version": "2026-07-28",
   "schema_draft": "https://json-schema.org/draft/2020-12/schema",
+  "supported_mcp_protocol_versions": [
+    "2026-07-28",
+    "2025-11-25",
+    "2025-06-18",
+    "2025-03-26",
+    "2024-11-05"
+  ],
   "tool_count": 15,
   "tools": [
     {

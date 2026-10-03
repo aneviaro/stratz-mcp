@@ -30,10 +30,12 @@ import (
 )
 
 type seeds struct {
-	PlayerID string
-	MatchID  string
-	MatchIDs []string
-	LeagueID string
+	PlayerID    string
+	MatchID     string
+	MatchIDs    []string
+	LeagueID    string
+	HeroID      int64
+	HeroStatsTo time.Time
 }
 
 type recordingExecutor struct {
@@ -233,14 +235,13 @@ func TestEveryPublicToolAgainstLiveSTRATZ(t *testing.T) {
 		if len(arrayField(t, objectField(t, constants, "data"), "items")) == 0 {
 			t.Fatal("hero constants returned no items")
 		}
-		call(t, "stratz_get_hero", map[string]any{"hero": 1, "detail_level": "summary"})
-		call(t, "stratz_batch_get_heroes", map[string]any{"heroes": []any{1}, "detail_level": "summary"})
-		now := time.Now().UTC().Add(-48 * time.Hour)
+		call(t, "stratz_get_hero", map[string]any{"hero": fixture.HeroID, "detail_level": "summary"})
+		call(t, "stratz_batch_get_heroes", map[string]any{"heroes": []any{fixture.HeroID}, "detail_level": "summary"})
 		for _, days := range []int{7, 60, 240} {
 			output := call(t, "stratz_get_hero_stats", map[string]any{
-				"hero": 1,
-				"from": now.AddDate(0, 0, -days).Format(time.RFC3339),
-				"to":   now.Format(time.RFC3339),
+				"hero": fixture.HeroID,
+				"from": fixture.HeroStatsTo.AddDate(0, 0, -days).Format(time.RFC3339),
+				"to":   fixture.HeroStatsTo.Format(time.RFC3339),
 			})
 			stats := objectField(t, output, "data")
 			if positiveIntField(stats, "sample_size") == 0 || stats["win_rate"] == nil {
@@ -297,6 +298,10 @@ func TestEveryPublicToolAgainstLiveSTRATZ(t *testing.T) {
 
 func discoverSeeds(ctx context.Context, t *testing.T, executor stratz.Executor) seeds {
 	t.Helper()
+	const (
+		heroID            = int64(1)
+		maxPlaybackProbes = 25
+	)
 	playerID := os.Getenv("STRATZ_TEST_PLAYER_ID")
 	if playerID == "" {
 		playerID = "169047571"
@@ -304,6 +309,7 @@ func discoverSeeds(ctx context.Context, t *testing.T, executor stratz.Executor) 
 	if _, err := strconv.ParseUint(playerID, 10, 32); err != nil {
 		t.Fatalf("STRATZ_TEST_PLAYER_ID is invalid: %v", err)
 	}
+	heroStatsTo := discoverLatestHeroStatsTo(ctx, t, executor, heroID)
 
 	leagueData := execute(ctx, t, executor, "StratzIntegrationLeagueSeeds", `
 		query StratzIntegrationLeagueSeeds($request: LeagueRequestType!) {
@@ -320,7 +326,11 @@ func discoverSeeds(ctx context.Context, t *testing.T, executor stratz.Executor) 
 	if err := json.Unmarshal(leagueData, &leagueEnvelope); err != nil || len(leagueEnvelope.Leagues) == 0 {
 		t.Fatalf("discover league seeds: %v", err)
 	}
+
 	candidates := make([]seeds, 0, 2)
+	seenMatches := make(map[int64]struct{})
+	playbackProbes := 0
+leagueLoop:
 	for _, league := range leagueEnvelope.Leagues {
 		matchData := execute(ctx, t, executor, "StratzIntegrationMatchSeeds", `
 			query StratzIntegrationMatchSeeds($id: Int!, $request: LeagueMatchesRequestType!) {
@@ -331,13 +341,6 @@ func discoverSeeds(ctx context.Context, t *testing.T, executor stratz.Executor) 
 						statsDateTime
 						radiantKills
 						direKills
-						playbackData {
-							buildingEvents { time }
-							roshanEvents { time }
-							towerDeathEvents { time }
-							runeEvents { time }
-							wardEvents { time }
-						}
 					}
 				}
 			}
@@ -352,13 +355,6 @@ func discoverSeeds(ctx context.Context, t *testing.T, executor stratz.Executor) 
 					StatsDateTime  *int64          `json:"statsDateTime"`
 					RadiantKills   json.RawMessage `json:"radiantKills"`
 					DireKills      json.RawMessage `json:"direKills"`
-					PlaybackData   *struct {
-						BuildingEvents   []json.RawMessage `json:"buildingEvents"`
-						RoshanEvents     []json.RawMessage `json:"roshanEvents"`
-						TowerDeathEvents []json.RawMessage `json:"towerDeathEvents"`
-						RuneEvents       []json.RawMessage `json:"runeEvents"`
-						WardEvents       []json.RawMessage `json:"wardEvents"`
-					} `json:"playbackData"`
 				} `json:"matches"`
 			} `json:"league"`
 		}
@@ -366,35 +362,119 @@ func discoverSeeds(ctx context.Context, t *testing.T, executor stratz.Executor) 
 			continue
 		}
 		for _, match := range matchEnvelope.League.Matches {
-			objectiveCount := 0
-			timelineCount := 0
-			if match.PlaybackData != nil {
-				objectiveCount = len(match.PlaybackData.BuildingEvents) +
-					len(match.PlaybackData.RoshanEvents) +
-					len(match.PlaybackData.TowerDeathEvents)
-				timelineCount = len(match.PlaybackData.RuneEvents) + len(match.PlaybackData.WardEvents)
+			if match.ParsedDateTime == nil || match.StatsDateTime == nil ||
+				killCount(match.RadiantKills)+killCount(match.DireKills) == 0 {
+				continue
 			}
-			if match.ParsedDateTime != nil && match.StatsDateTime != nil &&
-				killCount(match.RadiantKills)+killCount(match.DireKills) > 0 &&
-				objectiveCount > 0 && timelineCount > 0 {
-				candidates = append(candidates, seeds{
-					PlayerID: playerID,
-					MatchID:  strconv.FormatInt(match.ID, 10),
-					LeagueID: strconv.FormatInt(league.ID, 10),
-				})
-				if len(candidates) == 2 {
-					return seeds{
-						PlayerID: playerID,
-						MatchID:  candidates[0].MatchID,
-						MatchIDs: []string{candidates[0].MatchID, candidates[1].MatchID},
-						LeagueID: candidates[0].LeagueID,
+			if _, duplicate := seenMatches[match.ID]; duplicate {
+				continue
+			}
+			seenMatches[match.ID] = struct{}{}
+			if playbackProbes == maxPlaybackProbes {
+				break leagueLoop
+			}
+			playbackProbes++
+
+			playbackData := execute(ctx, t, executor, "StratzIntegrationMatchPlaybackSeed", `
+				query StratzIntegrationMatchPlaybackSeed($id: Long!) {
+					match(id: $id) {
+						id
+						playbackData {
+							buildingEvents { time }
+							roshanEvents { time }
+							towerDeathEvents { time }
+							runeEvents { time }
+							wardEvents { time }
+						}
 					}
+				}
+			`, map[string]any{"id": match.ID})
+			var playbackEnvelope struct {
+				Match *struct {
+					PlaybackData *struct {
+						BuildingEvents   []json.RawMessage `json:"buildingEvents"`
+						RoshanEvents     []json.RawMessage `json:"roshanEvents"`
+						TowerDeathEvents []json.RawMessage `json:"towerDeathEvents"`
+						RuneEvents       []json.RawMessage `json:"runeEvents"`
+						WardEvents       []json.RawMessage `json:"wardEvents"`
+					} `json:"playbackData"`
+				} `json:"match"`
+			}
+			if json.Unmarshal(playbackData, &playbackEnvelope) != nil ||
+				playbackEnvelope.Match == nil || playbackEnvelope.Match.PlaybackData == nil {
+				continue
+			}
+			playback := playbackEnvelope.Match.PlaybackData
+			objectiveCount := len(playback.BuildingEvents) +
+				len(playback.RoshanEvents) +
+				len(playback.TowerDeathEvents)
+			timelineCount := len(playback.RuneEvents) + len(playback.WardEvents)
+			if objectiveCount == 0 || timelineCount == 0 {
+				continue
+			}
+
+			candidates = append(candidates, seeds{
+				MatchID:  strconv.FormatInt(match.ID, 10),
+				LeagueID: strconv.FormatInt(league.ID, 10),
+			})
+			if len(candidates) == 2 {
+				return seeds{
+					PlayerID:    playerID,
+					MatchID:     candidates[0].MatchID,
+					MatchIDs:    []string{candidates[0].MatchID, candidates[1].MatchID},
+					LeagueID:    candidates[0].LeagueID,
+					HeroID:      heroID,
+					HeroStatsTo: heroStatsTo,
 				}
 			}
 		}
 	}
-	t.Fatal("fewer than two parsed league matches with scores, objectives, and timeline events were available")
+	t.Fatalf(
+		"fewer than two parsed league matches with scores, objectives, and timeline events were available after %d playback probes",
+		playbackProbes,
+	)
 	return seeds{}
+}
+
+func discoverLatestHeroStatsTo(
+	ctx context.Context,
+	t *testing.T,
+	executor stratz.Executor,
+	heroID int64,
+) time.Time {
+	t.Helper()
+	data := execute(ctx, t, executor, "StratzIntegrationHeroStatsSeed", `
+		query StratzIntegrationHeroStatsSeed($heroIds: [Short!]) {
+			heroStats {
+				stats: winDay(heroIds: $heroIds, take: 400, skip: 0, groupBy: TIME) {
+					matchCount
+					period: day
+				}
+			}
+		}
+	`, map[string]any{"heroIds": []int64{heroID}})
+	var envelope struct {
+		HeroStats *struct {
+			Stats []struct {
+				MatchCount int64 `json:"matchCount"`
+				Period     int64 `json:"period"`
+			} `json:"stats"`
+		} `json:"heroStats"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil || envelope.HeroStats == nil {
+		t.Fatalf("discover latest hero-stat period for hero %d: %v", heroID, err)
+	}
+	var latestPeriod int64
+	for _, row := range envelope.HeroStats.Stats {
+		if row.MatchCount > 0 && row.Period > latestPeriod {
+			latestPeriod = row.Period
+		}
+	}
+	if latestPeriod == 0 {
+		t.Fatalf("discover latest hero-stat period for hero %d: no populated winDay rows", heroID)
+	}
+	latestDay := time.Unix(latestPeriod, 0).UTC()
+	return time.Date(latestDay.Year(), latestDay.Month(), latestDay.Day(), 0, 0, 0, 0, time.UTC).AddDate(0, 0, 1)
 }
 
 func probePluralMatchEndpoint(
