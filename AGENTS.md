@@ -52,6 +52,8 @@ Status: Current
 - Run `make test-live` for any curated-operation, upstream-schema, decoder, enum, filter, or mapping change. The live suite is part of correctness.
 - Use STRATZ MCP tools for live validation when requested. Raw GraphQL through the MCP requires a pulled local schema bundle and may fail before reaching STRATZ; prefer curated MCP tools when they cover the behavior.
 - Temporary diagnostics may expose only bounded, non-secret upstream metadata and must be removed once the mismatch is understood.
+- Probe `playbackData` for one match per request in live fixtures; STRATZ may reject rebuilding multiple uncached matches in one request.
+- Anchor hero-stat live ranges to the latest observed aggregate period rather than wall-clock time because upstream aggregates can lag.
 
 ## Libraries and commands
 
