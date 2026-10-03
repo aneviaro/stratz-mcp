@@ -1,5 +1,5 @@
 {
-  "$id": "urn:stratz-mcp:contract:1.0.0-draft.3:stratz_server_info:output",
+  "$id": "urn:stratz-mcp:contract:1.0.0-draft.4:stratz_server_info:output",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
     {
@@ -247,13 +247,31 @@
                   "type": "object"
                 },
                 "mcp_protocol_version": {
-                  "const": "2025-11-25"
+                  "const": "2026-07-28",
+                  "description": "Preferred MCP protocol version for this server."
                 },
                 "schema_version": {
                   "type": "string"
                 },
                 "server_version": {
                   "type": "string"
+                },
+                "supported_mcp_protocol_versions": {
+                  "description": "Complete ordered set of MCP protocol versions advertised by this server.",
+                  "items": {
+                    "enum": [
+                      "2026-07-28",
+                      "2025-11-25",
+                      "2025-06-18",
+                      "2025-03-26",
+                      "2024-11-05"
+                    ],
+                    "type": "string"
+                  },
+                  "maxItems": 5,
+                  "minItems": 5,
+                  "type": "array",
+                  "uniqueItems": true
                 },
                 "upstream_status": {
                   "enum": [
@@ -269,6 +287,7 @@
               "required": [
                 "server_version",
                 "mcp_protocol_version",
+                "supported_mcp_protocol_versions",
                 "schema_version",
                 "cache_status",
                 "upstream_status",

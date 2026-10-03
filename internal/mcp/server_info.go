@@ -30,12 +30,13 @@ func serverInfoHandler(options Options) ToolHandler {
 		return map[string]any{
 			"kind": "success",
 			"data": map[string]any{
-				"server_version":       options.Version,
-				"mcp_protocol_version": contracts.MCPProtocolVersion,
-				"schema_version":       options.SchemaVersion,
-				"cache_status":         cacheStatus,
-				"upstream_status":      health.Status,
-				"limits":               publicLimits(options),
+				"server_version":                  options.Version,
+				"mcp_protocol_version":            contracts.MCPProtocolVersion,
+				"supported_mcp_protocol_versions": contracts.SupportedMCPProtocolVersions(),
+				"schema_version":                  options.SchemaVersion,
+				"cache_status":                    cacheStatus,
+				"upstream_status":                 health.Status,
+				"limits":                          publicLimits(options),
 			},
 			"summary": nil,
 			"provenance": map[string]any{

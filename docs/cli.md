@@ -12,7 +12,7 @@ Global options may appear before or after the command: `--config`, `--env-file`,
 
 | Command | Behavior |
 | --- | --- |
-| `serve` | Run the MCP 2025-11-25 stdio server until EOF or cancellation. |
+| `serve` | Run the MCP `2026-07-28` stdio server until EOF or cancellation, with tested legacy `2025-11-25` stdio lifecycle compatibility. |
 | `doctor` | Check configuration, pre-existing file permissions, cache health, schema availability, and upstream connectivity. |
 | `schema pull` | Fetch authenticated introspection and constants, then atomically replace the restricted local schema bundle. |
 | `cache stats` | Print cache status, format, entry, namespace, and byte counts. |

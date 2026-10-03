@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -51,7 +52,7 @@ func (serverExecutor) Execute(
 	}, nil
 }
 
-func testServer(t *testing.T, logger *slog.Logger) *Server {
+func testServer(t *testing.T, logger *slog.Logger, handlers ...map[string]ToolHandler) *Server {
 	t.Helper()
 	cfg := config.Defaults(t.TempDir())
 	cfg.Cache.Enabled = false
@@ -98,6 +99,10 @@ func testServer(t *testing.T, logger *slog.Logger) *Server {
 	); err != nil {
 		t.Fatal(err)
 	}
+	var configuredHandlers map[string]ToolHandler
+	if len(handlers) > 0 {
+		configuredHandlers = handlers[0]
+	}
 	server, err := New(Options{
 		Version:         "v1.2.3",
 		SchemaVersion:   "sha256:fixture",
@@ -106,6 +111,7 @@ func testServer(t *testing.T, logger *slog.Logger) *Server {
 		Executor:        serverExecutor{},
 		CursorToken:     "fixture-token",
 		Logger:          logger,
+		Handlers:        configuredHandlers,
 		Now: func() time.Time {
 			return time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
 		},
@@ -245,6 +251,17 @@ func TestSDKConformance(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertResultConforms(t, "stratz_server_info", success, false)
+	serverInfoOutput, ok := success.StructuredContent.(map[string]any)
+	if !ok {
+		t.Fatalf("server info structured content = %T", success.StructuredContent)
+	}
+	serverInfoData, ok := serverInfoOutput["data"].(map[string]any)
+	if !ok || serverInfoData["mcp_protocol_version"] != contracts.MCPProtocolVersion {
+		t.Fatalf("server info data = %#v", serverInfoOutput["data"])
+	}
+	if got, ok := serverInfoData["supported_mcp_protocol_versions"].([]any); !ok || len(got) != len(contracts.SupportedMCPProtocolVersions()) {
+		t.Fatalf("server info supported versions = %#v", serverInfoData["supported_mcp_protocol_versions"])
+	}
 
 	rawSuccess, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
 		Name: "stratz_execute_graphql",
@@ -371,7 +388,117 @@ func TestEveryToolRunsThroughTheRegisteredAdapter(t *testing.T) {
 	}
 }
 
-func TestRawStdioProtocolHarness(t *testing.T) {
+func TestRawModernStdioProtocolHarness(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var handlerCalls atomic.Int64
+	server := testServer(t, slog.New(slog.NewTextHandler(io.Discard, nil)), map[string]ToolHandler{
+		"stratz_get_player": func(context.Context, any) (any, error) {
+			handlerCalls.Add(1)
+			return nil, fmt.Errorf("unexpected handler invocation")
+		},
+	})
+	serverInput, clientWriter := io.Pipe()
+	clientReader, serverOutput := io.Pipe()
+	serverDone := make(chan error, 1)
+	go func() {
+		serverDone <- server.Run(ctx, serverInput, serverOutput)
+	}()
+	reader := bufio.NewReader(clientReader)
+	var rawLines [][]byte
+	meta := `"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-modern","version":"1"},"io.modelcontextprotocol/clientCapabilities":{}}`
+
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{`+meta+`}}`)
+	list := readRaw(t, reader, &rawLines)
+	listResult, ok := list["result"].(map[string]any)
+	if !ok || listResult["resultType"] != "complete" || listResult["ttlMs"] != float64(protocolCatalogCacheTTL) || listResult["cacheScope"] != "public" {
+		t.Fatalf("modern tools/list result = %#v", list)
+	}
+
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"stratz_get_player","arguments":{"player_id":"1"}}}`)
+	missingMetadata := readRaw(t, reader, &rawLines)
+	missingMetadataError, ok := missingMetadata["error"].(map[string]any)
+	if !ok || missingMetadataError["code"] != float64(-32602) || missingMetadata["result"] != nil {
+		t.Fatalf("metadata-free modern request = %#v, want -32602 and no result", missingMetadata)
+	}
+	if calls := handlerCalls.Load(); calls != 0 {
+		t.Fatalf("metadata-free modern request invoked handler %d times, want 0", calls)
+	}
+
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":3,"method":"server/discover","params":{`+meta+`}}`)
+	discover := readRaw(t, reader, &rawLines)
+	discoverResult, ok := discover["result"].(map[string]any)
+	if !ok || discoverResult["resultType"] != "complete" || discoverResult["ttlMs"] != float64(protocolDiscoveryCacheTTL) || discoverResult["cacheScope"] != "public" {
+		t.Fatalf("modern server/discover result = %#v", discover)
+	}
+	assertRawSupportedVersions(t, discoverResult["supportedVersions"])
+	serverInfo, ok := discoverResult["_meta"].(map[string]any)["io.modelcontextprotocol/serverInfo"].(map[string]any)
+	if !ok || serverInfo["name"] != serverName || serverInfo["version"] != "v1.2.3" {
+		t.Fatalf("server identity metadata = %#v", discoverResult["_meta"])
+	}
+	capabilities, ok := discoverResult["capabilities"].(map[string]any)
+	if !ok {
+		t.Fatalf("discover capabilities = %#v", discoverResult["capabilities"])
+	}
+	for _, name := range []string{"tools", "resources", "prompts"} {
+		capability, ok := capabilities[name].(map[string]any)
+		if !ok {
+			t.Fatalf("discover missing %s capability: %#v", name, capabilities)
+		}
+		if len(capability) != 0 {
+			t.Fatalf("discover %s capability is dynamic: %#v", name, capability)
+		}
+	}
+	for _, name := range []string{"roots", "sampling", "logging", "subscriptions"} {
+		if _, ok := capabilities[name]; ok {
+			t.Fatalf("discover advertised deprecated capability %s: %#v", name, capabilities)
+		}
+	}
+
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{`+meta+`,"name":"stratz_server_info","arguments":{}}}`)
+	info := readRaw(t, reader, &rawLines)
+	infoResult := info["result"].(map[string]any)
+	assertRawMirror(t, infoResult)
+	infoData := infoResult["structuredContent"].(map[string]any)["data"].(map[string]any)
+	if infoData["mcp_protocol_version"] != contracts.MCPProtocolVersion {
+		t.Fatalf("server info preferred version = %#v", infoData["mcp_protocol_version"])
+	}
+	assertRawSupportedVersions(t, infoData["supported_mcp_protocol_versions"])
+
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":5,"method":"resources/read","params":{`+meta+`,"uri":"stratz://schema/full"}}`)
+	readResource := readRaw(t, reader, &rawLines)
+	readResult, ok := readResource["result"].(map[string]any)
+	if !ok || readResult["ttlMs"] != float64(0) || readResult["cacheScope"] != "private" {
+		t.Fatalf("resource read cache hints = %#v, want 0/private", readResource)
+	}
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":6,"method":"resources/read","params":{`+meta+`,"uri":"stratz://schema/missing"}}`)
+	missingResource := readRaw(t, reader, &rawLines)
+	missingError, ok := missingResource["error"].(map[string]any)
+	if !ok || missingError["code"] != float64(-32602) {
+		t.Fatalf("missing resource error = %#v, want -32602", missingResource)
+	}
+
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2099-01-01","io.modelcontextprotocol/clientInfo":{"name":"raw-modern","version":"1"},"io.modelcontextprotocol/clientCapabilities":{}},"name":"stratz_server_info","arguments":{}}}`)
+	unsupported := readRaw(t, reader, &rawLines)
+	if unsupported["error"].(map[string]any)["code"] != float64(-32022) {
+		t.Fatalf("unsupported version error = %#v, want -32022", unsupported)
+	}
+
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2025-11-25"},"name":"stratz_get_player","arguments":{"player_id":"1"}}}`)
+	downgrade := readRaw(t, reader, &rawLines)
+	downgradeError, ok := downgrade["error"].(map[string]any)
+	if !ok || downgradeError["code"] != float64(-32602) || downgrade["result"] != nil {
+		t.Fatalf("modern protocol downgrade = %#v, want -32602 and no result", downgrade)
+	}
+	if calls := handlerCalls.Load(); calls != 0 {
+		t.Fatalf("modern protocol downgrade invoked handler %d times, want 0", calls)
+	}
+
+	closeRawHarness(t, ctx, clientWriter, clientReader, serverDone, rawLines)
+}
+
+func TestRawLegacyStdioProtocolHarness(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -399,8 +526,8 @@ func TestRawStdioProtocolHarness(t *testing.T) {
 	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":2,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"raw-test","version":"1"}}}`)
 	initialize := readRaw(t, reader, &rawLines)
 	initializeResult := initialize["result"].(map[string]any)
-	if initializeResult["protocolVersion"] != contracts.MCPProtocolVersion {
-		t.Fatalf("initialize result = %#v", initializeResult)
+	if initializeResult["protocolVersion"] != legacyProtocolVersion {
+		t.Fatalf("initialize protocol version = %#v, want %s", initializeResult["protocolVersion"], legacyProtocolVersion)
 	}
 	capabilities := initializeResult["capabilities"].(map[string]any)
 	for _, name := range []string{"tools", "resources", "prompts"} {
@@ -420,6 +547,9 @@ func TestRawStdioProtocolHarness(t *testing.T) {
 	if _, present := successResult["isError"]; present {
 		t.Fatalf("success unexpectedly included isError: %#v", successResult)
 	}
+	if _, present := successResult["resultType"]; present {
+		t.Fatalf("legacy success unexpectedly included resultType: %#v", successResult)
+	}
 	assertRawMirror(t, successResult)
 
 	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"stratz_get_player","arguments":{"player_id":"abc"}}}`)
@@ -436,24 +566,7 @@ func TestRawStdioProtocolHarness(t *testing.T) {
 		t.Fatalf("unknown tool did not use JSON-RPC error path: %#v", protocolFailure)
 	}
 
-	if err := clientWriter.Close(); err != nil {
-		t.Fatal(err)
-	}
-	select {
-	case err := <-serverDone:
-		if err != nil {
-			t.Fatalf("server shutdown failed: %v", err)
-		}
-	case <-ctx.Done():
-		t.Fatal("server did not shut down after stdin closed")
-	}
-	_ = clientReader.Close()
-
-	for _, line := range rawLines {
-		if !json.Valid(line) {
-			t.Fatalf("stdout contained non-JSON protocol data: %q", line)
-		}
-	}
+	closeRawHarness(t, ctx, clientWriter, clientReader, serverDone, rawLines)
 	if !strings.Contains(diagnostics.String(), "initialization") {
 		t.Fatalf("expected lifecycle diagnostic on stderr, got %q", diagnostics.String())
 	}
@@ -600,6 +713,47 @@ func assertResultConforms(
 	}
 	if text.Text != string(compact) {
 		t.Fatalf("text mirror = %q, structured = %s", text.Text, compact)
+	}
+}
+
+func closeRawHarness(
+	t *testing.T,
+	ctx context.Context,
+	clientWriter io.Closer,
+	clientReader io.Closer,
+	serverDone <-chan error,
+	rawLines [][]byte,
+) {
+	t.Helper()
+	if err := clientWriter.Close(); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case err := <-serverDone:
+		if err != nil {
+			t.Fatalf("server shutdown failed: %v", err)
+		}
+	case <-ctx.Done():
+		t.Fatal("server did not shut down after stdin closed")
+	}
+	_ = clientReader.Close()
+	for _, line := range rawLines {
+		if !json.Valid(line) {
+			t.Fatalf("stdout contained non-JSON protocol data: %q", line)
+		}
+	}
+}
+
+func assertRawSupportedVersions(t *testing.T, value any) {
+	t.Helper()
+	got, ok := value.([]any)
+	if !ok || len(got) != len(contracts.SupportedMCPProtocolVersions()) {
+		t.Fatalf("supported versions = %#v", value)
+	}
+	for index, version := range contracts.SupportedMCPProtocolVersions() {
+		if got[index] != version {
+			t.Fatalf("supported version %d = %v, want %s", index, got[index], version)
+		}
 	}
 }
 

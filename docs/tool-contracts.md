@@ -24,8 +24,9 @@ The schemas are normative for the project's public MCP contract. Remaining field
 
 ## 2. MCP wire contract
 
-- Protocol target: MCP `2025-11-25`.
-- Transport: stdio only in v1.
+- Preferred protocol: MCP `2026-07-28`.
+- Supported protocol versions, in advertised preference order: `2026-07-28`, `2025-11-25`, `2025-06-18`, `2025-03-26`, and `2024-11-05`.
+- Transport: stdio only in v1. Streamable HTTP, HTTP routing headers, OAuth authorization changes, sticky routing, and horizontal HTTP deployment are out of scope for this milestone.
 - Schema dialect: JSON Schema Draft 2020-12.
 - Every tool publishes both `inputSchema` and `outputSchema`.
 - Every successful or execution-error call returns one `content` text item containing the exact compact JSON serialization of `structuredContent`.
@@ -39,7 +40,10 @@ The schemas are normative for the project's public MCP contract. Remaining field
 - Schema-valid MCP calls with invalid values, upstream failures, cache failures, and business errors are tool execution errors.
 - The server declares `tools`, `resources`, and `prompts` capabilities. `listChanged` is `false` because the v1 surface is static for a running process.
 - Resources do not advertise subscriptions in v1.
-- The server negotiates protocol versions through MCP initialization. It prefers `2025-11-25` and fails initialization clearly when the client and Go SDK cannot negotiate a supported version.
+- Modern `2026-07-28` clients may use per-request metadata and `server/discover` without an `initialize` round trip. Legacy clients continue to use the `initialize` then `notifications/initialized` lifecycle and must complete it before normal operations.
+- Discovery results advertise the complete supported-version set. Catalog list results and resource reads include MCP client cache hints: discovery is public for 1 hour, tool/resource/prompt catalogs are public for 5 minutes, and resource reads are private with `ttlMs: 0` because local restricted artifacts can change at any time. These hints are MCP response-freshness metadata only; they are not SQLite application data-cache TTLs.
+- `stratz_server_info.data.mcp_protocol_version` is the server's preferred protocol version. `stratz_server_info.data.supported_mcp_protocol_versions` is the complete ordered advertised set. A legacy stdio connection can negotiate an older effective version even though `mcp_protocol_version` remains `2026-07-28`.
+- Protocol compatibility does not change STRATZ data semantics, normalized field meanings, cache policy, or the planned curated-tool surface.
 
 Raw GraphQL uses the machine-readable `rawGraphqlPolicy` in [tool-contracts.json](./tool-contracts.json):
 
@@ -57,14 +61,21 @@ Example success:
   "content": [
     {
       "type": "text",
-      "text": "{\"kind\":\"success\",\"data\":{\"server_version\":\"1.0.0\",\"mcp_protocol_version\":\"2025-11-25\",\"schema_version\":\"sha256:...\",\"cache_status\":\"healthy\",\"upstream_status\":\"reachable\",\"limits\":{}},\"summary\":null,\"provenance\":{\"retrieved_at\":\"2026-06-18T13:00:00Z\",\"operation\":\"server_info\",\"schema_version\":\"sha256:...\",\"detail_level\":null,\"cache\":{\"status\":\"disabled\",\"age_seconds\":null},\"patch\":null,\"date_range\":null,\"rate_limits\":[]},\"warnings\":[]}"
+      "text": "{\"kind\":\"success\",\"data\":{\"server_version\":\"1.0.0\",\"mcp_protocol_version\":\"2026-07-28\",\"supported_mcp_protocol_versions\":[\"2026-07-28\",\"2025-11-25\",\"2025-06-18\",\"2025-03-26\",\"2024-11-05\"],\"schema_version\":\"sha256:...\",\"cache_status\":\"healthy\",\"upstream_status\":\"reachable\",\"limits\":{}},\"summary\":null,\"provenance\":{\"retrieved_at\":\"2026-06-18T13:00:00Z\",\"operation\":\"server_info\",\"schema_version\":\"sha256:...\",\"detail_level\":null,\"cache\":{\"status\":\"disabled\",\"age_seconds\":null},\"patch\":null,\"date_range\":null,\"rate_limits\":[]},\"warnings\":[]}"
     }
   ],
   "structuredContent": {
     "kind": "success",
     "data": {
       "server_version": "1.0.0",
-      "mcp_protocol_version": "2025-11-25",
+      "mcp_protocol_version": "2026-07-28",
+      "supported_mcp_protocol_versions": [
+        "2026-07-28",
+        "2025-11-25",
+        "2025-06-18",
+        "2025-03-26",
+        "2024-11-05"
+      ],
       "schema_version": "sha256:...",
       "cache_status": "healthy",
       "upstream_status": "reachable",
@@ -216,7 +227,14 @@ Data:
 ```json
 {
   "server_version": "1.0.0",
-  "mcp_protocol_version": "2025-11-25",
+  "mcp_protocol_version": "2026-07-28",
+  "supported_mcp_protocol_versions": [
+    "2026-07-28",
+    "2025-11-25",
+    "2025-06-18",
+    "2025-03-26",
+    "2024-11-05"
+  ],
   "schema_version": "sha256:...",
   "cache_status": "healthy",
   "upstream_status": "reachable",
@@ -639,7 +657,7 @@ Any change to a tool name, schema, detail-level inclusion rule, error code, curs
 
 1. A contract-version change.
 2. Updated generated validators and examples.
-3. Compatibility tests against Codex and Claude.
+3. Compatibility tests against Codex and Claude for modern `2026-07-28` and legacy `2025-11-25` stdio lifecycles.
 4. A migration or deprecation note when an existing client could break.
 
 ### `1.0.0-draft.3` migration note

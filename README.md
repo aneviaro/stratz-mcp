@@ -207,7 +207,7 @@ The server exposes 15 tools covering players, matches, heroes, constants, league
 - [Troubleshooting](docs/troubleshooting.md)
 - [Development guide](docs/development.md)
 
-All MCP traffic is stdio. Stdout is reserved for JSON-RPC; diagnostics go to stderr.
+All MCP traffic is stdio. The server prefers MCP `2026-07-28` and retains tested legacy `2025-11-25` stdio lifecycle compatibility for clients that still initialize that way. Stdout is reserved for JSON-RPC; diagnostics go to stderr.
 
 ## Docker
 

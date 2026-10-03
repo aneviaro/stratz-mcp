@@ -2,9 +2,16 @@
   "data": {
     "cache_status": "healthy",
     "limits": {},
-    "mcp_protocol_version": "2025-11-25",
+    "mcp_protocol_version": "2026-07-28",
     "schema_version": "x",
     "server_version": "x",
+    "supported_mcp_protocol_versions": [
+      "2026-07-28",
+      "2025-11-25",
+      "2025-06-18",
+      "2025-03-26",
+      "2024-11-05"
+    ],
     "upstream_status": "reachable"
   },
   "kind": "success",

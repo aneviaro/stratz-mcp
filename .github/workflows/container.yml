@@ -28,5 +28,7 @@ jobs:
       - name: Verify non-root read-only runtime
         run: |
           test "$(docker run --rm --entrypoint /stratz-mcp stratz-mcp:test version | head -c 10)" = "stratz-mcp"
-          CLIENT_PROFILE=codex ./scripts/interop-smoke.sh docker stratz-mcp:test
-          CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test
+          MCP_PROTOCOL_PROFILE=modern CLIENT_PROFILE=codex ./scripts/interop-smoke.sh docker stratz-mcp:test
+          MCP_PROTOCOL_PROFILE=legacy CLIENT_PROFILE=codex ./scripts/interop-smoke.sh docker stratz-mcp:test
+          MCP_PROTOCOL_PROFILE=modern CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test
+          MCP_PROTOCOL_PROFILE=legacy CLIENT_PROFILE=claude ./scripts/interop-smoke.sh docker stratz-mcp:test

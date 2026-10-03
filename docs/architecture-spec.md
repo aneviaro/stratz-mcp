@@ -104,9 +104,10 @@ Handlers must remain transport-independent so an HTTP transport can be added lat
 
 ### 4.1 MCP protocol and wire contract
 
-- Target MCP protocol version: `2025-11-25`.
-- The server follows MCP lifecycle negotiation and must not process normal operations before initialization completes.
-- The v1 transport is stdio with one newline-delimited UTF-8 JSON-RPC message per line.
+- Preferred MCP protocol version: `2026-07-28`.
+- Supported MCP protocol versions, in advertised preference order: `2026-07-28`, `2025-11-25`, `2025-06-18`, `2025-03-26`, and `2024-11-05`.
+- The v1 transport is stdio with one newline-delimited UTF-8 JSON-RPC message per line. Streamable HTTP, HTTP routing headers, OAuth authorization changes, sticky routing, and horizontal HTTP deployment are out of scope for this stdio-only milestone.
+- Modern `2026-07-28` clients may send per-request protocol metadata and use `server/discover` without a preceding `initialize` request. Legacy clients use `initialize` plus `notifications/initialized`; for those connections, normal operations must wait until the legacy lifecycle completes.
 - Stdout contains MCP messages only. Logs and diagnostics use stderr.
 - The server declares static `tools`, `resources`, and `prompts` capabilities.
 - `listChanged` is `false` for all three capabilities in v1.
@@ -117,7 +118,10 @@ Handlers must remain transport-independent so an HTTP transport can be added lat
 - Tool execution errors set MCP `isError: true` and return the stable structured error envelope.
 - Unknown tools, malformed JSON-RPC, and malformed MCP call envelopes use JSON-RPC protocol errors.
 - Value validation, upstream, cache, privacy, not-found, and business failures use tool execution errors.
-- The implementation must use an MCP Go SDK version that supports this protocol contract. If the selected SDK cannot negotiate `2025-11-25` or emit `outputSchema` and `structuredContent`, the dependency choice is blocked rather than silently reducing the contract.
+- `stratz_server_info.data.mcp_protocol_version` reports the preferred protocol. `supported_mcp_protocol_versions` reports the complete advertised set; a legacy stdio connection can negotiate an older effective version without changing the preferred value.
+- MCP response cache hints are advisory client-freshness metadata: discovery is public for 1 hour, catalog lists are public for 5 minutes, and resource reads are private with `ttlMs: 0`. They do not alter SQLite application data-cache TTLs or stale fallback.
+- Protocol compatibility must not imply STRATZ data-semantic changes, normalized-field reinterpretation, or tool-surface consolidation beyond the documented v1 surface.
+- The implementation must use an MCP Go SDK version that supports this protocol contract. If the selected SDK cannot advertise `2026-07-28`, retain tested `2025-11-25` compatibility, or emit `outputSchema`, `structuredContent`, and cache hints, the dependency choice is blocked rather than silently reducing the contract.
 
 The complete wire examples and result schemas are normative in [tool-contracts.md](./tool-contracts.md).
 
@@ -1102,8 +1106,8 @@ CI should:
 - Validate Agent Skills.
 - Verify generated prompts and skills are current.
 - Build the native server binary.
-- Run MCP protocol smoke tests over native stdio.
-- Optionally build a local Docker image and run MCP protocol smoke tests through Docker stdio.
+- Run MCP protocol smoke tests over native stdio for modern `2026-07-28` and legacy `2025-11-25` profiles.
+- Build a local Docker image when Docker behavior changes and run MCP protocol smoke tests through Docker stdio for modern `2026-07-28` and legacy `2025-11-25` profiles.
 - Verify all GitHub Actions references are pinned to full commit SHAs.
 - Verify container base images are pinned to immutable digests.
 
@@ -1213,7 +1217,7 @@ The gate covers:
 - Pagination.
 - Error display.
 - Docker cache persistence.
-- Exact MCP 2025-11-25 `structuredContent`, `outputSchema`, and `isError` behavior.
+- Exact MCP `2026-07-28` `structuredContent`, `outputSchema`, cache-hint, and `isError` behavior, plus tested `2025-11-25` legacy lifecycle compatibility.
 - Cursor integrity and expiry.
 - WAF and non-JSON upstream errors.
 
@@ -1289,7 +1293,7 @@ CI rejects stale generated outputs.
 - Maintain the June 18–19, 2026 live evidence and deterministic policy fixtures for private-profile, runtime-partial, oversized-response, timeout, rate-limit, and invalid-token edge behavior.
 - Track current STRATZ API-use, caching, redistribution, attribution, and branding terms.
 - Validate [tool-contracts.json](./tool-contracts.json) against the discovered schema and revise infeasible fields explicitly.
-- Select an MCP Go SDK version proven to support MCP `2025-11-25`, `outputSchema`, `structuredContent`, and execution-error mapping.
+- Select an MCP Go SDK version proven to support MCP `2026-07-28`, tested `2025-11-25` compatibility, `outputSchema`, `structuredContent`, cache hints, and execution-error mapping.
 - Produce the approved raw root-field policy validator and schema-drift test fixtures.
 
 ### Milestone 1 — Foundation
@@ -1354,7 +1358,7 @@ All milestones are planning-ready. Milestone dependencies govern implementation 
 The v1 system is ready for full implementation planning because these architecture decisions are fixed:
 
 1. Product scope is a local stdio MCP server with curated tools, guarded raw GraphQL, resources, prompts, and portable skills.
-2. MCP targets protocol `2025-11-25` with normative `inputSchema`, `outputSchema`, `structuredContent`, text mirroring, and `isError` behavior.
+2. MCP prefers protocol `2026-07-28` with tested `2025-11-25` legacy stdio compatibility and normative `inputSchema`, `outputSchema`, `structuredContent`, text mirroring, cache-hint, and `isError` behavior.
 3. The raw GraphQL boundary is a machine-readable, default-deny approved root-field policy plus document, variable, complexity, list, timeout, and streaming limits.
 4. The curated tool list, normalized result envelopes, detail levels, batch semantics, request budget, cursor format, and error codes are specified.
 5. `DATA_NOT_READY` uses the error-only wire path with required typed match-availability context.
@@ -1371,7 +1375,7 @@ Open upstream feasibility details and redistribution-permission questions are pl
 A component is complete only when its applicable criteria pass:
 
 1. Generated tool validators and examples conform to [tool-contracts.json](./tool-contracts.json), and each normalized field has a verified STRATZ source or documented derivation.
-2. MCP `2025-11-25` lifecycle, stdio framing, capabilities, `structuredContent`, text mirroring, `outputSchema`, protocol errors, execution errors, and `isError` mappings pass SDK conformance tests.
+2. MCP `2026-07-28` per-request metadata/discovery behavior, legacy `2025-11-25` initialization behavior, stdio framing, capabilities, `structuredContent`, text mirroring, `outputSchema`, protocol errors, execution errors, cache hints, and `isError` mappings pass SDK conformance tests.
 3. Raw GraphQL rejects non-query operations, denied/unknown roots, concealed denied roots through aliases/fragments, disallowed introspection, and every configured demand-control limit.
 4. Every 25-item batch tool stays within five upstream HTTP round trips and passes atomic-failure, cancellation, ordering, duplicate, and cache-mixing tests.
 5. HMAC-bound cursors pass integrity, filter/tool/token binding, expiry, versioning, rotation, and restart tests.
@@ -1399,7 +1403,7 @@ The source-public project is ready when:
 10. MCP resources expose the full schema, domain schema subsets, and constants.
 11. MCP prompts and portable skills are generated or synchronized from one canonical workflow source.
 12. All five skills work in Codex and Claude without relying on private vendor-only workflow logic.
-13. Native and Docker protocol smoke tests pass against MCP `2025-11-25`.
+13. Native and Docker protocol smoke tests pass against MCP `2026-07-28` and the tested legacy `2025-11-25` stdio lifecycle.
 14. No secrets appear in logs, responses, cache contents, fixtures, or generated artifacts.
 15. Retrieved content is sanitized and treated as untrusted by server outputs, prompts, and skills.
 16. STRATZ API-use, caching, redistribution, attribution, and branding constraints are reflected in product behavior and documentation.
@@ -1422,11 +1426,12 @@ Any implementation choice that changes a public tool contract, security rule, ca
 
 ## 27. Primary references
 
-- [MCP specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25)
-- [MCP lifecycle](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle)
-- [MCP stdio transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)
-- [MCP tools, structured content, output schemas, and errors](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
-- [MCP resources](https://modelcontextprotocol.io/specification/2025-11-25/server/resources)
+- [MCP specification 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28)
+- [MCP lifecycle](https://modelcontextprotocol.io/specification/2026-07-28/basic/lifecycle)
+- [MCP stdio transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports)
+- [MCP tools, structured content, output schemas, and errors](https://modelcontextprotocol.io/specification/2026-07-28/server/tools)
+- [MCP resources](https://modelcontextprotocol.io/specification/2026-07-28/server/resources)
+- [MCP specification 2025-11-25 compatibility target](https://modelcontextprotocol.io/specification/2025-11-25)
 - [GraphQL security and demand control](https://graphql.org/learn/security/)
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Go vulnerability management](https://go.dev/doc/security/vuln/)

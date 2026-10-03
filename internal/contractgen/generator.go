@@ -24,11 +24,19 @@ import (
 
 const (
 	contractRegistryPath = "docs/tool-contracts.json"
-	expectedContract     = "1.0.0-draft.3"
-	expectedProtocol     = "2025-11-25"
+	expectedContract     = "1.0.0-draft.4"
+	expectedProtocol     = "2026-07-28"
 	draft202012          = "https://json-schema.org/draft/2020-12/schema"
 	referenceCreatedDate = "2026-06-19"
 )
+
+var expectedSupportedProtocols = []string{
+	"2026-07-28",
+	"2025-11-25",
+	"2025-06-18",
+	"2025-03-26",
+	"2024-11-05",
+}
 
 var expectedTools = []string{
 	"stratz_batch_get_heroes",
@@ -49,14 +57,15 @@ var expectedTools = []string{
 }
 
 type registry struct {
-	Schema             string                    `json:"$schema"`
-	ID                 string                    `json:"$id"`
-	ContractVersion    string                    `json:"contractVersion"`
-	MCPProtocolVersion string                    `json:"mcpProtocolVersion"`
-	Description        string                    `json:"description"`
-	RawGraphQLPolicy   rawGraphQLPolicy          `json:"rawGraphqlPolicy"`
-	Defs               map[string]any            `json:"$defs"`
-	Tools              map[string]toolDefinition `json:"tools"`
+	Schema                       string                    `json:"$schema"`
+	ID                           string                    `json:"$id"`
+	ContractVersion              string                    `json:"contractVersion"`
+	MCPProtocolVersion           string                    `json:"mcpProtocolVersion"`
+	SupportedMCPProtocolVersions []string                  `json:"supportedMcpProtocolVersions"`
+	Description                  string                    `json:"description"`
+	RawGraphQLPolicy             rawGraphQLPolicy          `json:"rawGraphqlPolicy"`
+	Defs                         map[string]any            `json:"$defs"`
+	Tools                        map[string]toolDefinition `json:"tools"`
 }
 
 type rawGraphQLPolicy struct {
@@ -188,11 +197,12 @@ func Build(registryPath string) ([]Artifact, error) {
 	}
 
 	manifest, err := marshalJSON(map[string]any{
-		"contract_version":     reg.ContractVersion,
-		"mcp_protocol_version": reg.MCPProtocolVersion,
-		"schema_draft":         reg.Schema,
-		"tool_count":           len(names),
-		"tools":                manifestTools,
+		"contract_version":                reg.ContractVersion,
+		"mcp_protocol_version":            reg.MCPProtocolVersion,
+		"supported_mcp_protocol_versions": reg.SupportedMCPProtocolVersions,
+		"schema_draft":                    reg.Schema,
+		"tool_count":                      len(names),
+		"tools":                           manifestTools,
 	})
 	if err != nil {
 		return nil, err
@@ -241,6 +251,22 @@ func validateRegistry(reg registry) error {
 	if reg.MCPProtocolVersion != expectedProtocol {
 		return fmt.Errorf("MCP protocol version %q is unsupported; generator expects %q", reg.MCPProtocolVersion, expectedProtocol)
 	}
+	if len(reg.SupportedMCPProtocolVersions) == 0 {
+		return errors.New("supported MCP protocol versions must not be empty")
+	}
+	seenProtocols := make(map[string]struct{}, len(reg.SupportedMCPProtocolVersions))
+	for _, version := range reg.SupportedMCPProtocolVersions {
+		if _, exists := seenProtocols[version]; exists {
+			return fmt.Errorf("supported MCP protocol version %q is duplicated", version)
+		}
+		seenProtocols[version] = struct{}{}
+	}
+	if reg.SupportedMCPProtocolVersions[0] != reg.MCPProtocolVersion {
+		return fmt.Errorf("preferred MCP protocol version %q must be first in supported versions", reg.MCPProtocolVersion)
+	}
+	if !slices.Equal(reg.SupportedMCPProtocolVersions, expectedSupportedProtocols) {
+		return fmt.Errorf("supported MCP protocol versions %v are unsupported; generator expects %v", reg.SupportedMCPProtocolVersions, expectedSupportedProtocols)
+	}
 	if reg.ID == "" {
 		return errors.New("contract registry $id is required")
 	}
@@ -277,6 +303,80 @@ func validateRegistry(reg registry) error {
 		if err := compileSourceSchema(name+".outputSchema", tool.OutputSchema, reg.Defs); err != nil {
 			return err
 		}
+	}
+	if err := validateServerInfoSchema(reg); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateServerInfoSchema(reg registry) error {
+	tool := reg.Tools["stratz_server_info"]
+	output, ok := tool.OutputSchema.(map[string]any)
+	if !ok {
+		return errors.New("stratz_server_info output schema must be an object")
+	}
+	alternatives, ok := output["oneOf"].([]any)
+	if !ok || len(alternatives) == 0 {
+		return errors.New("stratz_server_info output schema must declare success and error alternatives")
+	}
+	firstAlternative, ok := alternatives[0].(map[string]any)
+	if !ok {
+		return errors.New("stratz_server_info success schema is malformed")
+	}
+	allOf, ok := firstAlternative["allOf"].([]any)
+	if !ok || len(allOf) < 2 {
+		return errors.New("stratz_server_info success schema is malformed")
+	}
+	secondAllOf, ok := allOf[1].(map[string]any)
+	if !ok {
+		return errors.New("stratz_server_info success schema is malformed")
+	}
+	properties, ok := secondAllOf["properties"].(map[string]any)
+	if !ok {
+		return errors.New("stratz_server_info success schema is missing properties")
+	}
+	data, ok := properties["data"].(map[string]any)
+	if !ok {
+		return errors.New("stratz_server_info success schema is missing data")
+	}
+	dataProperties, ok := data["properties"].(map[string]any)
+	if !ok {
+		return errors.New("stratz_server_info data schema is missing properties")
+	}
+	preferred, ok := dataProperties["mcp_protocol_version"].(map[string]any)
+	if !ok || preferred["const"] != reg.MCPProtocolVersion {
+		return fmt.Errorf("stratz_server_info mcp_protocol_version schema must const %q", reg.MCPProtocolVersion)
+	}
+	supported, ok := dataProperties["supported_mcp_protocol_versions"].(map[string]any)
+	if !ok || supported["type"] != "array" {
+		return errors.New("stratz_server_info supported_mcp_protocol_versions schema must be an array")
+	}
+	items, ok := supported["items"].(map[string]any)
+	if !ok || items["type"] != "string" {
+		return errors.New("stratz_server_info supported protocol items must be strings")
+	}
+	rawEnum, ok := items["enum"].([]any)
+	if !ok {
+		return errors.New("stratz_server_info supported protocol items must declare an enum")
+	}
+	schemaProtocols := make([]string, len(rawEnum))
+	for i, raw := range rawEnum {
+		var ok bool
+		schemaProtocols[i], ok = raw.(string)
+		if !ok {
+			return errors.New("stratz_server_info supported protocol enum must contain strings")
+		}
+	}
+	if !slices.Equal(schemaProtocols, reg.SupportedMCPProtocolVersions) {
+		return fmt.Errorf("stratz_server_info supported protocol schema %v does not match registry %v", schemaProtocols, reg.SupportedMCPProtocolVersions)
+	}
+	if supported["minItems"] != float64(len(reg.SupportedMCPProtocolVersions)) || supported["maxItems"] != float64(len(reg.SupportedMCPProtocolVersions)) || supported["uniqueItems"] != true {
+		return errors.New("stratz_server_info supported protocol schema cardinality does not match registry")
+	}
+	required, ok := data["required"].([]any)
+	if !ok || !slices.Contains(required, "mcp_protocol_version") || !slices.Contains(required, "supported_mcp_protocol_versions") {
+		return errors.New("stratz_server_info protocol fields must be required")
 	}
 	return nil
 }
@@ -595,6 +695,17 @@ func exampleFor(schema any) (any, error) {
 			if !ok {
 				items = true
 			}
+			if unique, _ := node["uniqueItems"].(bool); unique {
+				if itemSchema, ok := items.(map[string]any); ok {
+					if values, ok := itemSchema["enum"].([]any); ok && len(values) >= count {
+						result := make([]any, count)
+						for i := range result {
+							result[i] = clone(values[i])
+						}
+						return result, nil
+					}
+				}
+			}
 			result := make([]any, count)
 			for i := range result {
 				value, err := exampleFor(items)
@@ -775,6 +886,11 @@ func renderGo(reg registry, names []string) ([]byte, error) {
 	fmt.Fprintf(&builder, "const ContractVersion = %q\n", reg.ContractVersion)
 	fmt.Fprintf(&builder, "const MCPProtocolVersion = %q\n", reg.MCPProtocolVersion)
 	fmt.Fprintf(&builder, "const SchemaDraft = %q\n\n", reg.Schema)
+	renderStringSliceFunction(
+		&builder,
+		"SupportedMCPProtocolVersions",
+		reg.SupportedMCPProtocolVersions,
+	)
 	renderStringSliceFunction(
 		&builder,
 		"RawGraphQLAllowedRootFields",
@@ -1074,7 +1190,8 @@ func renderReference(reg registry, names []string) []byte {
 	fmt.Fprintf(&builder, "---\nCreated: %s\nPurpose: Generated reference for the public STRATZ MCP tool contracts.\nStatus: Generated from docs/tool-contracts.json; do not edit manually\n---\n\n", referenceCreatedDate)
 	builder.WriteString("# Generated STRATZ MCP tool contracts\n\n")
 	fmt.Fprintf(&builder, "- Contract version: `%s`\n", reg.ContractVersion)
-	fmt.Fprintf(&builder, "- MCP protocol version: `%s`\n", reg.MCPProtocolVersion)
+	fmt.Fprintf(&builder, "- Preferred MCP protocol version: `%s`\n", reg.MCPProtocolVersion)
+	fmt.Fprintf(&builder, "- Supported MCP protocol versions: `%s`\n", strings.Join(reg.SupportedMCPProtocolVersions, "`, `"))
 	fmt.Fprintf(&builder, "- JSON Schema dialect: `%s`\n", reg.Schema)
 	fmt.Fprintf(&builder, "- Tool count: `%d`\n\n", len(names))
 	builder.WriteString("| Tool | Description | Required input fields |\n")
