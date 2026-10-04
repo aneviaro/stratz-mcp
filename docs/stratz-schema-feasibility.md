@@ -1,256 +1,111 @@
 ---
 Created: 2026-06-18
-Purpose: Record live STRATZ schema evidence and assess feasibility of the proposed curated MCP tools.
-Status: Core v1 domains verified; exact operation selections and normalized field mappings remain to be generated from the full local schema
+Updated: 2026-10-04
+Purpose: Map the v2 query modes to verified STRATZ operations and bounded local behavior.
+Status: v2 contract feasibility recorded; exact operation generation remains a later implementation task.
 ---
 
-# STRATZ schema feasibility
+# STRATZ schema feasibility for v2 query modes
 
-## 1. Method
+## 1. Evidence boundary
 
-Authenticated GraphQL introspection was run against:
+Authenticated introspection was performed against `https://api.stratz.com/graphql` using the repository's verified HTTP contract. The fetched schema is not committed or redistributed. This document records only native fields and bounded derivations supported by the evidence; it does not authorize unsupported fields.
 
-```text
-https://api.stratz.com/graphql
-```
+The Dota query root exposes `constants`, `heroStats`, `league`, `leagues`, `live`, `match`, `matches`, `player`, `players`, `team`, and `teams`. Raw access remains governed by the default-deny policy in [`tool-contracts.json`](./tool-contracts.json).
 
-Only root signatures and selected public type/input signatures were printed. The full fetched schema was not committed or redistributed.
+All curated calls remain within five upstream attempts. Local scans must be bounded, preserve continuation state in an authenticated cursor, and warn when the result is incomplete.
 
-Developer commands:
+## 2. `stratz_query_players`
 
-- `cmd/stratz-schema-inspect`
-- `cmd/stratz-discovery`
+### Exact mode
 
-## 2. Root API
+- Native source: `players(steamAccountIds: [Long]!)`, with `player(steamAccountId: Long!)` for a single normalized identifier.
+- Feasible identifiers: Steam account ID, SteamID64, and STRATZ profile URL after local normalization.
+- Native normalized fields: account identity, display identity, avatar, privacy state, rank/leaderboard values, match count, win count, and last-match time where returned.
+- `include_profile_statistics` is default-off; when enabled it maps only the verified count/win/last-match fields.
+- The 25-item bound is feasible in one bounded batch operation. Upstream null/private results are mapped to the documented atomic error behavior.
 
-The live `DotaQuery` root exposes:
+No general player search mode is defined because the verified schema does not provide a safe bounded search contract.
 
-| Field | Signature |
-|---|---|
-| `constants` | `ConstantQuery` |
-| `heroStats` | `HeroStatsQuery` |
-| `league` | `(id: Int!) -> LeagueType` |
-| `leagues` | `(request: LeagueRequestType!) -> [LeagueType]` |
-| `live` | `LiveQuery` |
-| `match` | `(id: Long!) -> MatchType` |
-| `matches` | `(ids: [Long]!) -> [MatchType]` |
-| `player` | `(steamAccountId: Long!) -> PlayerType` |
-| `players` | `(steamAccountIds: [Long]!) -> [PlayerType]` |
-| `team` | `(teamId: Int!) -> TeamType` |
-| `teams` | `(teamIds: [Int]!) -> [TeamType]` |
+## 3. `stratz_query_matches`
 
-Other roots include guild, leaderboard, plus, STRATZ, vendor, and yogurt domains.
+### Exact mode
 
-The approved raw policy allows `guild` and `leaderboard`. It denies `plus`, `stratz`, `vendor`, and `yogurt` pending separate security/data review. Query operation type alone does not grant access, and new upstream roots remain denied until an explicit contract revision.
+- Native source: `matches(ids: [Long]!)`; one request supports up to 25 IDs.
+- Match IDs are decimal strings, and native result order is normalized back to exact input order with duplicates.
+- Summary, player rows, objectives, and bounded timeline fields are available from `MatchType` and `MatchPlaybackDataType`.
+- A missing match is `NOT_FOUND`; an unavailable replay-dependent detail is `DATA_NOT_READY`, not a silent downgrade.
 
-## 3. Batch feasibility
+### Player-history mode
 
-### Matches
+- Native source: `player.matches(request: PlayerMatchesRequestType!)`.
+- Native filters include date bounds, hero, position/role/lane IDs, game mode, lobby, victory, patch/game version, league, region, parsed/stats, party, radiant, and team/player relations.
+- The public v2 subset is date, hero, role, game mode, lobby, result, patch, and minimum duration. Minimum duration is a bounded local filter because it is not native.
+- `take`, `skip`, `before`, and `after` are carried in the authenticated cursor; no cursor exposes upstream credentials or private data.
 
-`matches(ids: [Long]!)` natively supports one-request match batches. The v1 25-item batch limit is feasible within the five-request budget.
+### League-history mode
 
-### Players
+- Native source: `league.matches(request: LeagueMatchesRequestType!)`.
+- Date, game mode/version, hero, parsed/stats, lane/role/position, lobby, rank, region, series, team/player, and pagination inputs are available upstream.
+- The v2 public subset is league ID, date, and patch; results are normalized to match summaries and are paginated.
 
-`players(steamAccountIds: [Long]!)` natively supports one-request player batches. Identifier normalization must happen before constructing this request.
+### Live mode
 
-### Heroes
+- Native source: `live.matches(request: MatchLiveRequestType)`.
+- Native filters include game state, hero, completion/parsing state, league, league tier, ordering, and pagination.
+- Player, team, game mode, and minimum spectator constraints are bounded local filters over live pages.
+- Supported public order values are `newest` and `highest_profile`, mapped to the verified order fields.
+- Live results provide match, game mode/state, league/team, players, spectator count, scores, and rank-related live fields. Region filtering and replay-derived fields are not promised.
 
-There is no `heroes(ids: ...)` field. `constants.heroes(...)` returns the hero set, and `constants.hero(id: ...)` returns one hero.
+## 4. `stratz_query_heroes`
 
-The batch tool remains feasible by loading/caching the bounded hero constant set once and selecting requested IDs locally. Name and slug resolution is also local and must reject ambiguity.
+### Exact and search modes
 
-## 4. Player tools
+- Native source: `constants.hero(id:)` and the bounded `constants.heroes(...)` aggregate; exact name/slug matching uses a local normalized index and rejects ambiguity.
+- Exact mode accepts up to 25 IDs, names, or slugs and performs local selection after the bounded constants load.
+- Search mode is a bounded local/indexed search over the same hero reference set and is paginated when needed.
+- Normalized reference fields are hero ID, internal name, slug/localized name, primary attribute, attack type, and roles.
 
-`PlayerType` exposes:
+### Optional statistics
 
-- `steamAccountId`
-- `steamAccount`
-- `identity`
-- `simpleSummary`
-- `ranks`
-- `leaderboardRanks`
-- `matchCount`
-- `winCount`
-- `firstMatchDate`
-- `lastMatchDate`
-- `matches(request: PlayerMatchesRequestType!)`
-- performance and hero-performance fields
+- Native source: `heroStats.stats` plus the verified time-bucketed win operations.
+- Supported public constraints are date range, rank bracket, and role. Date ranges are translated into bounded day/week/month buckets; provenance records the effective range and warnings record rounding.
+- Sample size, pick rate, and win rate are feasible from the verified aggregate population. Metrics without the requested dimension return `INVALID_ARGUMENT` or an explicitly unavailable field; populations are never mixed.
+- Lane dimensions, item/build/talent guides, matchups, synergies, and other statistics are not part of the v2 contract even where related upstream fields exist.
+- Statistics are not fetched unless `include_statistics: true`.
 
-`PlayerMatchesRequestType` supports:
+## 5. `stratz_query_leagues`
 
-- `startDateTime`, `endDateTime`
-- `heroIds`
-- `positionIds`, `roleIds`, `laneIds`
-- `gameModeIds`
-- `lobbyTypeIds`
-- `isVictory`
-- `gameVersionIds`
-- `leagueId`, `leagueIds`
-- `regionIds`
-- `isParsed`, `isStats`, `isParty`, `isRadiant`
-- team, friend, and enemy filters
-- `take`, `skip`, `before`, `after`
+### Exact mode
 
-Implications:
+- Native source: `leagues(request: LeagueRequestType!)` with the requested ID set, with bounded deduplication and atomic response semantics in one paged operation.
+- League ID, name, region, tier, date range, and live/status inputs are available for normalized league records.
 
-- The proposed date, hero, role, lane, game-mode, lobby, win/loss, region, league, and patch/game-version filters are feasible.
-- Minimum duration is not a native filter. It requires bounded client-side filtering.
-- Opaque MCP cursors must preserve STRATZ `before`/`after` or skip state plus client-side scan progress.
+### Search mode
 
-## 5. Match tools
+- Native source: `leagues(request: LeagueRequestType!)`, including tier, future/ended/live, date, ordering, `take`, and `skip`.
+- Name query is not native and is a bounded client-side scan over authenticated pages.
+- Status is derived only from verified future/ended/live values and dates. An incomplete text scan produces a warning and continuation cursor.
 
-`MatchType` exposes the core normalized match fields:
+## 6. `stratz_query_constants`
 
-- ID and timestamps.
-- Duration and result.
-- Game mode, lobby type, region, game version, league, and series.
-- Players.
-- Pick/bans.
-- Team and lane outcomes.
-- Kill, net-worth, and experience timelines.
-- Tower/building events.
-- Playback data.
+### Types mode
 
-`MatchPlayerType` exposes:
+The verified `ConstantQuery` exposes bounded aggregates for `heroes`, `items`, `abilities`, game modes, regions, and game versions. The v2 `types` array makes multi-class retrieval explicit. There is no `all` shortcut and no native rank class, so neither is advertised.
 
-- Steam account and hero IDs.
-- Team side, slot, role, position, and lane.
-- Kills, deaths, assists, level, net worth, GPM, XPM, damage, healing, and tower damage.
-- Items, abilities, stats, and player playback data.
+### Typed-selectors mode
 
-`MatchPlaybackDataType` exposes bounded event groups for:
+Each selector names one supported class and a bounded list of IDs. Hero, item, and ability selectors map to their typed constant fields; game-mode, region, and game-version selectors use their corresponding bounded constant mappings. The implementation may load a bounded class aggregate once and select locally, keeping the five-attempt budget. Type and selector errors fail the complete request. Items carry their class in the normalized `type` field.
 
-- Buildings.
-- Couriers.
-- Roshan.
-- Runes.
-- Towers.
-- Wards.
+## 7. Shared feasibility guarantees
 
-Implications:
+- Normalization discards unknown upstream fields and never fabricates unavailable values.
+- Exact selector calls are atomic, preserve order and duplicates, and accept at most 25 identifiers.
+- Every paginated query uses authenticated, filter-bound cursors and returns `page`; old cursors are invalid after the v2 boundary.
+- Five upstream attempts is a hard per-call budget, including bounded scans and local-enrichment fetches.
+- Privacy, cache, stale-fallback, response-size, and redaction rules remain those in the normative contract and architecture specification.
+- Static resources are unchanged.
 
-- `summary`, `standard`, and `full` match levels are feasible.
-- The exact normalized fight/economy mappings need generated operations and fixture validation.
-- Missing match ID `1` returned HTTP 200 with `data.match: null`; curated tools map this to `NOT_FOUND`.
+## 8. Generation follow-up
 
-## 6. Constants and heroes
-
-`ConstantQuery` exposes:
-
-- `hero` and `heroes`.
-- `item` and `items`.
-- `ability` and `abilities`.
-- Game modes and lobby types.
-- Regions.
-- Roles.
-- Game versions.
-- Facets, NPCs, modifiers, patch notes, and other reference data.
-
-Implications:
-
-- Hero, item, ability, game-mode, region, and game-version resources are feasible.
-- Rank constants are not a `ConstantQuery` field. Rank metadata must be derived from committed schema enums/reference mappings or removed from `stratz_get_constants` if redistribution terms do not allow that mapping.
-- Hero lookup by localized name/slug is a local index over `constants.heroes`.
-
-## 7. Hero statistics
-
-`HeroStatsQuery` exposes:
-
-- `stats` with hero IDs, week, rank brackets, positions, and time grouping.
-- `winDay`, `winWeek`, `winMonth`, `winHour`, and `winGameVersion`.
-- `banDay`.
-- `heroVsHeroMatchup` and `matchUp`.
-- Lane outcomes.
-- Item, ability, talent, and guide statistics.
-
-`HeroPositionTimeDetailType` includes match/win counts, hero ID, week/time, position/rank grouping, and many aggregate performance fields.
-
-Implications:
-
-- Win rate, sample size, role/position breakdown, time trends, matchup, and synergy analysis are feasible.
-- Pick rate requires a denominator query across the same population.
-- Ban rate uses a separate time-bucketed operation.
-- Arbitrary RFC 3339 date ranges are not a single native argument. The curated tool must translate them into bounded day/week/month buckets, document the effective range in provenance, and warn when the range is rounded.
-- A patch/game-version filter is naturally supported by `winGameVersion`, but not every metric supports the same game-version dimension. Unsupported combinations return `INVALID_ARGUMENT` or explicit `null` fields with a warning; they must not silently mix populations.
-
-## 8. Leagues
-
-`LeagueRequestType` supports:
-
-- League ID(s).
-- Start/end and between-date filters.
-- Future/ended/live flags.
-- Tier.
-- Ordering.
-- Image/prize/date requirements.
-- `take` and `skip`.
-
-`LeagueType` exposes:
-
-- ID, name/display name, description, region, country, tier, dates, image, prize pool, venue, streams, and live status.
-- `matches(request: LeagueMatchesRequestType!)`.
-- Series, standings, tables, stages, and statistics.
-
-`LeagueMatchesRequestType` supports date, game mode/version, hero, parsed/stats, lane/role/position, lobby, rank, region, series, team/player, and pagination filters.
-
-Implications:
-
-- League retrieval and league-match listing are feasible.
-- Normalized `status` is derived from dates plus future/ended/live fields.
-- Text name search is not a native filter. It uses bounded client-side scanning over paginated league results. Incomplete scans must return a warning and continuation cursor rather than claiming exhaustive search.
-
-## 9. Live matches
-
-`LiveQuery` exposes:
-
-- `match(id:, skipPlaybackDuration:)`.
-- `matches(request: MatchLiveRequestType)`.
-
-Native live request filters:
-
-- Game state.
-- Hero.
-- Completion/parsing state.
-- League ID(s).
-- League tier.
-- Ordering.
-- `take` and `skip`.
-
-Native order values:
-
-- `AVERAGE_RANK`
-- `GAME_TIME`
-- `MATCH_ID`
-- `SPECTATOR_COUNT`
-
-`MatchLiveType` exposes:
-
-- Match/lobby IDs.
-- Game time/minute, game mode, and game state.
-- League and team IDs/objects.
-- Players.
-- Spectator count.
-- Scores and radiant lead.
-- Average rank.
-- Playback and win-rate data.
-
-It does not expose a region field.
-
-Implications:
-
-- League, hero, state, tier, newest, and spectator ordering are native.
-- Team, player, game mode, and minimum spectator filters are feasible through bounded client-side filtering.
-- Region filtering is not feasible and has been removed from the v1 curated contract.
-- Client-side live filtering may scan at most five upstream pages per MCP call and resumes through the authenticated cursor.
-
-## 10. Required contract-generation work
-
-Before curated implementation:
-
-1. Pull the full schema locally using the verified Go HTTP contract.
-2. Generate selected-operation types.
-3. Validate every field in `docs/tool-contracts.json` against concrete STRATZ selections.
-4. Define exact enum mapping tables for roles, positions, ranks, tiers, modes, lobby types, game states, and order values.
-5. Define bounded client-side scan semantics for non-native filters.
-6. Add fixtures for null, private, unparsed, partial, and schema-drift responses.
-7. Update the schema feasibility status when all normalized fields have an approved source or derivation.
+The subsequent implementation work must pull the full schema locally, generate selected operations, validate each public field against a concrete selection, define enum mapping tables, and add fixtures for null, private, unparsed, partial, and schema-drift responses. Generated outputs are deliberately not changed by this contract task.

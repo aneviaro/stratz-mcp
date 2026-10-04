@@ -1,0 +1,102 @@
+{
+  "$id": "urn:stratz-mcp:contract:2.0.0-draft.1:stratz_query_constants:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "fresh": {
+          "default": false,
+          "type": "boolean"
+        },
+        "include_raw": {
+          "default": false,
+          "type": "boolean"
+        },
+        "mode": {
+          "const": "types"
+        },
+        "types": {
+          "items": {
+            "enum": [
+              "heroes",
+              "items",
+              "abilities",
+              "game_modes",
+              "regions",
+              "game_versions"
+            ],
+            "type": "string"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "mode",
+        "types"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "fresh": {
+          "default": false,
+          "type": "boolean"
+        },
+        "include_raw": {
+          "default": false,
+          "type": "boolean"
+        },
+        "mode": {
+          "const": "typed_selectors"
+        },
+        "selectors": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "ids": {
+                "items": {
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 25,
+                "minItems": 1,
+                "type": "array"
+              },
+              "type": {
+                "enum": [
+                  "heroes",
+                  "items",
+                  "abilities",
+                  "game_modes",
+                  "regions",
+                  "game_versions"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "ids"
+            ],
+            "type": "object"
+          },
+          "maxItems": 25,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "mode",
+        "selectors"
+      ],
+      "type": "object"
+    }
+  ],
+  "type": "object"
+}

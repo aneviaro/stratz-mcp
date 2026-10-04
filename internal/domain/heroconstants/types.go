@@ -58,6 +58,60 @@ type StatsFilters struct {
 	IncludeSynergies bool
 }
 
+// ConstantsData is the normalized legacy constants result retained for
+// callers that use FetchConstants. QueryConstants uses ConstantsQueryData.
+type ConstantsData struct {
+	Type  string               `json:"type"`
+	Items []contracts.Constant `json:"items"`
+}
+
+// HeroStatsData is the normalized aggregate returned by FetchHeroStats.
+type HeroStatsData struct {
+	HeroID     int64           `json:"hero_id"`
+	SampleSize int64           `json:"sample_size"`
+	PickRate   *float64        `json:"pick_rate"`
+	WinRate    *float64        `json:"win_rate"`
+	BanRate    *float64        `json:"ban_rate"`
+	Roles      []HeroBreakdown `json:"roles"`
+	Lanes      []HeroBreakdown `json:"lanes"`
+	Matchups   []HeroRelation  `json:"matchups"`
+	Synergies  []HeroRelation  `json:"synergies"`
+}
+
+type HeroBreakdown struct {
+	Name       string   `json:"name"`
+	SampleSize int64    `json:"sample_size"`
+	PickRate   *float64 `json:"pick_rate"`
+	WinRate    *float64 `json:"win_rate"`
+}
+
+type HeroRelation struct {
+	HeroID     int64    `json:"hero_id"`
+	SampleSize int64    `json:"sample_size"`
+	WinRate    *float64 `json:"win_rate"`
+	Advantage  *float64 `json:"advantage"`
+}
+
+// QueryPage is the authenticated continuation returned by local search.
+type QueryPage struct {
+	NextCursor *string `json:"next_cursor"`
+	HasMore    bool    `json:"has_more"`
+}
+
+// HeroQueryData and ConstantsQueryData are domain results assembled from the
+// generated request contracts. Keeping page state here lets adapters serialize
+// the v2 union without exposing pagination internals to the service.
+type HeroQueryData struct {
+	Mode  string           `json:"mode"`
+	Items []contracts.Hero `json:"items"`
+	Page  *QueryPage       `json:"page,omitempty"`
+}
+
+type ConstantsQueryData struct {
+	Mode  string               `json:"mode"`
+	Items []contracts.Constant `json:"items"`
+}
+
 type upstreamHero struct {
 	ID            int64   `json:"id"`
 	Name          string  `json:"name"`
@@ -161,12 +215,13 @@ func (value upstreamConstantID) String() string {
 }
 
 type upstreamConstants struct {
-	Heroes    []upstreamHero     `json:"heroes"`
-	Items     []upstreamConstant `json:"items"`
-	Abilities []upstreamConstant `json:"abilities"`
-	GameModes []upstreamConstant `json:"gameModes"`
-	Regions   []upstreamConstant `json:"regions"`
-	Ranks     []upstreamConstant `json:"ranks"`
+	Heroes       []upstreamHero     `json:"heroes"`
+	Items        []upstreamConstant `json:"items"`
+	Abilities    []upstreamConstant `json:"abilities"`
+	GameModes    []upstreamConstant `json:"gameModes"`
+	Regions      []upstreamConstant `json:"regions"`
+	Ranks        []upstreamConstant `json:"ranks"`
+	GameVersions []upstreamConstant `json:"gameVersions"`
 }
 
 type constantsEnvelope struct {

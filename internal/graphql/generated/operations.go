@@ -875,6 +875,66 @@ type PlayerFieldsIdentityPlayerIdentityType struct {
 // GetName returns PlayerFieldsIdentityPlayerIdentityType.Name, and is useful for accessing the field via an interface.
 func (v *PlayerFieldsIdentityPlayerIdentityType) GetName() *string { return v.Name }
 
+// PlayerFieldsLean includes the GraphQL fields of PlayerType requested by the fragment PlayerFieldsLean.
+type PlayerFieldsLean struct {
+	SteamAccountId int64                                         `json:"steamAccountId"`
+	SteamAccount   *PlayerFieldsLeanSteamAccountSteamAccountType `json:"steamAccount"`
+	Identity       *PlayerFieldsLeanIdentityPlayerIdentityType   `json:"identity"`
+	LastMatchDate  *int64                                        `json:"lastMatchDate"`
+	Ranks          []PlayerFieldsLeanRanksPlayerRankType         `json:"ranks"`
+}
+
+// GetSteamAccountId returns PlayerFieldsLean.SteamAccountId, and is useful for accessing the field via an interface.
+func (v *PlayerFieldsLean) GetSteamAccountId() int64 { return v.SteamAccountId }
+
+// GetSteamAccount returns PlayerFieldsLean.SteamAccount, and is useful for accessing the field via an interface.
+func (v *PlayerFieldsLean) GetSteamAccount() *PlayerFieldsLeanSteamAccountSteamAccountType {
+	return v.SteamAccount
+}
+
+// GetIdentity returns PlayerFieldsLean.Identity, and is useful for accessing the field via an interface.
+func (v *PlayerFieldsLean) GetIdentity() *PlayerFieldsLeanIdentityPlayerIdentityType {
+	return v.Identity
+}
+
+// GetLastMatchDate returns PlayerFieldsLean.LastMatchDate, and is useful for accessing the field via an interface.
+func (v *PlayerFieldsLean) GetLastMatchDate() *int64 { return v.LastMatchDate }
+
+// GetRanks returns PlayerFieldsLean.Ranks, and is useful for accessing the field via an interface.
+func (v *PlayerFieldsLean) GetRanks() []PlayerFieldsLeanRanksPlayerRankType { return v.Ranks }
+
+// PlayerFieldsLeanIdentityPlayerIdentityType includes the requested fields of the GraphQL type PlayerIdentityType.
+type PlayerFieldsLeanIdentityPlayerIdentityType struct {
+	Name *string `json:"name"`
+}
+
+// GetName returns PlayerFieldsLeanIdentityPlayerIdentityType.Name, and is useful for accessing the field via an interface.
+func (v *PlayerFieldsLeanIdentityPlayerIdentityType) GetName() *string { return v.Name }
+
+// PlayerFieldsLeanRanksPlayerRankType includes the requested fields of the GraphQL type PlayerRankType.
+type PlayerFieldsLeanRanksPlayerRankType struct {
+	Rank *int `json:"rank"`
+}
+
+// GetRank returns PlayerFieldsLeanRanksPlayerRankType.Rank, and is useful for accessing the field via an interface.
+func (v *PlayerFieldsLeanRanksPlayerRankType) GetRank() *int { return v.Rank }
+
+// PlayerFieldsLeanSteamAccountSteamAccountType includes the requested fields of the GraphQL type SteamAccountType.
+type PlayerFieldsLeanSteamAccountSteamAccountType struct {
+	Id     *int64  `json:"id"`
+	Name   *string `json:"name"`
+	Avatar *string `json:"avatar"`
+}
+
+// GetId returns PlayerFieldsLeanSteamAccountSteamAccountType.Id, and is useful for accessing the field via an interface.
+func (v *PlayerFieldsLeanSteamAccountSteamAccountType) GetId() *int64 { return v.Id }
+
+// GetName returns PlayerFieldsLeanSteamAccountSteamAccountType.Name, and is useful for accessing the field via an interface.
+func (v *PlayerFieldsLeanSteamAccountSteamAccountType) GetName() *string { return v.Name }
+
+// GetAvatar returns PlayerFieldsLeanSteamAccountSteamAccountType.Avatar, and is useful for accessing the field via an interface.
+func (v *PlayerFieldsLeanSteamAccountSteamAccountType) GetAvatar() *string { return v.Avatar }
+
 // PlayerFieldsRanksPlayerRankType includes the requested fields of the GraphQL type PlayerRankType.
 type PlayerFieldsRanksPlayerRankType struct {
 	Rank *int `json:"rank"`
@@ -5961,6 +6021,102 @@ type StratzGetPlayerResponse struct {
 // GetPlayer returns StratzGetPlayerResponse.Player, and is useful for accessing the field via an interface.
 func (v *StratzGetPlayerResponse) GetPlayer() *StratzGetPlayerPlayerPlayerType { return v.Player }
 
+// StratzGetPlayersLeanPlayersPlayerType includes the requested fields of the GraphQL type PlayerType.
+type StratzGetPlayersLeanPlayersPlayerType struct {
+	PlayerFieldsLean `json:"-"`
+}
+
+// GetSteamAccountId returns StratzGetPlayersLeanPlayersPlayerType.SteamAccountId, and is useful for accessing the field via an interface.
+func (v *StratzGetPlayersLeanPlayersPlayerType) GetSteamAccountId() int64 {
+	return v.PlayerFieldsLean.SteamAccountId
+}
+
+// GetSteamAccount returns StratzGetPlayersLeanPlayersPlayerType.SteamAccount, and is useful for accessing the field via an interface.
+func (v *StratzGetPlayersLeanPlayersPlayerType) GetSteamAccount() *PlayerFieldsLeanSteamAccountSteamAccountType {
+	return v.PlayerFieldsLean.SteamAccount
+}
+
+// GetIdentity returns StratzGetPlayersLeanPlayersPlayerType.Identity, and is useful for accessing the field via an interface.
+func (v *StratzGetPlayersLeanPlayersPlayerType) GetIdentity() *PlayerFieldsLeanIdentityPlayerIdentityType {
+	return v.PlayerFieldsLean.Identity
+}
+
+// GetLastMatchDate returns StratzGetPlayersLeanPlayersPlayerType.LastMatchDate, and is useful for accessing the field via an interface.
+func (v *StratzGetPlayersLeanPlayersPlayerType) GetLastMatchDate() *int64 {
+	return v.PlayerFieldsLean.LastMatchDate
+}
+
+// GetRanks returns StratzGetPlayersLeanPlayersPlayerType.Ranks, and is useful for accessing the field via an interface.
+func (v *StratzGetPlayersLeanPlayersPlayerType) GetRanks() []PlayerFieldsLeanRanksPlayerRankType {
+	return v.PlayerFieldsLean.Ranks
+}
+
+func (v *StratzGetPlayersLeanPlayersPlayerType) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*StratzGetPlayersLeanPlayersPlayerType
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.StratzGetPlayersLeanPlayersPlayerType = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.PlayerFieldsLean)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalStratzGetPlayersLeanPlayersPlayerType struct {
+	SteamAccountId int64 `json:"steamAccountId"`
+
+	SteamAccount *PlayerFieldsLeanSteamAccountSteamAccountType `json:"steamAccount"`
+
+	Identity *PlayerFieldsLeanIdentityPlayerIdentityType `json:"identity"`
+
+	LastMatchDate *int64 `json:"lastMatchDate"`
+
+	Ranks []PlayerFieldsLeanRanksPlayerRankType `json:"ranks"`
+}
+
+func (v *StratzGetPlayersLeanPlayersPlayerType) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *StratzGetPlayersLeanPlayersPlayerType) __premarshalJSON() (*__premarshalStratzGetPlayersLeanPlayersPlayerType, error) {
+	var retval __premarshalStratzGetPlayersLeanPlayersPlayerType
+
+	retval.SteamAccountId = v.PlayerFieldsLean.SteamAccountId
+	retval.SteamAccount = v.PlayerFieldsLean.SteamAccount
+	retval.Identity = v.PlayerFieldsLean.Identity
+	retval.LastMatchDate = v.PlayerFieldsLean.LastMatchDate
+	retval.Ranks = v.PlayerFieldsLean.Ranks
+	return &retval, nil
+}
+
+// StratzGetPlayersLeanResponse is returned by StratzGetPlayersLean on success.
+type StratzGetPlayersLeanResponse struct {
+	Players []StratzGetPlayersLeanPlayersPlayerType `json:"players"`
+}
+
+// GetPlayers returns StratzGetPlayersLeanResponse.Players, and is useful for accessing the field via an interface.
+func (v *StratzGetPlayersLeanResponse) GetPlayers() []StratzGetPlayersLeanPlayersPlayerType {
+	return v.Players
+}
+
 // StratzGetPlayersPlayersPlayerType includes the requested fields of the GraphQL type PlayerType.
 type StratzGetPlayersPlayersPlayerType struct {
 	PlayerFields `json:"-"`
@@ -7270,6 +7426,14 @@ type __StratzGetPlayersInput struct {
 // GetSteamAccountIds returns __StratzGetPlayersInput.SteamAccountIds, and is useful for accessing the field via an interface.
 func (v *__StratzGetPlayersInput) GetSteamAccountIds() []int64 { return v.SteamAccountIds }
 
+// __StratzGetPlayersLeanInput is used internally by genqlient
+type __StratzGetPlayersLeanInput struct {
+	SteamAccountIds []int64 `json:"steamAccountIds"`
+}
+
+// GetSteamAccountIds returns __StratzGetPlayersLeanInput.SteamAccountIds, and is useful for accessing the field via an interface.
+func (v *__StratzGetPlayersLeanInput) GetSteamAccountIds() []int64 { return v.SteamAccountIds }
+
 // __StratzListLeagueMatchesInput is used internally by genqlient
 type __StratzListLeagueMatchesInput struct {
 	Id      int                      `json:"id"`
@@ -8461,6 +8625,55 @@ func StratzGetPlayers(
 	}
 
 	data_ = &StratzGetPlayersResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by StratzGetPlayersLean.
+const StratzGetPlayersLean_Operation = `
+query StratzGetPlayersLean ($steamAccountIds: [Long!]!) {
+	players(steamAccountIds: $steamAccountIds) {
+		... PlayerFieldsLean
+	}
+}
+fragment PlayerFieldsLean on PlayerType {
+	steamAccountId
+	steamAccount {
+		id
+		name
+		avatar
+	}
+	identity {
+		name
+	}
+	lastMatchDate
+	ranks {
+		rank
+	}
+}
+`
+
+func StratzGetPlayersLean(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	steamAccountIds []int64,
+) (data_ *StratzGetPlayersLeanResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "StratzGetPlayersLean",
+		Query:  StratzGetPlayersLean_Operation,
+		Variables: &__StratzGetPlayersLeanInput{
+			SteamAccountIds: steamAccountIds,
+		},
+	}
+
+	data_ = &StratzGetPlayersLeanResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(

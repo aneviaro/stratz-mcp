@@ -1,10 +1,10 @@
 ---
 Created: 2026-06-18
-Purpose: Define the approved v1 architecture and product contract for the STRATZ MCP server and its portable agent skills.
+Purpose: Define the approved v2 architecture and product contract for the STRATZ MCP server and its portable agent skills.
 Status: Implemented locally; source-public distribution with local-only fetched STRATZ artifacts
 ---
 
-# STRATZ MCP Server — v1 Architecture Specification
+# STRATZ MCP Server — v2 Architecture Specification
 
 ## 1. Executive summary
 
@@ -42,7 +42,7 @@ Where this architecture summary conflicts with a normative companion contract, t
 - Support deterministic retrieval and aggregation without embedding subjective analysis in the server.
 - Provide portable workflows for match analysis, player review, hero research, league scouting, and advanced GraphQL queries.
 
-### 2.2 Non-goals for v1
+### 2.2 Non-goals for v2
 
 - A public or hosted multi-user service.
 - Streamable HTTP or other remote MCP transports.
@@ -106,11 +106,11 @@ Handlers must remain transport-independent so an HTTP transport can be added lat
 
 - Preferred MCP protocol version: `2026-07-28`.
 - Supported MCP protocol versions, in advertised preference order: `2026-07-28`, `2025-11-25`, `2025-06-18`, `2025-03-26`, and `2024-11-05`.
-- The v1 transport is stdio with one newline-delimited UTF-8 JSON-RPC message per line. Streamable HTTP, HTTP routing headers, OAuth authorization changes, sticky routing, and horizontal HTTP deployment are out of scope for this stdio-only milestone.
+- The v2 transport is stdio with one newline-delimited UTF-8 JSON-RPC message per line. Streamable HTTP, HTTP routing headers, OAuth authorization changes, sticky routing, and horizontal HTTP deployment are out of scope for this stdio-only milestone.
 - Modern `2026-07-28` clients may send per-request protocol metadata and use `server/discover` without a preceding `initialize` request. Legacy clients use `initialize` plus `notifications/initialized`; for those connections, normal operations must wait until the legacy lifecycle completes.
 - Stdout contains MCP messages only. Logs and diagnostics use stderr.
 - The server declares static `tools`, `resources`, and `prompts` capabilities.
-- `listChanged` is `false` for all three capabilities in v1.
+- `listChanged` is `false` for all three capabilities in v2.
 - Resource subscriptions are not supported.
 - Every tool publishes a Draft 2020-12 `inputSchema` and `outputSchema` generated from [tool-contracts.json](./tool-contracts.json).
 - Every tool result returns authoritative `structuredContent`.
@@ -120,300 +120,44 @@ Handlers must remain transport-independent so an HTTP transport can be added lat
 - Value validation, upstream, cache, privacy, not-found, and business failures use tool execution errors.
 - `stratz_server_info.data.mcp_protocol_version` reports the preferred protocol. `supported_mcp_protocol_versions` reports the complete advertised set; a legacy stdio connection can negotiate an older effective version without changing the preferred value.
 - MCP response cache hints are advisory client-freshness metadata: discovery is public for 1 hour, catalog lists are public for 5 minutes, and resource reads are private with `ttlMs: 0`. They do not alter SQLite application data-cache TTLs or stale fallback.
-- Protocol compatibility must not imply STRATZ data-semantic changes, normalized-field reinterpretation, or tool-surface consolidation beyond the documented v1 surface.
+- Protocol compatibility must not imply STRATZ data-semantic changes, normalized-field reinterpretation, or tool-surface consolidation beyond the documented v2 surface.
 - The implementation must use an MCP Go SDK version that supports this protocol contract. If the selected SDK cannot advertise `2026-07-28`, retain tested `2025-11-25` compatibility, or emit `outputSchema`, `structuredContent`, and cache hints, the dependency choice is blocked rather than silently reducing the contract.
 
 The complete wire examples and result schemas are normative in [tool-contracts.md](./tool-contracts.md).
 
 ## 5. MCP surface
 
-All public tool names use the `stratz_` prefix to avoid collisions when a client connects multiple MCP servers.
+All public tool names use the `stratz_` prefix. Contract version `2.0.0-draft.1` intentionally replaces the v1 curated catalog; this is a breaking boundary, not an alias or deprecation period. The exact registry and mode branches are normative in [tool-contracts.json](./tool-contracts.json).
 
-The v1 tool list and exact schema contracts are frozen in [tool-contracts.json](./tool-contracts.json). Descriptions in this section are architectural summaries, not substitutes for the machine-readable schemas.
+The complete public catalog is exactly:
 
-### 5.1 Curated tools
+- `stratz_server_info` — server, protocol, schema, cache, limit, and upstream status.
+- `stratz_query_players` — exact normalized player identifiers, with opt-in profile statistics.
+- `stratz_query_matches` — exact, player-history, league-history, and live modes.
+- `stratz_query_heroes` — exact and bounded search modes, with default-off statistics.
+- `stratz_query_leagues` — exact and authenticated bounded search modes.
+- `stratz_query_constants` — explicit type retrieval or typed exact selectors.
+- `stratz_execute_graphql` — one guarded raw GraphQL query.
 
-#### Server
+Every query input is a closed discriminator union. A mode branch rejects selectors and filters from every other branch. Exact selectors accept 1–25 identifiers, normalize them, preserve order and duplicates, and fail atomically. Every query success has `data.mode` and `data.items`; paginated modes additionally have `data.page`, and all successes carry warnings and provenance. No old tool name or alias remains valid.
 
-- `stratz_server_info`
-  - Returns server version, schema snapshot version, cache state, active limits, and STRATZ connectivity state.
-  - Never returns credentials, credential fingerprints, or request headers.
+### 5.1 Query semantics
 
-#### Players
+- Players are exact-only; general player search is not supported.
+- Matches support exact IDs, bounded player history, bounded league history, and bounded live filtering. Detail availability is explicit and never silently downgraded.
+- Heroes support exact ID/name/slug lookup and bounded search, with only date, rank-bracket, and role statistics filters. Statistics are opt-in and no unsupported hero dimensions are promised.
+- Leagues support exact IDs and authenticated search with status, tier, and date filters.
+- Constants support `types` and `typed_selectors`; there is no ambiguous `all` shortcut or unsupported rank class.
+- Each call has at most five upstream attempts. Non-native local scans are bounded and report incomplete results.
+- v2 cursors are authenticated, filter-bound, versioned, and expiring. All v1 cursors are invalid, and v2 caches cold-start without reusing v1 entries.
 
-- `stratz_get_player`
-- `stratz_list_player_matches`
-- `stratz_batch_get_players`
+### 5.2 Raw GraphQL
 
-Player identifiers may be supplied as:
+`stratz_execute_graphql` remains default-deny and is governed by the machine-readable `rawGraphqlPolicy`. It permits exactly one query operation after expanded root checks, rejects mutations, subscriptions, denied or unknown roots, and unapproved introspection, and enforces document, variable, complexity, list, timeout, response-size, and cacheability limits. GraphQL data plus errors is preserved and marked partial; credentials and arbitrary upstream headers are never returned.
 
-- Steam account ID.
-- SteamID64.
-- STRATZ profile URL.
+### 5.3 Wire and migration boundary
 
-The server normalizes identifiers internally and returns both canonical account ID and SteamID64 where available.
-
-`stratz_list_player_matches` supports:
-
-- Date range.
-- Hero.
-- Role.
-- Game mode.
-- Lobby type.
-- Win or loss.
-- Minimum match duration.
-- Optional patch.
-
-All except minimum duration map to native `PlayerMatchesRequestType` fields. Minimum duration uses bounded client-side scanning. Each MCP call may consume at most five upstream pages; if more data remains, the cursor resumes the scan.
-
-#### Matches
-
-- `stratz_get_match`
-- `stratz_batch_get_matches`
-
-`summary` detail returns core match and player outcomes.
-
-`standard` detail also returns key timeline events and objectives.
-
-`full` detail includes the available replay-derived rune and ward timeline, subject to the global response-size limit. Fight and economy breakdowns remain optional reserved fields and are omitted with an explicit warning until STRATZ exposes a bounded, semantically correct source.
-
-If requested data is not parsed or ready, the tool returns an MCP execution error with code `DATA_NOT_READY`. Its required error `context` contains the stable normalized match summary, `parse_status`, and requested detail level. It must not silently downgrade the requested detail level or return a success envelope.
-
-#### Heroes
-
-- `stratz_get_hero`
-- `stratz_get_hero_stats`
-- `stratz_batch_get_heroes`
-
-Hero lookup accepts:
-
-- Numeric hero ID.
-- Exact localized name.
-- Canonical slug.
-
-Ambiguous names return suggestions and an error rather than selecting a fuzzy match.
-
-Hero statistics may include:
-
-- Pick, win, and ban rates.
-- Role and lane breakdowns.
-- Rank bracket.
-- Time range.
-- Patch.
-- Matchups and synergies.
-
-The server does not make subjective build recommendations.
-
-STRATZ exposes hero statistics through separate time-bucketed operations. Arbitrary date ranges are translated into bounded day/week/month buckets, and provenance reports the effective range. Unsupported combinations—such as a metric that lacks game-version grouping—must return `INVALID_ARGUMENT` or an explicit unavailable field with a warning rather than mixing incompatible populations.
-
-#### Leagues and professional matches
-
-- `stratz_list_leagues`
-- `stratz_get_league`
-- `stratz_list_league_matches`
-
-League listing supports:
-
-- Text search.
-- Status.
-- Tier.
-- Date range.
-
-Tier/date/future/ended/live filtering is native. Name text search is a bounded client-side scan over paginated league results. An incomplete scan returns a warning and continuation cursor.
-
-#### Live matches
-
-- `stratz_list_live_matches`
-
-Supported filters:
-
-- Team or player ID.
-- League ID.
-- Hero ID.
-- Live game state.
-- League tier.
-- Game mode.
-- Minimum spectator count.
-
-Supported sorting:
-
-- Newest.
-- Highest profile.
-
-Native STRATZ filters are league, hero, game state, tier, completion/parsing state, and ordering. Team, player, game mode, and minimum-spectator filters are applied through bounded client-side scanning of live results. Region is not exposed by the live schema and is not a v1 curated filter. A call may scan at most five upstream pages; if more upstream data remains, the returned cursor resumes the scan without claiming a complete snapshot.
-
-#### Constants
-
-- `stratz_get_constants`
-
-The required `type` argument accepts:
-
-- `heroes`
-- `items`
-- `abilities`
-- `game_modes`
-- `regions`
-- `ranks`
-- `all`
-
-Clients must explicitly request `all` because the combined response may be large.
-
-### 5.2 Raw GraphQL tool
-
-`stratz_execute_graphql` provides guarded access to approved STRATZ query roots not represented by curated tools. GraphQL operation type alone is not considered a sufficient read-only or safety boundary.
-
-Inputs:
-
-- `query`: GraphQL document.
-- `variables`: JSON-compatible object.
-- `operation_name`: optional operation name.
-- `cache`: optional boolean; default `false`.
-- `cache_ttl_seconds`: optional integer; default 300 and maximum 3,600 when caching is enabled.
-- `fresh`: optional boolean.
-
-Behavior:
-
-- Parse the document into an AST before execution.
-- Permit query operations only after validating every expanded top-level root field against the approved root policy.
-- Reject mutations and subscriptions.
-- Permit exactly one operation per request.
-- Reject runtime introspection by default.
-- Allow runtime introspection only when the server starts with `--allow-introspection`.
-- Reject file uploads, binary bodies, and nonstandard GraphQL transport extensions.
-- Preserve the upstream GraphQL `data`, `errors`, and `extensions` values unchanged inside the normalized raw-tool envelope.
-- Never expose cookies, arbitrary headers, redirects, or an unbounded upstream body.
-- If STRATZ returns both `data` and `errors`, preserve both and mark the result as partial.
-
-Approved root-field policy:
-
-- Default action: deny.
-- Allowed roots: `constants`, `guild`, `heroStats`, `leaderboard`, `league`, `leagues`, `live`, `match`, `matches`, `player`, `players`, `team`, and `teams`.
-- Denied roots pending separate security/data review: `plus`, `stratz`, `vendor`, and `yogurt`.
-- `__typename` is allowed.
-- `__schema` and `__type` are allowed only when runtime introspection is explicitly enabled.
-- Unknown roots introduced by a future STRATZ schema are denied until an explicit policy and contract revision approves them.
-- Aliases, inline fragments, and fragment spreads are expanded before root checks; aliases cannot conceal a denied field.
-- All selected nested fields remain subject to document, complexity, breadth, response-size, cacheability, and sensitive-field policies.
-
-The machine-readable policy in [tool-contracts.json](./tool-contracts.json) is normative. This policy—not the mere use of a GraphQL `query` operation—is the v1 raw-access boundary.
-
-Default policy limits:
-
-- Maximum UTF-8 GraphQL document size: 64 KiB.
-- Maximum JSON-encoded variables size: 256 KiB.
-- Maximum variables nesting depth: 16.
-- Maximum variables object/array nodes: 1,000.
-- Maximum individual variable string: 64 KiB.
-- Maximum AST depth: 12.
-- Maximum aliases: 50.
-- Maximum selected fields after fragment expansion: 500.
-- Maximum top-level selected fields: 20.
-- Maximum calculated complexity: 1,000.
-- Maximum requested list page size: 100.
-- Maximum nested list depth: 2.
-- Maximum decompressed response size: 5 MiB.
-- Upstream timeout: 20 seconds.
-
-Complexity calculation is deterministic:
-
-- Scalar and enum fields cost 1.
-- Object fields cost 1 plus their child cost.
-- List fields multiply child cost by the statically requested page size.
-- A variable-supplied page size is resolved from the validated variables before execution.
-- An unbounded list field is rejected with `QUERY_LIST_LIMIT_REQUIRED`, unless the committed schema policy explicitly classifies it as a fixed-size list with maximum cardinality at or below 25.
-- A requested list size above 100 is rejected.
-- Fragment spreads are expanded with cycle detection.
-- Conditional directives are charged at their worst-case included cost.
-- Introspection fields are rejected before cost calculation unless runtime introspection is enabled.
-
-Request and response limits must be enforced while streaming. The implementation must not call an unbounded `io.ReadAll` on request, compressed response, decompressed response, or error bodies. Compression is measured against the decompressed limit.
-
-The response may include sanitized rate-limit metadata:
-
-- Limit.
-- Remaining requests.
-- Reset time.
-- Upstream request ID, when available.
-
-Arbitrary upstream headers are never returned.
-
-Raw caching:
-
-- Remains opt-in.
-- Defaults to a five-minute TTL and permits at most one hour.
-- Never serves stale raw results.
-- Is rejected when the query selects fields classified as credential-, viewer-, private-profile-, or account-specific.
-- Is disabled entirely until authenticated schema discovery produces an approved cacheability classification for the selected fields.
-
-### 5.3 Batch tools
-
-Batch tools accept at most 25 inputs.
-
-Semantics:
-
-- All-or-nothing response behavior.
-- Any item failure fails the entire batch.
-- No partial result payload is returned to the caller.
-- The error identifies the failed input.
-- Remaining in-flight requests are cancelled after the first failure.
-- Authentication failure fails the whole batch immediately.
-- Upstream requests are deduplicated internally.
-- Successful results preserve exact input order and duplicates.
-- Cache hits and misses may be mixed internally.
-- Successfully fetched items may populate the cache even when a later item fails.
-
-This is response atomicity only; all upstream operations are read-only and no remote transaction exists.
-
-The 25-item batch limit does not grant 25 upstream HTTP calls. Each batch tool must use one approved bounded GraphQL operation that carries all unique identifiers, or at most five HTTP round trips when upstream pagination is unavoidable. A batch tool must not fall back to one HTTP request per item. If the authenticated discovery spike shows that a domain cannot satisfy this rule, that batch tool is removed from v1 or its input limit is reduced through an explicit contract revision.
-
-### 5.4 Shared curated-tool inputs
-
-Curated tools use these common controls where relevant:
-
-- `detail_level`: `summary`, `standard`, or `full`; default `standard`.
-- `fresh`: bypass cache reads and stale fallback when `true`.
-- `include_raw`: include the bounded upstream payload when `true`; default `false`.
-- `limit`: page size for list tools.
-- `cursor`: opaque pagination cursor.
-
-Arbitrary field selection is not supported by curated tools. Clients needing custom projections use `stratz_execute_graphql`.
-
-### 5.5 Pagination
-
-Every list tool returns:
-
-- `items`
-- `next_cursor`
-- `has_more`
-
-Cursors are opaque, authenticated, versioned tokens. The payload contains:
-
-- Cursor format version.
-- Tool name.
-- Canonical filter hash.
-- Page size.
-- Upstream continuation state.
-- Token namespace.
-- Schema/operation version.
-- Issued-at and expiry times.
-
-The payload is canonical JSON, HMAC-SHA-256 signed, and base64url encoded. The HMAC key is derived from the active STRATZ token with HKDF-SHA-256 and a fixed `stratz-mcp/cursor/v1` context; the token itself and derived key are never stored.
-
-Validation rules:
-
-- Reject modified, malformed, wrong-tool, wrong-filter, wrong-token, or wrong-version cursors with `CURSOR_INVALID`.
-- Reject expired cursors with `CURSOR_EXPIRED`.
-- Do not accept unsigned legacy cursors.
-- Changing the STRATZ token invalidates existing cursors.
-- Cursors contain no API token, user-readable private data, or raw query document.
-
-Default lifetimes:
-
-- Live matches: 5 minutes.
-- Recent player/match listings: 1 hour.
-- Historical league listings: 24 hours.
-
-Cursors do not guarantee a snapshot. Results may shift when upstream data changes; the cursor preserves traversal state and integrity, not database isolation.
+Handlers remain adapters and domain services own normalization, mode validation, pagination, atomicity, and bounded filtering. The text mirror is the exact compact JSON form of `structuredContent`. Clients must rediscover the seven-tool catalog and translate old calls using the migration table in [tool-contracts.md](./tool-contracts.md). Any v2 schema, cursor, cache, error, or wire change requires a semantic contract revision and migration note.
 
 ## 6. MCP resources
 
@@ -453,7 +197,7 @@ Recommended URI shape:
 - `stratz://constants/regions`
 - `stratz://constants/ranks`
 
-Dynamic, authenticated, or freshness-sensitive player and match data remains tool-only in v1.
+Dynamic, authenticated, or freshness-sensitive player and match data remains tool-only in v2.
 
 Fetched schema snapshots and constants remain local-only unless current STRATZ redistribution permission is recorded in [stratz-integration-discovery.md](./stratz-integration-discovery.md). Source builds may generate these resources locally from the user's token but must not commit or publish fetched STRATZ material.
 
@@ -603,9 +347,9 @@ Provenance must never contain:
 ### 9.2 Schema stability
 
 - Curated response schemas are owned and versioned by this project.
-- Stable tool names remain unchanged throughout v1.
-- Breaking changes require semantic versioning and a deprecation window.
-- Version suffixes are not embedded in tool names until a genuinely incompatible v2 is necessary.
+- Stable tool names remain unchanged throughout v2.
+- Breaking changes require semantic versioning and migration documentation; the v2 boundary intentionally has no old-tool alias or deprecation window.
+- Version suffixes are not embedded in tool names until a genuinely incompatible v3 is necessary.
 
 ## 10. Error model
 
@@ -1203,7 +947,7 @@ Fixtures must never contain real tokens or unnecessary private player data.
 
 ### 21.4 Interoperability gate
 
-Before v1, manually smoke-test both native and Docker stdio in:
+Before v2, manually smoke-test both native and Docker stdio in:
 
 - Codex.
 - Claude.
@@ -1351,11 +1095,11 @@ All milestones are planning-ready. Milestone dependencies govern implementation 
 - Protocol and interoperability tests.
 - Complete documentation.
 
-## 25. v1 acceptance criteria
+## 25. v2 acceptance criteria
 
 ### 25.1 Planning-ready decisions
 
-The v1 system is ready for full implementation planning because these architecture decisions are fixed:
+The v2 system is ready for full implementation planning because these architecture decisions are fixed:
 
 1. Product scope is a local stdio MCP server with curated tools, guarded raw GraphQL, resources, prompts, and portable skills.
 2. MCP prefers protocol `2026-07-28` with tested `2025-11-25` legacy stdio compatibility and normative `inputSchema`, `outputSchema`, `structuredContent`, text mirroring, cache-hint, and `isError` behavior.

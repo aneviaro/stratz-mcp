@@ -55,8 +55,8 @@ type Server struct {
 	sdk *sdk.Server
 }
 
-// New creates the static v1 MCP surface and registers every generated tool
-// schema.
+// New creates the static v2 MCP surface and registers every generated tool
+// schema exactly once.
 func New(options Options) (*Server, error) {
 	if options.Logger == nil {
 		options.Logger = slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -71,9 +71,11 @@ func New(options Options) (*Server, error) {
 		options.SchemaVersion = "unavailable"
 	}
 
-	handlers := make(map[string]ToolHandler, len(options.Handlers)+1)
-	for name, handler := range options.Handlers {
-		handlers[name] = handler
+	handlers := make(map[string]ToolHandler, len(contracts.Definitions()))
+	for _, definition := range contracts.Definitions() {
+		if handler := options.Handlers[definition.Name]; handler != nil {
+			handlers[definition.Name] = handler
+		}
 	}
 	if handlers["stratz_execute_graphql"] == nil {
 		manifest, manifestErr := schema.LoadManifest(options.SchemaDirectory)
@@ -131,13 +133,17 @@ func New(options Options) (*Server, error) {
 		MaxUpstreamRequests: options.Config.Limits.MaxUpstreamRequests,
 		MaxBatchSize:        options.Config.Limits.MaxBatchSize,
 		ConstantsTTL:        options.Config.Cache.PublicReferenceTTL,
+		Token:               options.CursorToken,
+		SchemaVersion:       options.SchemaVersion,
 		Now:                 options.Now,
 	})
 	if err != nil {
 		return nil, err
 	}
+	var playerMatchService *playermatch.Service
+	var leagueLiveService *leaguelive.Service
 	if options.CursorToken != "" {
-		playerMatchService, err := playermatch.New(playermatch.Options{
+		playerMatchService, err = playermatch.New(playermatch.Options{
 			Executor:            options.Executor,
 			Token:               options.CursorToken,
 			SchemaVersion:       options.SchemaVersion,
@@ -149,8 +155,7 @@ func New(options Options) (*Server, error) {
 		if err != nil {
 			return nil, err
 		}
-		registerPlayerMatchHandlers(handlers, options, playerMatchService, heroConstantsService)
-		leagueLiveService, err := leaguelive.New(leaguelive.Options{
+		leagueLiveService, err = leaguelive.New(leaguelive.Options{
 			Executor:            options.Executor,
 			Token:               options.CursorToken,
 			SchemaVersion:       options.SchemaVersion,
@@ -160,10 +165,15 @@ func New(options Options) (*Server, error) {
 		if err != nil {
 			return nil, err
 		}
-		registerLeagueLiveHandlers(handlers, options, leagueLiveService, heroConstantsService)
 	}
 	registerHeroConstantsHandlers(handlers, options, heroConstantsService)
-	handlers["stratz_server_info"] = serverInfoHandler(options)
+	if playerMatchService != nil && leagueLiveService != nil {
+		registerPlayerMatchHandlers(handlers, options, playerMatchService, heroConstantsService)
+		registerLeagueLiveHandlers(handlers, options, leagueLiveService, heroConstantsService, playerMatchService)
+	}
+	if handlers["stratz_server_info"] == nil {
+		handlers["stratz_server_info"] = serverInfoHandler(options)
+	}
 
 	server := sdk.NewServer(
 		&sdk.Implementation{
@@ -185,6 +195,10 @@ func New(options Options) (*Server, error) {
 	server.AddReceivingMiddleware(protocolMiddleware)
 
 	for _, definition := range contracts.Definitions() {
+		handler := handlers[definition.Name]
+		if handler == nil {
+			return nil, fmt.Errorf("generated tool %q has no registered handler", definition.Name)
+		}
 		inputSchema, err := contracts.Schema(definition.Name, contracts.InputSchema)
 		if err != nil {
 			return nil, err
@@ -193,9 +207,8 @@ func New(options Options) (*Server, error) {
 		if err != nil {
 			return nil, err
 		}
-		handler := handlers[definition.Name]
-		if specification, ok := cacheSpecifications[definition.Name]; ok {
-			handler = cachedToolHandler(options, definition.Name, specification, handler)
+		if definition.Name != "stratz_execute_graphql" && definition.Name != "stratz_server_info" {
+			handler = cachedToolHandler(options, definition.Name, handler)
 		}
 		server.AddTool(
 			&sdk.Tool{
@@ -239,6 +252,12 @@ func toolAdapter(name string, handler ToolHandler) sdk.ToolHandler {
 		}
 		if err := contracts.ValidateInput(name, input); err != nil {
 			return ErrorResult(name, invalidArgumentsError())
+		}
+		if name == "stratz_query_matches" {
+			arguments, argumentsErr := inputObject(input)
+			if argumentsErr != nil || !detailAllowedForRequest(name, arguments) {
+				return ErrorResult(name, invalidArgumentsError())
+			}
 		}
 		if handler == nil {
 			return ErrorResult(name, &ExecutionError{

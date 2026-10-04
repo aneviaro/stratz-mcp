@@ -1,0 +1,95 @@
+{
+  "$id": "urn:stratz-mcp:contract:2.0.0-draft.1:stratz_query_leagues:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "fresh": {
+          "default": false,
+          "type": "boolean"
+        },
+        "include_raw": {
+          "default": false,
+          "type": "boolean"
+        },
+        "league_ids": {
+          "items": {
+            "maxLength": 32,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 25,
+          "minItems": 1,
+          "type": "array"
+        },
+        "mode": {
+          "const": "exact"
+        }
+      },
+      "required": [
+        "mode",
+        "league_ids"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "cursor": {
+          "maxLength": 4096,
+          "type": "string"
+        },
+        "fresh": {
+          "default": false,
+          "type": "boolean"
+        },
+        "from": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "include_raw": {
+          "default": false,
+          "type": "boolean"
+        },
+        "limit": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "mode": {
+          "const": "search"
+        },
+        "query": {
+          "maxLength": 256,
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "live",
+            "ongoing",
+            "completed",
+            "ended",
+            "upcoming",
+            "future"
+          ],
+          "type": "string"
+        },
+        "tier": {
+          "maxLength": 64,
+          "type": "string"
+        },
+        "to": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "type": "object"
+    }
+  ],
+  "type": "object"
+}

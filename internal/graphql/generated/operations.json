@@ -81,6 +81,11 @@
       "sourceLocation": "internal/graphql/operations/player.graphql"
     },
     {
+      "operationName": "StratzGetPlayersLean",
+      "query": "\nquery StratzGetPlayersLean ($steamAccountIds: [Long!]!) {\n\tplayers(steamAccountIds: $steamAccountIds) {\n\t\t... PlayerFieldsLean\n\t}\n}\nfragment PlayerFieldsLean on PlayerType {\n\tsteamAccountId\n\tsteamAccount {\n\t\tid\n\t\tname\n\t\tavatar\n\t}\n\tidentity {\n\t\tname\n\t}\n\tlastMatchDate\n\tranks {\n\t\trank\n\t}\n}\n",
+      "sourceLocation": "internal/graphql/operations/player.graphql"
+    },
+    {
       "operationName": "StratzListLeagueMatches",
       "query": "\nquery StratzListLeagueMatches ($id: Int!, $request: LeagueMatchesRequestType!) {\n\tleague(id: $id) {\n\t\tid\n\t\tmatches(request: $request) {\n\t\t\t... MatchSummaryFields\n\t\t}\n\t}\n}\nfragment MatchSummaryFields on MatchType {\n\tid\n\tstartDateTime\n\tdurationSeconds\n\tdidRadiantWin\n\tradiantKills\n\tdireKills\n\tgameModeId: gameMode\n\tlobbyTypeId: lobbyType\n\tregionId\n\tleagueId\n\tgameVersionId\n\tparsedDateTime\n\tstatsDateTime\n}\n",
       "sourceLocation": "internal/graphql/operations/league_live.graphql"

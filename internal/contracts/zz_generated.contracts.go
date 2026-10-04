@@ -2,7 +2,7 @@
 
 package contracts
 
-const ContractVersion = "1.0.0-draft.4"
+const ContractVersion = "2.0.0-draft.1"
 const MCPProtocolVersion = "2026-07-28"
 const SchemaDraft = "https://json-schema.org/draft/2020-12/schema"
 
@@ -89,11 +89,17 @@ const (
 	ErrorCodeInternalError               ErrorCode = "INTERNAL_ERROR"
 )
 
-type ConstantRecord struct {
+type CommonControls struct {
+	Fresh      *bool `json:"fresh,omitempty"`
+	IncludeRaw *bool `json:"include_raw,omitempty"`
+}
+
+type Constant struct {
 	ID            string         `json:"id"`
 	LocalizedName *string        `json:"localized_name"`
 	Metadata      map[string]any `json:"metadata"`
 	Name          string         `json:"name"`
+	Type          string         `json:"type"`
 }
 
 type DateTime string
@@ -106,14 +112,6 @@ const (
 	DetailLevelFull     DetailLevel = "full"
 )
 
-type EconomyPoint struct {
-	DireExperience    *int64 `json:"dire_experience"`
-	DireNetworth      *int64 `json:"dire_networth"`
-	RadiantExperience *int64 `json:"radiant_experience"`
-	RadiantNetworth   *int64 `json:"radiant_networth"`
-	TimeSeconds       int64  `json:"time_seconds"`
-}
-
 type Error struct {
 	Code        ErrorCode        `json:"code"`
 	Details     map[string]any   `json:"details"`
@@ -123,29 +121,22 @@ type Error struct {
 	Retryable   bool             `json:"retryable"`
 }
 
-type ErrorContext MatchAvailabilityContext
-
 type ErrorResult struct {
-	Context *ErrorContext `json:"context,omitempty"`
-	Error   Error         `json:"error"`
-	Kind    string        `json:"kind"`
+	Context *MatchAvailabilityContext `json:"context,omitempty"`
+	Error   Error                     `json:"error"`
+	Kind    string                    `json:"kind"`
 }
 
-type Fight struct {
-	DireKills      int64 `json:"dire_kills"`
-	EndTimeSeconds int64 `json:"end_time_seconds"`
-	Participants   []struct {
-		AccountID *string `json:"account_id"`
-		Deaths    int64   `json:"deaths"`
-		HeroID    int64   `json:"hero_id"`
-		HeroName  *string `json:"hero_name"`
-		Kills     int64   `json:"kills"`
-		Team      string  `json:"team"`
-	} `json:"participants"`
-	RadiantKills         int64  `json:"radiant_kills"`
-	RadiantNetworthDelta *int64 `json:"radiant_networth_delta"`
-	StartTimeSeconds     int64  `json:"start_time_seconds"`
+type Event struct {
+	AccountID   *string `json:"account_id"`
+	HeroID      *int64  `json:"hero_id"`
+	Team        *string `json:"team"`
+	TimeSeconds int64   `json:"time_seconds"`
+	Type        string  `json:"type"`
+	Value       any     `json:"value"`
 }
+
+type ExactMatchDetailLevel MatchDetailLevel
 
 type Hero struct {
 	AttackType       *string  `json:"attack_type"`
@@ -155,23 +146,16 @@ type Hero struct {
 	PrimaryAttribute *string  `json:"primary_attribute"`
 	Roles            []string `json:"roles"`
 	Slug             string   `json:"slug"`
-}
-
-type HeroBreakdown struct {
-	Name       string   `json:"name"`
-	PickRate   *float64 `json:"pick_rate"`
-	SampleSize int64    `json:"sample_size"`
-	WinRate    *float64 `json:"win_rate"`
+	Statistics       *struct {
+		PickRate   *float64 `json:"pick_rate"`
+		SampleSize int64    `json:"sample_size"`
+		WinRate    *float64 `json:"win_rate"`
+	} `json:"statistics,omitempty"`
 }
 
 type HeroIdentifier any
 
-type HeroRelation struct {
-	Advantage  *float64 `json:"advantage"`
-	HeroID     int64    `json:"hero_id"`
-	SampleSize int64    `json:"sample_size"`
-	WinRate    *float64 `json:"win_rate"`
-}
+type Identifier string
 
 type League struct {
 	EndsAt   NullableDateTime `json:"ends_at"`
@@ -183,19 +167,25 @@ type League struct {
 	Tier     *string          `json:"tier"`
 }
 
+type LeagueHistoryDetailLevel string
+
+const (
+	LeagueHistoryDetailLevelSummary LeagueHistoryDetailLevel = "summary"
+)
+
 type LiveMatch struct {
-	DireTeamName    *string           `json:"dire_team_name"`
-	DurationSeconds *int64            `json:"duration_seconds"`
-	GameModeID      *int64            `json:"game_mode_id"`
-	League          *League           `json:"league"`
-	MatchID         MatchID           `json:"match_id"`
-	Players         []LiveMatchPlayer `json:"players"`
-	RadiantTeamName *string           `json:"radiant_team_name"`
-	SpectatorCount  *int64            `json:"spectator_count"`
-	StartedAt       NullableDateTime  `json:"started_at"`
+	DireTeamName    *string          `json:"dire_team_name"`
+	DurationSeconds *int64           `json:"duration_seconds"`
+	GameModeID      *int64           `json:"game_mode_id"`
+	League          *League          `json:"league"`
+	MatchID         MatchID          `json:"match_id"`
+	Players         []LivePlayer     `json:"players"`
+	RadiantTeamName *string          `json:"radiant_team_name"`
+	SpectatorCount  *int64           `json:"spectator_count"`
+	StartedAt       NullableDateTime `json:"started_at"`
 }
 
-type LiveMatchPlayer struct {
+type LivePlayer struct {
 	AccountID *string `json:"account_id"`
 	Assists   int64   `json:"assists"`
 	Deaths    int64   `json:"deaths"`
@@ -211,13 +201,11 @@ type LiveMatchPlayer struct {
 type Match struct {
 	DireScore       *int64           `json:"dire_score"`
 	DurationSeconds *int64           `json:"duration_seconds"`
-	Economy         []EconomyPoint   `json:"economy,omitempty"`
-	Fights          []Fight          `json:"fights,omitempty"`
 	GameModeID      *int64           `json:"game_mode_id"`
 	LeagueID        *string          `json:"league_id"`
 	LobbyTypeID     *int64           `json:"lobby_type_id"`
 	MatchID         MatchID          `json:"match_id"`
-	Objectives      []TimelineEvent  `json:"objectives,omitempty"`
+	Objectives      []Event          `json:"objectives,omitempty"`
 	ParseStatus     string           `json:"parse_status"`
 	PatchID         *string          `json:"patch_id"`
 	Players         []MatchPlayer    `json:"players"`
@@ -225,7 +213,7 @@ type Match struct {
 	RadiantWin      *bool            `json:"radiant_win"`
 	RegionID        *int64           `json:"region_id"`
 	StartedAt       NullableDateTime `json:"started_at"`
-	Timeline        []TimelineEvent  `json:"timeline,omitempty"`
+	Timeline        []Event          `json:"timeline,omitempty"`
 }
 
 type MatchAvailabilityContext struct {
@@ -246,18 +234,16 @@ const (
 type MatchID string
 
 type MatchPlayer struct {
-	AccountID *string  `json:"account_id"`
-	Assists   int64    `json:"assists"`
-	Deaths    int64    `json:"deaths"`
-	HeroID    int64    `json:"hero_id"`
-	HeroName  *string  `json:"hero_name"`
-	Imp       *float64 `json:"imp"`
-	Kills     int64    `json:"kills"`
-	Level     *int64   `json:"level"`
-	Networth  *int64   `json:"networth"`
-	Position  int64    `json:"position"`
-	Team      string   `json:"team"`
-	Won       *bool    `json:"won"`
+	AccountID *string `json:"account_id"`
+	Assists   int64   `json:"assists"`
+	Deaths    int64   `json:"deaths"`
+	HeroID    *int64  `json:"hero_id"`
+	Kills     int64   `json:"kills"`
+	Level     *int64  `json:"level"`
+	Networth  *int64  `json:"networth"`
+	Position  int64   `json:"position"`
+	Team      string  `json:"team"`
+	Won       *bool   `json:"won"`
 }
 
 type MatchSummary struct {
@@ -277,12 +263,12 @@ type MatchSummary struct {
 
 type NullableDateTime = *DateTime
 
-type PageInfo struct {
+type Page struct {
 	HasMore    bool    `json:"has_more"`
 	NextCursor *string `json:"next_cursor"`
 }
 
-type PaginationInput struct {
+type Pagination struct {
 	Cursor *string `json:"cursor,omitempty"`
 	Limit  *int64  `json:"limit,omitempty"`
 }
@@ -298,11 +284,21 @@ type Player struct {
 		LeaderboardRank *int64 `json:"leaderboard_rank"`
 		RankTier        *int64 `json:"rank_tier"`
 	} `json:"rank"`
+	Statistics *struct {
+		LastMatchAt NullableDateTime `json:"last_match_at"`
+		MatchCount  int64            `json:"match_count"`
+		WinCount    int64            `json:"win_count"`
+	} `json:"statistics,omitempty"`
 	SteamID64 *string `json:"steam_id64"`
 	WinCount  *int64  `json:"win_count,omitempty"`
 }
 
-type PlayerIdentifier string
+type PlayerHistoryDetailLevel string
+
+const (
+	PlayerHistoryDetailLevelSummary PlayerHistoryDetailLevel = "summary"
+	PlayerHistoryDetailLevelPlayers PlayerHistoryDetailLevel = "players"
+)
 
 type PlayerMatchSummary struct {
 	DireScore       *int64           `json:"dire_score"`
@@ -329,8 +325,8 @@ type Provenance struct {
 		From NullableDateTime `json:"from"`
 		To   NullableDateTime `json:"to"`
 	} `json:"date_range"`
-	DetailLevel *MatchDetailLevel `json:"detail_level"`
-	Operation   string            `json:"operation"`
+	DetailLevel *string `json:"detail_level"`
+	Operation   string  `json:"operation"`
 	Patch       *struct {
 		ID   *string `json:"id"`
 		Name *string `json:"name"`
@@ -346,63 +342,16 @@ type Provenance struct {
 	SchemaVersion string   `json:"schema_version"`
 }
 
-type SuccessBase struct {
-	Data       any        `json:"data"`
-	Kind       string     `json:"kind"`
-	Provenance Provenance `json:"provenance"`
-	Raw        any        `json:"raw,omitempty"`
-	Summary    *string    `json:"summary"`
-	Warnings   []string   `json:"warnings"`
+type QuerySuccess any
+
+type Success struct {
+	Data       map[string]any `json:"data"`
+	Kind       string         `json:"kind"`
+	Provenance Provenance     `json:"provenance"`
+	Raw        any            `json:"raw,omitempty"`
+	Summary    *string        `json:"summary"`
+	Warnings   []string       `json:"warnings"`
 }
-
-type TimelineEvent struct {
-	AccountID   *string `json:"account_id"`
-	HeroID      *int64  `json:"hero_id"`
-	HeroName    *string `json:"hero_name"`
-	Team        *string `json:"team"`
-	TimeSeconds int64   `json:"time_seconds"`
-	Type        string  `json:"type"`
-	Value       any     `json:"value"`
-}
-
-type StratzBatchGetHeroesRequest struct {
-	DetailLevel *DetailLevel     `json:"detail_level,omitempty"`
-	Fresh       *bool            `json:"fresh,omitempty"`
-	Heroes      []HeroIdentifier `json:"heroes"`
-	IncludeRaw  *bool            `json:"include_raw,omitempty"`
-}
-
-type StratzBatchGetHeroesData struct {
-	Items []Hero `json:"items"`
-}
-
-type StratzBatchGetHeroesResponse ToolResult[StratzBatchGetHeroesData]
-
-type StratzBatchGetMatchesRequest struct {
-	DetailLevel *MatchDetailLevel `json:"detail_level,omitempty"`
-	Fresh       *bool             `json:"fresh,omitempty"`
-	IncludeRaw  *bool             `json:"include_raw,omitempty"`
-	MatchIds    []MatchID         `json:"match_ids"`
-}
-
-type StratzBatchGetMatchesData struct {
-	Items []Match `json:"items"`
-}
-
-type StratzBatchGetMatchesResponse ToolResult[StratzBatchGetMatchesData]
-
-type StratzBatchGetPlayersRequest struct {
-	DetailLevel *DetailLevel       `json:"detail_level,omitempty"`
-	Fresh       *bool              `json:"fresh,omitempty"`
-	IncludeRaw  *bool              `json:"include_raw,omitempty"`
-	PlayerIds   []PlayerIdentifier `json:"player_ids"`
-}
-
-type StratzBatchGetPlayersData struct {
-	Items []Player `json:"items"`
-}
-
-type StratzBatchGetPlayersResponse ToolResult[StratzBatchGetPlayersData]
 
 type StratzExecuteGraphQLRequest struct {
 	Cache           *bool          `json:"cache,omitempty"`
@@ -425,177 +374,56 @@ type StratzExecuteGraphQLData struct {
 
 type StratzExecuteGraphQLResponse ToolResult[StratzExecuteGraphQLData]
 
-type StratzGetConstantsRequest struct {
-	Fresh      *bool  `json:"fresh,omitempty"`
-	IncludeRaw *bool  `json:"include_raw,omitempty"`
-	Type       string `json:"type"`
+type StratzQueryConstantsRequest any
+
+type StratzQueryConstantsData struct {
+	Items any `json:"items,omitempty"`
+	Mode  any `json:"mode,omitempty"`
 }
 
-type StratzGetConstantsData struct {
-	Items []ConstantRecord `json:"items"`
-	Type  string           `json:"type"`
+type StratzQueryConstantsResponse ToolResult[StratzQueryConstantsData]
+
+type StratzQueryHeroesRequest any
+
+type StratzQueryHeroesData struct {
+	Items any     `json:"items,omitempty"`
+	Mode  *string `json:"mode,omitempty"`
 }
 
-type StratzGetConstantsResponse ToolResult[StratzGetConstantsData]
+type StratzQueryHeroesResponse ToolResult[StratzQueryHeroesData]
 
-type StratzGetHeroRequest struct {
-	DetailLevel *DetailLevel   `json:"detail_level,omitempty"`
-	Fresh       *bool          `json:"fresh,omitempty"`
-	Hero        HeroIdentifier `json:"hero"`
-	IncludeRaw  *bool          `json:"include_raw,omitempty"`
+type StratzQueryLeaguesRequest any
+
+type StratzQueryLeaguesData struct {
+	Items any     `json:"items,omitempty"`
+	Mode  *string `json:"mode,omitempty"`
 }
 
-type StratzGetHeroData Hero
+type StratzQueryLeaguesResponse ToolResult[StratzQueryLeaguesData]
 
-type StratzGetHeroResponse ToolResult[StratzGetHeroData]
+type StratzQueryMatchesRequest any
 
-type StratzGetHeroStatsRequest struct {
-	Fresh            *bool          `json:"fresh,omitempty"`
-	From             *DateTime      `json:"from,omitempty"`
-	Hero             HeroIdentifier `json:"hero"`
-	IncludeMatchups  *bool          `json:"include_matchups,omitempty"`
-	IncludeRaw       *bool          `json:"include_raw,omitempty"`
-	IncludeSynergies *bool          `json:"include_synergies,omitempty"`
-	Lane             *string        `json:"lane,omitempty"`
-	PatchID          *string        `json:"patch_id,omitempty"`
-	RankBracket      *string        `json:"rank_bracket,omitempty"`
-	Role             *string        `json:"role,omitempty"`
-	To               *DateTime      `json:"to,omitempty"`
+type StratzQueryMatchesData struct {
+	Items any     `json:"items,omitempty"`
+	Mode  *string `json:"mode,omitempty"`
 }
 
-type StratzGetHeroStatsData struct {
-	BanRate    *float64        `json:"ban_rate"`
-	HeroID     int64           `json:"hero_id"`
-	Lanes      []HeroBreakdown `json:"lanes"`
-	Matchups   []HeroRelation  `json:"matchups"`
-	PickRate   *float64        `json:"pick_rate"`
-	Roles      []HeroBreakdown `json:"roles"`
-	SampleSize int64           `json:"sample_size"`
-	Synergies  []HeroRelation  `json:"synergies"`
-	WinRate    *float64        `json:"win_rate"`
+type StratzQueryMatchesResponse ToolResult[StratzQueryMatchesData]
+
+type StratzQueryPlayersRequest struct {
+	Fresh                    *bool        `json:"fresh,omitempty"`
+	IncludeProfileStatistics *bool        `json:"include_profile_statistics,omitempty"`
+	IncludeRaw               *bool        `json:"include_raw,omitempty"`
+	Mode                     string       `json:"mode"`
+	PlayerIds                []Identifier `json:"player_ids"`
 }
 
-type StratzGetHeroStatsResponse ToolResult[StratzGetHeroStatsData]
-
-type StratzGetLeagueRequest struct {
-	DetailLevel *DetailLevel `json:"detail_level,omitempty"`
-	Fresh       *bool        `json:"fresh,omitempty"`
-	IncludeRaw  *bool        `json:"include_raw,omitempty"`
-	LeagueID    string       `json:"league_id"`
+type StratzQueryPlayersData struct {
+	Items any     `json:"items,omitempty"`
+	Mode  *string `json:"mode,omitempty"`
 }
 
-type StratzGetLeagueData League
-
-type StratzGetLeagueResponse ToolResult[StratzGetLeagueData]
-
-type StratzGetMatchRequest struct {
-	DetailLevel *MatchDetailLevel `json:"detail_level,omitempty"`
-	Fresh       *bool             `json:"fresh,omitempty"`
-	IncludeRaw  *bool             `json:"include_raw,omitempty"`
-	MatchID     MatchID           `json:"match_id"`
-}
-
-type StratzGetMatchData Match
-
-type StratzGetMatchResponse ToolResult[StratzGetMatchData]
-
-type StratzGetPlayerRequest struct {
-	DetailLevel *DetailLevel     `json:"detail_level,omitempty"`
-	Fresh       *bool            `json:"fresh,omitempty"`
-	IncludeRaw  *bool            `json:"include_raw,omitempty"`
-	PlayerID    PlayerIdentifier `json:"player_id"`
-}
-
-type StratzGetPlayerData Player
-
-type StratzGetPlayerResponse ToolResult[StratzGetPlayerData]
-
-type StratzListLeagueMatchesRequest struct {
-	Cursor      *string      `json:"cursor,omitempty"`
-	DetailLevel *DetailLevel `json:"detail_level,omitempty"`
-	Fresh       *bool        `json:"fresh,omitempty"`
-	From        *DateTime    `json:"from,omitempty"`
-	IncludeRaw  *bool        `json:"include_raw,omitempty"`
-	LeagueID    string       `json:"league_id"`
-	Limit       *int64       `json:"limit,omitempty"`
-	PatchID     *string      `json:"patch_id,omitempty"`
-	To          *DateTime    `json:"to,omitempty"`
-}
-
-type StratzListLeagueMatchesData struct {
-	Items []MatchSummary `json:"items"`
-	Page  PageInfo       `json:"page"`
-}
-
-type StratzListLeagueMatchesResponse ToolResult[StratzListLeagueMatchesData]
-
-type StratzListLeaguesRequest struct {
-	Cursor     *string   `json:"cursor,omitempty"`
-	Fresh      *bool     `json:"fresh,omitempty"`
-	From       *DateTime `json:"from,omitempty"`
-	IncludeRaw *bool     `json:"include_raw,omitempty"`
-	Limit      *int64    `json:"limit,omitempty"`
-	Query      *string   `json:"query,omitempty"`
-	Status     *string   `json:"status,omitempty"`
-	Tier       *string   `json:"tier,omitempty"`
-	To         *DateTime `json:"to,omitempty"`
-}
-
-type StratzListLeaguesData struct {
-	Items []League `json:"items"`
-	Page  PageInfo `json:"page"`
-}
-
-type StratzListLeaguesResponse ToolResult[StratzListLeaguesData]
-
-type StratzListLiveMatchesRequest struct {
-	Cursor            *string           `json:"cursor,omitempty"`
-	Fresh             *bool             `json:"fresh,omitempty"`
-	GameModeID        *int64            `json:"game_mode_id,omitempty"`
-	GameStates        []string          `json:"game_states,omitempty"`
-	Hero              *HeroIdentifier   `json:"hero,omitempty"`
-	IncludeRaw        *bool             `json:"include_raw,omitempty"`
-	LeagueID          *string           `json:"league_id,omitempty"`
-	Limit             *int64            `json:"limit,omitempty"`
-	MinimumSpectators *int64            `json:"minimum_spectators,omitempty"`
-	PlayerID          *PlayerIdentifier `json:"player_id,omitempty"`
-	Sort              *string           `json:"sort,omitempty"`
-	TeamID            *string           `json:"team_id,omitempty"`
-	Tiers             []string          `json:"tiers,omitempty"`
-}
-
-type StratzListLiveMatchesData struct {
-	Items []LiveMatch `json:"items"`
-	Page  PageInfo    `json:"page"`
-}
-
-type StratzListLiveMatchesResponse ToolResult[StratzListLiveMatchesData]
-
-type StratzListPlayerMatchesRequest struct {
-	Cursor                 *string           `json:"cursor,omitempty"`
-	DetailLevel            *MatchDetailLevel `json:"detail_level,omitempty"`
-	Fresh                  *bool             `json:"fresh,omitempty"`
-	From                   *DateTime         `json:"from,omitempty"`
-	GameModeID             *int64            `json:"game_mode_id,omitempty"`
-	Hero                   *HeroIdentifier   `json:"hero,omitempty"`
-	IncludePlayer          *bool             `json:"include_player,omitempty"`
-	IncludeRaw             *bool             `json:"include_raw,omitempty"`
-	Limit                  *int64            `json:"limit,omitempty"`
-	LobbyTypeID            *int64            `json:"lobby_type_id,omitempty"`
-	MinimumDurationSeconds *int64            `json:"minimum_duration_seconds,omitempty"`
-	PatchID                *string           `json:"patch_id,omitempty"`
-	PlayerID               PlayerIdentifier  `json:"player_id"`
-	Result                 *string           `json:"result,omitempty"`
-	Role                   *string           `json:"role,omitempty"`
-	To                     *DateTime         `json:"to,omitempty"`
-}
-
-type StratzListPlayerMatchesData struct {
-	Items []PlayerMatchSummary `json:"items"`
-	Page  PageInfo             `json:"page"`
-}
-
-type StratzListPlayerMatchesResponse ToolResult[StratzListPlayerMatchesData]
+type StratzQueryPlayersResponse ToolResult[StratzQueryPlayersData]
 
 type StratzServerInfoRequest struct{}
 
@@ -612,19 +440,11 @@ type StratzServerInfoData struct {
 type StratzServerInfoResponse ToolResult[StratzServerInfoData]
 
 var generatedDefinitions = []Definition{
-	{Name: "stratz_batch_get_heroes", Description: "Get up to 25 heroes atomically; any item failure or ambiguity fails the entire batch.", InputSchemaPath: "generated/schemas/stratz_batch_get_heroes.input.json", OutputSchemaPath: "generated/schemas/stratz_batch_get_heroes.output.json", InputExamplePath: "generated/examples/stratz_batch_get_heroes.input.json", OutputExamplePath: "generated/examples/stratz_batch_get_heroes.output.json", ProtocolFixturePath: "generated/protocol/stratz_batch_get_heroes.json"},
-	{Name: "stratz_batch_get_matches", Description: "Get up to 25 matches atomically; any item failure fails the entire batch.", InputSchemaPath: "generated/schemas/stratz_batch_get_matches.input.json", OutputSchemaPath: "generated/schemas/stratz_batch_get_matches.output.json", InputExamplePath: "generated/examples/stratz_batch_get_matches.input.json", OutputExamplePath: "generated/examples/stratz_batch_get_matches.output.json", ProtocolFixturePath: "generated/protocol/stratz_batch_get_matches.json"},
-	{Name: "stratz_batch_get_players", Description: "Get up to 25 players atomically; any item failure fails the entire batch.", InputSchemaPath: "generated/schemas/stratz_batch_get_players.input.json", OutputSchemaPath: "generated/schemas/stratz_batch_get_players.output.json", InputExamplePath: "generated/examples/stratz_batch_get_players.input.json", OutputExamplePath: "generated/examples/stratz_batch_get_players.output.json", ProtocolFixturePath: "generated/protocol/stratz_batch_get_players.json"},
-	{Name: "stratz_execute_graphql", Description: "Execute one guarded GraphQL query against an approved STRATZ root field using JSON-compatible variables.", InputSchemaPath: "generated/schemas/stratz_execute_graphql.input.json", OutputSchemaPath: "generated/schemas/stratz_execute_graphql.output.json", InputExamplePath: "generated/examples/stratz_execute_graphql.input.json", OutputExamplePath: "generated/examples/stratz_execute_graphql.output.json", ProtocolFixturePath: "generated/protocol/stratz_execute_graphql.json"},
-	{Name: "stratz_get_constants", Description: "Get one explicit class of STRATZ/Dota reference constants, or all classes when requested.", InputSchemaPath: "generated/schemas/stratz_get_constants.input.json", OutputSchemaPath: "generated/schemas/stratz_get_constants.output.json", InputExamplePath: "generated/examples/stratz_get_constants.input.json", OutputExamplePath: "generated/examples/stratz_get_constants.output.json", ProtocolFixturePath: "generated/protocol/stratz_get_constants.json"},
-	{Name: "stratz_get_hero", Description: "Get normalized hero reference data by numeric ID, exact localized name, or canonical slug.", InputSchemaPath: "generated/schemas/stratz_get_hero.input.json", OutputSchemaPath: "generated/schemas/stratz_get_hero.output.json", InputExamplePath: "generated/examples/stratz_get_hero.input.json", OutputExamplePath: "generated/examples/stratz_get_hero.output.json", ProtocolFixturePath: "generated/protocol/stratz_get_hero.json"},
-	{Name: "stratz_get_hero_stats", Description: "Get bounded aggregate hero statistics for a date, patch, rank, role, and lane window.", InputSchemaPath: "generated/schemas/stratz_get_hero_stats.input.json", OutputSchemaPath: "generated/schemas/stratz_get_hero_stats.output.json", InputExamplePath: "generated/examples/stratz_get_hero_stats.input.json", OutputExamplePath: "generated/examples/stratz_get_hero_stats.output.json", ProtocolFixturePath: "generated/protocol/stratz_get_hero_stats.json"},
-	{Name: "stratz_get_league", Description: "Get normalized league metadata by exact league ID.", InputSchemaPath: "generated/schemas/stratz_get_league.input.json", OutputSchemaPath: "generated/schemas/stratz_get_league.output.json", InputExamplePath: "generated/examples/stratz_get_league.input.json", OutputExamplePath: "generated/examples/stratz_get_league.output.json", ProtocolFixturePath: "generated/protocol/stratz_get_league.json"},
-	{Name: "stratz_get_match", Description: "Get a normalized Dota match with detail-level controlled timelines and replay-derived events.", InputSchemaPath: "generated/schemas/stratz_get_match.input.json", OutputSchemaPath: "generated/schemas/stratz_get_match.output.json", InputExamplePath: "generated/examples/stratz_get_match.input.json", OutputExamplePath: "generated/examples/stratz_get_match.output.json", ProtocolFixturePath: "generated/protocol/stratz_get_match.json"},
-	{Name: "stratz_get_player", Description: "Get a normalized STRATZ player profile by account ID, SteamID64, or STRATZ profile URL.", InputSchemaPath: "generated/schemas/stratz_get_player.input.json", OutputSchemaPath: "generated/schemas/stratz_get_player.output.json", InputExamplePath: "generated/examples/stratz_get_player.input.json", OutputExamplePath: "generated/examples/stratz_get_player.output.json", ProtocolFixturePath: "generated/protocol/stratz_get_player.json"},
-	{Name: "stratz_list_league_matches", Description: "List matches for a league with bounded date/patch filters and an authenticated opaque cursor.", InputSchemaPath: "generated/schemas/stratz_list_league_matches.input.json", OutputSchemaPath: "generated/schemas/stratz_list_league_matches.output.json", InputExamplePath: "generated/examples/stratz_list_league_matches.input.json", OutputExamplePath: "generated/examples/stratz_list_league_matches.output.json", ProtocolFixturePath: "generated/protocol/stratz_list_league_matches.json"},
-	{Name: "stratz_list_leagues", Description: "Search and list STRATZ leagues with bounded filters and an authenticated opaque cursor.", InputSchemaPath: "generated/schemas/stratz_list_leagues.input.json", OutputSchemaPath: "generated/schemas/stratz_list_leagues.output.json", InputExamplePath: "generated/examples/stratz_list_leagues.input.json", OutputExamplePath: "generated/examples/stratz_list_leagues.output.json", ProtocolFixturePath: "generated/protocol/stratz_list_leagues.json"},
-	{Name: "stratz_list_live_matches", Description: "List current live matches with bounded filters, sorting, and a short-lived authenticated cursor.", InputSchemaPath: "generated/schemas/stratz_list_live_matches.input.json", OutputSchemaPath: "generated/schemas/stratz_list_live_matches.output.json", InputExamplePath: "generated/examples/stratz_list_live_matches.input.json", OutputExamplePath: "generated/examples/stratz_list_live_matches.output.json", ProtocolFixturePath: "generated/protocol/stratz_list_live_matches.json"},
-	{Name: "stratz_list_player_matches", Description: "List normalized matches for a player using bounded filters and an authenticated opaque cursor.", InputSchemaPath: "generated/schemas/stratz_list_player_matches.input.json", OutputSchemaPath: "generated/schemas/stratz_list_player_matches.output.json", InputExamplePath: "generated/examples/stratz_list_player_matches.input.json", OutputExamplePath: "generated/examples/stratz_list_player_matches.output.json", ProtocolFixturePath: "generated/protocol/stratz_list_player_matches.json"},
-	{Name: "stratz_server_info", Description: "Return server, protocol, schema, cache, limit, and upstream connectivity information without secrets.", InputSchemaPath: "generated/schemas/stratz_server_info.input.json", OutputSchemaPath: "generated/schemas/stratz_server_info.output.json", InputExamplePath: "generated/examples/stratz_server_info.input.json", OutputExamplePath: "generated/examples/stratz_server_info.output.json", ProtocolFixturePath: "generated/protocol/stratz_server_info.json"},
+	{Name: "stratz_execute_graphql", Description: "Execute one guarded GraphQL query against an approved STRATZ root.", InputSchemaPath: "generated/schemas/stratz_execute_graphql.input.json", OutputSchemaPath: "generated/schemas/stratz_execute_graphql.output.json", InputExamplePath: "generated/examples/stratz_execute_graphql.input.json", OutputExamplePath: "generated/examples/stratz_execute_graphql.output.json", ProtocolFixturePath: "generated/protocol/stratz_execute_graphql.json"},
+	{Name: "stratz_query_constants", Description: "Query supported constants by types or typed selectors.", InputSchemaPath: "generated/schemas/stratz_query_constants.input.json", OutputSchemaPath: "generated/schemas/stratz_query_constants.output.json", InputExamplePath: "generated/examples/stratz_query_constants.input.json", OutputExamplePath: "generated/examples/stratz_query_constants.output.json", ProtocolFixturePath: "generated/protocol/stratz_query_constants.json"},
+	{Name: "stratz_query_heroes", Description: "Query normalized heroes exactly or by bounded search with optional statistics.", InputSchemaPath: "generated/schemas/stratz_query_heroes.input.json", OutputSchemaPath: "generated/schemas/stratz_query_heroes.output.json", InputExamplePath: "generated/examples/stratz_query_heroes.input.json", OutputExamplePath: "generated/examples/stratz_query_heroes.output.json", ProtocolFixturePath: "generated/protocol/stratz_query_heroes.json"},
+	{Name: "stratz_query_leagues", Description: "Query normalized leagues exactly or by authenticated bounded search.", InputSchemaPath: "generated/schemas/stratz_query_leagues.input.json", OutputSchemaPath: "generated/schemas/stratz_query_leagues.output.json", InputExamplePath: "generated/examples/stratz_query_leagues.input.json", OutputExamplePath: "generated/examples/stratz_query_leagues.output.json", ProtocolFixturePath: "generated/protocol/stratz_query_leagues.json"},
+	{Name: "stratz_query_matches", Description: "Query normalized matches by exact IDs, history filters, or live filters.", InputSchemaPath: "generated/schemas/stratz_query_matches.input.json", OutputSchemaPath: "generated/schemas/stratz_query_matches.output.json", InputExamplePath: "generated/examples/stratz_query_matches.input.json", OutputExamplePath: "generated/examples/stratz_query_matches.output.json", ProtocolFixturePath: "generated/protocol/stratz_query_matches.json"},
+	{Name: "stratz_query_players", Description: "Query normalized players by one to 25 exact identifiers.", InputSchemaPath: "generated/schemas/stratz_query_players.input.json", OutputSchemaPath: "generated/schemas/stratz_query_players.output.json", InputExamplePath: "generated/examples/stratz_query_players.input.json", OutputExamplePath: "generated/examples/stratz_query_players.output.json", ProtocolFixturePath: "generated/protocol/stratz_query_players.json"},
+	{Name: "stratz_server_info", Description: "Return server, protocol, schema, cache, limits, and upstream status.", InputSchemaPath: "generated/schemas/stratz_server_info.input.json", OutputSchemaPath: "generated/schemas/stratz_server_info.output.json", InputExamplePath: "generated/examples/stratz_server_info.input.json", OutputExamplePath: "generated/examples/stratz_server_info.output.json", ProtocolFixturePath: "generated/protocol/stratz_server_info.json"},
 }

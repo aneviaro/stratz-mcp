@@ -108,7 +108,29 @@ func TestCodecRejectsMismatchedBindingsAndExpiry(t *testing.T) {
 			cursor: cursor,
 			binding: func() Binding {
 				copy := binding
-				copy.Filters = map[string]any{"player_id": "321"}
+				copy.Filters = map[string]any{"mode": "player_history", "player_id": "321"}
+				return copy
+			}(),
+			now:  now,
+			want: contracts.ErrorCodeCursorInvalid,
+		},
+		{
+			name:   "wrong match mode",
+			cursor: cursor,
+			binding: func() Binding {
+				copy := binding
+				copy.Filters = map[string]any{"mode": "live", "player_id": "123", "hero_id": 1}
+				return copy
+			}(),
+			now:  now,
+			want: contracts.ErrorCodeCursorInvalid,
+		},
+		{
+			name:   "old match tool name",
+			cursor: cursor,
+			binding: func() Binding {
+				copy := binding
+				copy.Tool = "stratz_list_player_matches"
 				return copy
 			}(),
 			now:  now,
@@ -179,6 +201,34 @@ func TestCodecRejectsMismatchedBindingsAndExpiry(t *testing.T) {
 	}
 }
 
+func TestCursorLifetimes(t *testing.T) {
+	now := time.Date(2026, time.June, 19, 12, 0, 0, 0, time.UTC)
+	binding := testBinding()
+	for _, test := range []struct {
+		name     string
+		lifetime Lifetime
+		want     time.Duration
+	}{
+		{"live", LifetimeLive, 5 * time.Minute},
+		{"recent", LifetimeRecent, time.Hour},
+		{"historical", LifetimeHistorical, 24 * time.Hour},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			cursor, err := NewCodec(Options{Now: func() time.Time { return now }}).Encode(binding, test.lifetime, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			payload, err := NewCodec(Options{Now: func() time.Time { return now }}).Decode(cursor, binding, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := payload.ExpiresAt.Sub(payload.IssuedAt); got != test.want {
+				t.Fatalf("lifetime = %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
 func TestCodecIsRestartStable(t *testing.T) {
 	now := time.Date(2026, time.June, 19, 12, 0, 0, 0, time.UTC)
 	binding := testBinding()
@@ -205,8 +255,8 @@ func TestCodecIsRestartStable(t *testing.T) {
 
 func testBinding() Binding {
 	return Binding{
-		Tool:             "stratz_list_player_matches",
-		Filters:          map[string]any{"player_id": "123", "hero_id": 1},
+		Tool:             "stratz_query_matches",
+		Filters:          map[string]any{"mode": "player_history", "player_id": "123", "hero_id": 1},
 		PageSize:         25,
 		Token:            "fixture-token",
 		SchemaVersion:    "sha256:fixture",

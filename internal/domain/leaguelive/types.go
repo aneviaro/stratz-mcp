@@ -34,6 +34,40 @@ type Result[T any] struct {
 	Warnings   []string
 }
 
+// LeagueQueryData is the normalized result of an exact or bounded league query.
+type LeagueQueryData struct {
+	Mode  string
+	Items []contracts.League
+	Page  *contracts.Page
+}
+
+// MatchQueryData is the tagged result for league-history and live branches.
+type MatchQueryData struct {
+	Mode  string          `json:"mode"`
+	Items any             `json:"items"`
+	Page  *contracts.Page `json:"page,omitempty"`
+}
+
+type PageInfo struct {
+	NextCursor *string
+	HasMore    bool
+}
+
+type LeagueListData struct {
+	Items []contracts.League
+	Page  PageInfo
+}
+
+type LeagueMatchesData struct {
+	Items []contracts.MatchSummary
+	Page  PageInfo
+}
+
+type LiveMatchesData struct {
+	Items []contracts.LiveMatch
+	Page  PageInfo
+}
+
 // LeagueFilters contains the bounded filters for league listing.
 type LeagueFilters struct {
 	Query  *string

@@ -25,7 +25,7 @@ Use this skill when the user asks for this workflow. User-supplied parameters ar
 ## Workflow
 
 1. Read the relevant stratz://schema domain resource before drafting the query.
-2. Prefer a curated tool if it can answer the question without raw GraphQL.
+2. Prefer a curated query tool if it can answer the question without raw GraphQL.
 3. Request only necessary fields, use variables, paginate deliberately, and avoid aliases unless required.
 4. Explain policy or upstream failures clearly. Show the query and variables when requested or when diagnosing failure; otherwise summarize results.
 

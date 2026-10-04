@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aneviaro/stratz-mcp/internal/contracts"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
@@ -132,6 +133,10 @@ func validate(registry Registry) error {
 	}
 	names := map[string]bool{}
 	skills := map[string]bool{}
+	tools := make(map[string]bool, len(contracts.Definitions()))
+	for _, definition := range contracts.Definitions() {
+		tools[definition.Name] = true
+	}
 	for _, workflow := range registry.Workflows {
 		if names[workflow.Name] {
 			return fmt.Errorf("duplicate workflow name %q", workflow.Name)
@@ -141,6 +146,11 @@ func validate(registry Registry) error {
 		}
 		names[workflow.Name] = true
 		skills[workflow.Skill] = true
+		for _, tool := range workflow.Tools {
+			if strings.HasPrefix(tool, "stratz_") && !tools[tool] {
+				return fmt.Errorf("workflow %s references unknown tool %q", workflow.Name, tool)
+			}
+		}
 		arguments := map[string]bool{}
 		for _, argument := range workflow.Arguments {
 			if arguments[argument.Name] {

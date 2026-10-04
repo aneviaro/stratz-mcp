@@ -12,7 +12,7 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
 )
 
-func mapPlayer(source *upstreamPlayer) contracts.Player {
+func mapPlayer(source *upstreamPlayer, includeStatistics bool) contracts.Player {
 	accountID := source.SteamAccountID
 	if accountID < 0 {
 		accountID = 0
@@ -35,9 +35,17 @@ func mapPlayer(source *upstreamPlayer) contracts.Player {
 		DisplayName: displayName,
 		AvatarURL:   avatar,
 		IsPrivate:   source.IsPrivate,
-		MatchCount:  nonNegative(source.MatchCount),
-		WinCount:    nonNegative(source.WinCount),
-		LastMatchAt: unixDate(source.LastMatchDate),
+	}
+	if includeStatistics {
+		player.Statistics = &struct {
+			LastMatchAt contracts.NullableDateTime `json:"last_match_at"`
+			MatchCount  int64                      `json:"match_count"`
+			WinCount    int64                      `json:"win_count"`
+		}{
+			LastMatchAt: unixDate(source.LastMatchDate),
+			MatchCount:  maxZeroPointer(source.MatchCount),
+			WinCount:    maxZeroPointer(source.WinCount),
+		}
 	}
 	if len(source.Ranks) > 0 {
 		player.Rank = &struct {
@@ -72,9 +80,9 @@ func mapSummary(source *upstreamMatch) contracts.MatchSummary {
 	}
 }
 
-func mapPlayerMatchSummary(source *upstreamMatch, accountID int64, includePlayer bool) contracts.PlayerMatchSummary {
+func mapPlayerMatchSummary(source *upstreamMatch, accountID int64, includePlayer bool) PlayerMatchSummary {
 	summary := mapSummary(source)
-	playerSummary := contracts.PlayerMatchSummary{
+	playerSummary := PlayerMatchSummary{
 		MatchID:         summary.MatchID,
 		StartedAt:       summary.StartedAt,
 		DurationSeconds: summary.DurationSeconds,
@@ -94,7 +102,7 @@ func mapPlayerMatchSummary(source *upstreamMatch, accountID int64, includePlayer
 	return playerSummary
 }
 
-func findMatchPlayer(source *upstreamMatch, accountID int64) *contracts.MatchPlayer {
+func findMatchPlayer(source *upstreamMatch, accountID int64) *MatchPlayer {
 	for _, player := range source.Players {
 		if player.SteamAccountID == nil || *player.SteamAccountID != accountID {
 			continue
@@ -105,7 +113,7 @@ func findMatchPlayer(source *upstreamMatch, accountID int64) *contracts.MatchPla
 		}
 		won := playerWon(source.DidRadiantWin, player.IsRadiant)
 		publicAccountID := strconv.FormatInt(accountID, 10)
-		return &contracts.MatchPlayer{
+		return &MatchPlayer{
 			AccountID: &publicAccountID,
 			HeroID:    player.HeroID,
 			Team:      team,
@@ -152,9 +160,9 @@ func enumID(value upstreamEnumID, known map[string]int64) *int64 {
 	return &number
 }
 
-func mapMatch(source *upstreamMatch, detail contracts.DetailLevel) contracts.Match {
+func mapMatch(source *upstreamMatch, detail contracts.DetailLevel) Match {
 	summary := mapSummary(source)
-	match := contracts.Match{
+	match := Match{
 		MatchID:         summary.MatchID,
 		StartedAt:       summary.StartedAt,
 		DurationSeconds: summary.DurationSeconds,
@@ -167,7 +175,7 @@ func mapMatch(source *upstreamMatch, detail contracts.DetailLevel) contracts.Mat
 		LeagueID:        summary.LeagueID,
 		PatchID:         summary.PatchID,
 		ParseStatus:     summary.ParseStatus,
-		Players:         make([]contracts.MatchPlayer, 0, len(source.Players)),
+		Players:         make([]MatchPlayer, 0, len(source.Players)),
 	}
 	for _, player := range source.Players {
 		var accountID *string
@@ -180,7 +188,7 @@ func mapMatch(source *upstreamMatch, detail contracts.DetailLevel) contracts.Mat
 			team = "radiant"
 		}
 		won := playerWon(source.DidRadiantWin, player.IsRadiant)
-		match.Players = append(match.Players, contracts.MatchPlayer{
+		match.Players = append(match.Players, MatchPlayer{
 			AccountID: accountID,
 			HeroID:    player.HeroID,
 			Team:      team,
@@ -208,7 +216,7 @@ func mapMatch(source *upstreamMatch, detail contracts.DetailLevel) contracts.Mat
 // collectMatchHeroIDs returns the distinct positive hero IDs referenced across a
 // normalized match's players, fight participants, timeline, and objectives, so a
 // single hero-name resolution request can decorate every row.
-func collectMatchHeroIDs(match contracts.Match) []int64 {
+func collectMatchHeroIDs(match Match) []int64 {
 	const estimated = 10
 	ids := make([]int64, 0, estimated)
 	seen := make(map[int64]struct{}, estimated)
@@ -230,7 +238,7 @@ func collectMatchHeroIDs(match contracts.Match) []int64 {
 			add(participant.HeroID)
 		}
 	}
-	applyTimeline := func(events []contracts.TimelineEvent) {
+	applyTimeline := func(events []TimelineEvent) {
 		for _, event := range events {
 			if event.HeroID != nil {
 				add(*event.HeroID)
@@ -243,7 +251,7 @@ func collectMatchHeroIDs(match contracts.Match) []int64 {
 }
 
 // collectBatchHeroIDs deduplicates hero IDs across a batch of normalized matches.
-func collectBatchHeroIDs(matches []contracts.Match) []int64 {
+func collectBatchHeroIDs(matches []Match) []int64 {
 	ids := make([]int64, 0)
 	seen := make(map[int64]struct{})
 	for _, match := range matches {
@@ -260,7 +268,7 @@ func collectBatchHeroIDs(matches []contracts.Match) []int64 {
 
 // applyMatchHeroNames stamps the resolved localized name onto every hero-bearing
 // row of a normalized match. IDs without a resolved name keep a nil HeroName.
-func applyMatchHeroNames(match *contracts.Match, names map[int64]string) {
+func applyMatchHeroNames(match *Match, names map[int64]string) {
 	for index := range match.Players {
 		match.Players[index].HeroName = heroNamePointer(match.Players[index].HeroID, names)
 	}
@@ -273,7 +281,7 @@ func applyMatchHeroNames(match *contracts.Match, names map[int64]string) {
 	applyTimelineHeroNames(match.Objectives, names)
 }
 
-func applyTimelineHeroNames(events []contracts.TimelineEvent, names map[int64]string) {
+func applyTimelineHeroNames(events []TimelineEvent, names map[int64]string) {
 	for index := range events {
 		if events[index].HeroID == nil {
 			continue
@@ -284,7 +292,7 @@ func applyTimelineHeroNames(events []contracts.TimelineEvent, names map[int64]st
 
 // collectSummaryHeroIDs returns the distinct hero IDs from the included player
 // rows of a player-match list page. Items without a player row are skipped.
-func collectSummaryHeroIDs(items []contracts.PlayerMatchSummary) []int64 {
+func collectSummaryHeroIDs(items []PlayerMatchSummary) []int64 {
 	ids := make([]int64, 0, len(items))
 	seen := make(map[int64]struct{}, len(items))
 	for _, item := range items {
@@ -304,7 +312,7 @@ func collectSummaryHeroIDs(items []contracts.PlayerMatchSummary) []int64 {
 	return ids
 }
 
-func applySummaryHeroNames(items []contracts.PlayerMatchSummary, names map[int64]string) {
+func applySummaryHeroNames(items []PlayerMatchSummary, names map[int64]string) {
 	for index := range items {
 		if player := items[index].Player; player != nil {
 			player.HeroName = heroNamePointer(player.HeroID, names)
@@ -319,9 +327,9 @@ func heroNamePointer(heroID int64, names map[int64]string) *string {
 	return nil
 }
 
-func mapObjectives(source *upstreamPlaybackData) []contracts.TimelineEvent {
+func mapObjectives(source *upstreamPlaybackData) []TimelineEvent {
 	if source == nil {
-		return []contracts.TimelineEvent{}
+		return []TimelineEvent{}
 	}
 	events := make([]upstreamEvent, 0,
 		len(source.BuildingEvents)+len(source.RoshanEvents)+len(source.TowerDeathEvents))
@@ -348,9 +356,9 @@ func mapObjectives(source *upstreamPlaybackData) []contracts.TimelineEvent {
 	return result
 }
 
-func mapTimeline(source *upstreamPlaybackData) []contracts.TimelineEvent {
+func mapTimeline(source *upstreamPlaybackData) []TimelineEvent {
 	if source == nil {
-		return []contracts.TimelineEvent{}
+		return []TimelineEvent{}
 	}
 	events := make([]upstreamEvent, 0, len(source.RuneEvents)+len(source.WardEvents))
 	for _, event := range source.RuneEvents {
@@ -394,8 +402,8 @@ func normalizedPlayerSlot(slot int64) int64 {
 	return slot
 }
 
-func mapEvents(source []upstreamEvent) []contracts.TimelineEvent {
-	result := make([]contracts.TimelineEvent, 0, len(source))
+func mapEvents(source []upstreamEvent) []TimelineEvent {
+	result := make([]TimelineEvent, 0, len(source))
 	if len(source) > 5000 {
 		source = source[:5000]
 	}
@@ -413,7 +421,7 @@ func mapEvents(source []upstreamEvent) []contracts.TimelineEvent {
 			value := strconv.FormatInt(*event.SteamAccountID, 10)
 			account = &value
 		}
-		result = append(result, contracts.TimelineEvent{
+		result = append(result, TimelineEvent{
 			TimeSeconds: maxZero(event.Time),
 			Type:        cleanValue(event.Type, 64),
 			Team:        team,
@@ -425,13 +433,13 @@ func mapEvents(source []upstreamEvent) []contracts.TimelineEvent {
 	return result
 }
 
-func mapFights(source []upstreamFight) []contracts.Fight {
+func mapFights(source []upstreamFight) []Fight {
 	if len(source) > 500 {
 		source = source[:500]
 	}
-	result := make([]contracts.Fight, 0, len(source))
+	result := make([]Fight, 0, len(source))
 	for _, fight := range source {
-		item := contracts.Fight{
+		item := Fight{
 			StartTimeSeconds:     maxZero(fight.StartTime),
 			EndTimeSeconds:       maxZero(fight.EndTime),
 			RadiantKills:         maxZero(fight.RadiantKills),
@@ -471,13 +479,13 @@ func mapFights(source []upstreamFight) []contracts.Fight {
 	return result
 }
 
-func mapEconomy(source []upstreamEconomy) []contracts.EconomyPoint {
+func mapEconomy(source []upstreamEconomy) []EconomyPoint {
 	if len(source) > 5000 {
 		source = source[:5000]
 	}
-	result := make([]contracts.EconomyPoint, 0, len(source))
+	result := make([]EconomyPoint, 0, len(source))
 	for _, point := range source {
-		result = append(result, contracts.EconomyPoint{
+		result = append(result, EconomyPoint{
 			TimeSeconds:       maxZero(point.Time),
 			RadiantNetworth:   nonNegative(point.RadiantNetworth),
 			DireNetworth:      nonNegative(point.DireNetworth),
@@ -511,6 +519,13 @@ func unixDate(value *int64) *contracts.DateTime {
 	}
 	formatted := contracts.DateTime(time.Unix(*value, 0).UTC().Format(time.RFC3339))
 	return &formatted
+}
+
+func maxZeroPointer(value *int64) int64 {
+	if value == nil || *value < 0 {
+		return 0
+	}
+	return *value
 }
 
 func nonNegative(value *int64) *int64 {

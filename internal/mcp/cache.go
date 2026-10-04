@@ -15,26 +15,63 @@ type cacheSpecification struct {
 	class  cache.Class
 }
 
-var cacheSpecifications = map[string]cacheSpecification{
-	"stratz_get_player":          {domain: "players", class: cache.ClassProfileSensitive},
-	"stratz_list_player_matches": {domain: "matches", class: cache.ClassProfileSensitive},
-	"stratz_batch_get_players":   {domain: "players", class: cache.ClassProfileSensitive},
-	"stratz_get_match":           {domain: "matches", class: cache.ClassPublicRecent},
-	"stratz_batch_get_matches":   {domain: "matches", class: cache.ClassPublicRecent},
-	"stratz_get_hero":            {domain: "heroes", class: cache.ClassPublicReference},
-	"stratz_batch_get_heroes":    {domain: "heroes", class: cache.ClassPublicReference},
-	"stratz_get_hero_stats":      {domain: "heroes", class: cache.ClassPublicRecent},
-	"stratz_get_constants":       {domain: "constants", class: cache.ClassPublicReference},
-	"stratz_get_league":          {domain: "leagues", class: cache.ClassPublicReference},
-	"stratz_list_leagues":        {domain: "leagues", class: cache.ClassPublicRecent},
-	"stratz_list_league_matches": {domain: "matches", class: cache.ClassPublicRecent},
-	"stratz_list_live_matches":   {domain: "live", class: cache.ClassPublicLive},
+// cacheSpecificationFor classifies a generated, schema-validated request. A
+// consolidated tool does not have one cache class: its mode and opt-in fields
+// are part of the cache policy as well as the canonical key.
+func cacheSpecificationFor(name string, arguments map[string]any) (cacheSpecification, bool) {
+	mode, _ := arguments["mode"].(string)
+	switch name {
+	case "stratz_query_heroes":
+		if mode != "exact" && mode != "search" {
+			return cacheSpecification{}, false
+		}
+		if includeStatistics, ok := arguments["include_statistics"].(bool); ok && includeStatistics {
+			return cacheSpecification{domain: "heroes", class: cache.ClassPublicRecent}, true
+		}
+		if _, present := arguments["include_statistics"]; present {
+			if _, ok := arguments["include_statistics"].(bool); !ok {
+				return cacheSpecification{}, false
+			}
+		}
+		return cacheSpecification{domain: "heroes", class: cache.ClassPublicReference}, true
+	case "stratz_query_constants":
+		if mode != "types" && mode != "typed_selectors" {
+			return cacheSpecification{}, false
+		}
+		return cacheSpecification{domain: "constants", class: cache.ClassPublicReference}, true
+	case "stratz_query_players":
+		if mode != "exact" {
+			return cacheSpecification{}, false
+		}
+		return cacheSpecification{domain: "players", class: cache.ClassProfileSensitive}, true
+	case "stratz_query_leagues":
+		switch mode {
+		case "exact":
+			return cacheSpecification{domain: "leagues", class: cache.ClassPublicReference}, true
+		case "search":
+			return cacheSpecification{domain: "leagues", class: cache.ClassPublicRecent}, true
+		default:
+			return cacheSpecification{}, false
+		}
+	case "stratz_query_matches":
+		switch mode {
+		case "exact", "league_history":
+			return cacheSpecification{domain: "matches", class: cache.ClassPublicRecent}, true
+		case "player_history":
+			return cacheSpecification{domain: "matches", class: cache.ClassProfileSensitive}, true
+		case "live":
+			return cacheSpecification{domain: "matches", class: cache.ClassPublicLive}, true
+		default:
+			return cacheSpecification{}, false
+		}
+	default:
+		return cacheSpecification{}, false
+	}
 }
 
 func cachedToolHandler(
 	options Options,
 	name string,
-	specification cacheSpecification,
 	handler ToolHandler,
 ) ToolHandler {
 	if handler == nil || options.Cache == nil {
@@ -45,11 +82,24 @@ func cachedToolHandler(
 		if err != nil {
 			return nil, err
 		}
-		if detailInput(arguments) == contracts.DetailLevel("players") && !playersDetailAllowed(name) {
+		includeRaw := includeRaw(arguments)
+		if !detailAllowedForRequest(name, arguments) {
 			return nil, invalidArgumentsError()
 		}
+		specification, classified := cacheSpecificationFor(name, arguments)
+		if !classified {
+			output, handlerErr := handler(ctx, input)
+			if handlerErr == nil {
+				status := cache.LookupDisabled
+				if includeRaw {
+					status = cache.LookupBypass
+				}
+				setCacheProvenance(output, status, 0)
+			}
+			return output, handlerErr
+		}
+
 		fresh, _ := arguments["fresh"].(bool)
-		includeRaw, _ := arguments["include_raw"].(bool)
 		classification := cache.ResolveClassification(
 			options.Config.Cache,
 			options.Config.Features,
@@ -63,20 +113,20 @@ func cachedToolHandler(
 			Class:         specification.class,
 			Operation:     name,
 			Arguments:     cacheArguments(arguments),
-			DetailLevel:   string(detailInput(arguments)),
+			DetailLevel:   cacheDetailLevel(name, arguments),
 			IncludeRaw:    includeRaw,
 			SchemaVersion: options.SchemaVersion,
 		})
 		if keyErr != nil || !classification.Cacheable {
-			output, err := handler(ctx, input)
-			if err == nil {
+			output, handlerErr := handler(ctx, input)
+			if handlerErr == nil {
 				status := cache.LookupDisabled
 				if includeRaw {
 					status = cache.LookupBypass
 				}
 				setCacheProvenance(output, status, 0)
 			}
-			return output, err
+			return output, handlerErr
 		}
 
 		lookup, lookupErr := options.Cache.Lookup(ctx, cache.LookupRequest{
@@ -90,8 +140,8 @@ func cachedToolHandler(
 			}
 		}
 
-		output, err := handler(ctx, input)
-		if err != nil && !fresh && staleFallbackAllowed(err) {
+		output, handlerErr := handler(ctx, input)
+		if handlerErr != nil && !fresh && staleFallbackAllowed(handlerErr) {
 			stale, staleErr := options.Cache.Lookup(ctx, cache.LookupRequest{
 				Key:        key,
 				AllowStale: true,
@@ -103,10 +153,10 @@ func cachedToolHandler(
 					return cached, nil
 				}
 			}
-			return nil, err
+			return nil, handlerErr
 		}
-		if err != nil {
-			return nil, err
+		if handlerErr != nil {
+			return nil, handlerErr
 		}
 
 		status := lookup.Status
@@ -125,13 +175,43 @@ func cachedToolHandler(
 	}
 }
 
-func playersDetailAllowed(name string) bool {
-	switch name {
-	case "stratz_get_match", "stratz_batch_get_matches", "stratz_list_player_matches":
+func detailAllowedForRequest(name string, arguments map[string]any) bool {
+	if name != "stratz_query_matches" {
 		return true
+	}
+	mode, _ := arguments["mode"].(string)
+	detail, present := arguments["detail_level"]
+	if !present {
+		return true
+	}
+	text, ok := detail.(string)
+	if !ok {
+		if typed, typedOK := detail.(contracts.DetailLevel); typedOK {
+			text, ok = string(typed), true
+		}
+	}
+	if !ok {
+		return false
+	}
+	switch mode {
+	case "exact":
+		return text == "summary" || text == "players" || text == "standard" || text == "full"
+	case "player_history":
+		return text == "summary" || text == "players"
+	case "league_history":
+		return text == "summary"
+	case "live":
+		return false
 	default:
 		return false
 	}
+}
+
+func cacheDetailLevel(name string, arguments map[string]any) string {
+	if name == "stratz_query_matches" {
+		return string(matchDetailInput(arguments))
+	}
+	return ""
 }
 
 func staleFallbackAllowed(err error) bool {

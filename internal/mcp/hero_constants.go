@@ -9,83 +9,39 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/domain/heroconstants"
 )
 
+// registerHeroConstantsHandlers registers the two v2 query adapters owned by
+// the hero/constants domain. Input shape and mode validation are authoritative
+// in the generated contract and the domain operation respectively; this layer
+// only forwards the validated request and builds the public envelope.
 func registerHeroConstantsHandlers(
 	handlers map[string]ToolHandler,
 	options Options,
 	service *heroconstants.Service,
 ) {
-	if handlers["stratz_get_hero"] == nil {
-		handlers["stratz_get_hero"] = func(ctx context.Context, input any) (any, error) {
+	if handlers["stratz_query_heroes"] == nil {
+		handlers["stratz_query_heroes"] = func(ctx context.Context, input any) (any, error) {
 			object, err := inputObject(input)
 			if err != nil {
 				return nil, err
 			}
-			if err := rejectPlayersDetail(object); err != nil {
-				return nil, err
-			}
-			result, err := service.FetchHero(ctx, object["hero"])
-			if err != nil {
-				return nil, heroConstantsExecutionError(err)
-			}
-			return heroConstantsEnvelope(options, "get_hero", detailInput(object), result, includeRaw(object)), nil
-		}
-	}
-	if handlers["stratz_batch_get_heroes"] == nil {
-		handlers["stratz_batch_get_heroes"] = func(ctx context.Context, input any) (any, error) {
-			object, err := inputObject(input)
-			if err != nil {
-				return nil, err
-			}
-			if err := rejectPlayersDetail(object); err != nil {
-				return nil, err
-			}
-			identifiers, ok := object["heroes"].([]any)
-			if !ok {
-				return nil, invalidArgumentsError()
-			}
-			result, err := service.BatchHeroes(ctx, identifiers)
-			if err != nil {
-				return nil, heroConstantsExecutionError(err)
-			}
-			data := contracts.StratzBatchGetHeroesData{Items: result.Data}
-			wrapped := &heroconstants.Result[contracts.StratzBatchGetHeroesData]{
-				Data: data, Raw: result.Raw, RateLimits: result.RateLimits, Warnings: result.Warnings,
-			}
-			return heroConstantsEnvelope(options, "batch_get_heroes", detailInput(object), wrapped, includeRaw(object)), nil
-		}
-	}
-	if handlers["stratz_get_constants"] == nil {
-		handlers["stratz_get_constants"] = func(ctx context.Context, input any) (any, error) {
-			object, err := inputObject(input)
-			if err != nil {
-				return nil, err
-			}
-			constantType, err := requiredString(object, "type")
-			if err != nil {
-				return nil, err
-			}
-			result, err := service.FetchConstants(ctx, constantType)
-			if err != nil {
-				return nil, heroConstantsExecutionError(err)
-			}
-			return heroConstantsEnvelope(options, "get_constants", "", result, includeRaw(object)), nil
-		}
-	}
-	if handlers["stratz_get_hero_stats"] == nil {
-		handlers["stratz_get_hero_stats"] = func(ctx context.Context, input any) (any, error) {
-			object, err := inputObject(input)
-			if err != nil {
-				return nil, err
-			}
-			filters, err := decodeHeroStatsFilters(object)
-			if err != nil {
-				return nil, err
-			}
-			result, domainErr := service.FetchHeroStats(ctx, filters)
+			result, domainErr := service.QueryHeroes(ctx, contracts.StratzQueryHeroesRequest(object))
 			if domainErr != nil {
 				return nil, heroConstantsExecutionError(domainErr)
 			}
-			return heroConstantsEnvelope(options, "get_hero_stats", "", result, includeRaw(object)), nil
+			return heroConstantsEnvelope(options, "query_heroes", "", result, includeRaw(object)), nil
+		}
+	}
+	if handlers["stratz_query_constants"] == nil {
+		handlers["stratz_query_constants"] = func(ctx context.Context, input any) (any, error) {
+			object, err := inputObject(input)
+			if err != nil {
+				return nil, err
+			}
+			result, domainErr := service.QueryConstants(ctx, contracts.StratzQueryConstantsRequest(object))
+			if domainErr != nil {
+				return nil, heroConstantsExecutionError(domainErr)
+			}
+			return heroConstantsEnvelope(options, "query_constants", "", result, includeRaw(object)), nil
 		}
 	}
 }
@@ -123,40 +79,6 @@ func heroConstantsEnvelope[T any](
 		}
 	}
 	return output
-}
-
-func decodeHeroStatsFilters(input map[string]any) (heroconstants.StatsFilters, error) {
-	filters := heroconstants.StatsFilters{Hero: input["hero"]}
-	for key, destination := range map[string]**time.Time{
-		"from": &filters.From,
-		"to":   &filters.To,
-	} {
-		if value, ok := input[key].(string); ok {
-			parsed, err := time.Parse(time.RFC3339, value)
-			if err != nil {
-				return filters, invalidArgumentsError()
-			}
-			*destination = &parsed
-		}
-	}
-	for key, destination := range map[string]**string{
-		"patch_id":     &filters.PatchID,
-		"rank_bracket": &filters.RankBracket,
-		"role":         &filters.Role,
-		"lane":         &filters.Lane,
-	} {
-		if value, ok := input[key].(string); ok {
-			copy := value
-			*destination = &copy
-		}
-	}
-	if value, ok := input["include_matchups"].(bool); ok {
-		filters.IncludeMatchups = value
-	}
-	if value, ok := input["include_synergies"].(bool); ok {
-		filters.IncludeSynergies = value
-	}
-	return filters, nil
 }
 
 func heroConstantsExecutionError(err error) error {

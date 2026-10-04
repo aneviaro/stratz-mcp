@@ -10,7 +10,9 @@ Discovery always lists all 13 resources. Catalog list results are public MCP cli
 
 Guarded raw GraphQL is fail-closed until this local schema metadata exists; run `schema pull` before using `stratz_execute_graphql`.
 
-Five prompts are generated from `workflows/workflows.json`: match analysis, player review, hero research, league scouting, and bounded advanced GraphQL querying. The same canonical definitions generate portable skills under `skills/`.
+Five prompts are generated from `workflows/workflows.json`: match analysis, player review, hero research, league scouting, and bounded advanced GraphQL querying. The same canonical definitions generate portable skills under `skills/`; generated workflows are the detailed usage guide outside compact MCP discovery descriptions.
+
+Workflows use the seven-tool v2 surface: exact player lookups use `stratz_query_players` with `mode: "exact"`; match retrieval uses `stratz_query_matches` with `exact`, `player_history`, `league_history`, or `live`; hero retrieval uses `stratz_query_heroes` with `exact` or `search`; league retrieval uses `stratz_query_leagues` with `exact` or `search`; constants use `stratz_query_constants` with `types` or `typed_selectors`; and raw GraphQL remains a guarded fallback. Request `include_profile_statistics` or `include_statistics: true` only when the workflow consumes those statistics. There are no compatibility aliases, so clients should rediscover the catalog and use v2 modes after migration.
 
 Public source imports should include the generated skill and prompt documentation that comes from those canonical workflow definitions, but should continue to exclude local schema pulls, fetched constants, and any other restricted STRATZ-derived artifacts.
 

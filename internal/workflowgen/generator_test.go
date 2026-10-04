@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/aneviaro/stratz-mcp/internal/contracts"
 )
 
 func TestCanonicalRegistryAndArtifacts(t *testing.T) {
@@ -33,6 +35,33 @@ func TestCanonicalRegistryAndArtifacts(t *testing.T) {
 		if !bytes.Equal(got, want) {
 			t.Errorf("%s is stale; run go generate ./...", path)
 		}
+	}
+}
+
+func TestWorkflowToolReferencesUseCurrentCatalog(t *testing.T) {
+	root := repositoryRoot(t)
+	registry, err := Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	known := make(map[string]bool)
+	for _, definition := range contracts.Definitions() {
+		known[definition.Name] = true
+	}
+	for _, workflow := range registry.Workflows {
+		for _, tool := range workflow.Tools {
+			if strings.HasPrefix(tool, "stratz_") && !known[tool] {
+				t.Errorf("workflow %s references unknown tool %q", workflow.Name, tool)
+			}
+		}
+	}
+
+	invalid := registry
+	invalid.Workflows = append([]Workflow(nil), registry.Workflows...)
+	invalid.Workflows[0].Tools = append([]string(nil), registry.Workflows[0].Tools...)
+	invalid.Workflows[0].Tools = append(invalid.Workflows[0].Tools, "stratz_removed_tool")
+	if err := validate(invalid); err == nil || !strings.Contains(err.Error(), "unknown tool") {
+		t.Fatalf("validate() error = %v, want unknown tool failure", err)
 	}
 }
 

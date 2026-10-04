@@ -1,3 +1,19 @@
+fragment PlayerFieldsLean on PlayerType {
+  steamAccountId
+  steamAccount {
+    id
+    name
+    avatar
+  }
+  identity {
+    name
+  }
+  lastMatchDate
+  ranks {
+    rank
+  }
+}
+
 fragment PlayerFields on PlayerType {
   steamAccountId
   steamAccount {
@@ -25,6 +41,12 @@ query StratzGetPlayer($steamAccountId: Long!) {
 query StratzGetPlayers($steamAccountIds: [Long!]!) {
   players(steamAccountIds: $steamAccountIds) {
     ...PlayerFields
+  }
+}
+
+query StratzGetPlayersLean($steamAccountIds: [Long!]!) {
+  players(steamAccountIds: $steamAccountIds) {
+    ...PlayerFieldsLean
   }
 }
 

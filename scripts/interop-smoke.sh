@@ -119,6 +119,16 @@ const (
 	discoveryCacheTTL     = 3_600_000
 )
 
+var expectedV2Descriptions = map[string]string{
+	"stratz_execute_graphql": "Execute one guarded GraphQL query against an approved STRATZ root.",
+	"stratz_query_constants": "Query supported constants by types or typed selectors.",
+	"stratz_query_heroes":    "Query normalized heroes exactly or by bounded search with optional statistics.",
+	"stratz_query_leagues":   "Query normalized leagues exactly or by authenticated bounded search.",
+	"stratz_query_matches":   "Query normalized matches by exact IDs, history filters, or live filters.",
+	"stratz_query_players":   "Query normalized players by one to 25 exact identifiers.",
+	"stratz_server_info":     "Return server, protocol, schema, cache, limits, and upstream status.",
+}
+
 type rpcMessage struct {
 	ID     json.RawMessage `json:"id"`
 	Result json.RawMessage `json:"result"`
@@ -151,6 +161,7 @@ type discoverResult struct {
 
 type listedTool struct {
 	Name         string         `json:"name"`
+	Description  string         `json:"description"`
 	InputSchema  map[string]any `json:"inputSchema"`
 	OutputSchema map[string]any `json:"outputSchema"`
 }
@@ -241,19 +252,33 @@ func validateCatalogs(results map[string]json.RawMessage) {
 	decodeResult(results, "2", &tools)
 	assertProtocolResult("tools/list", tools.cacheableResult)
 	assertCacheHints("tools/list", tools.TTLMs, tools.CacheScope, catalogCacheTTL, "public")
+	if len(expectedV2Descriptions) != 7 || len(contracts.Definitions()) != 7 {
+		fatalf("v2 catalog size = %d generated definitions/%d expected descriptions, want 7", len(contracts.Definitions()), len(expectedV2Descriptions))
+	}
 	wantToolNames := make([]string, 0, len(contracts.Definitions()))
 	toolsByName := make(map[string]listedTool, len(tools.Tools))
 	for _, definition := range contracts.Definitions() {
 		wantToolNames = append(wantToolNames, definition.Name)
+		expectedDescription, ok := expectedV2Descriptions[definition.Name]
+		if !ok || definition.Description != expectedDescription {
+			fatalf("v2 contract description for %s = %q, want %q", definition.Name, definition.Description, expectedDescription)
+		}
 	}
 	gotToolNames := make([]string, 0, len(tools.Tools))
 	for _, tool := range tools.Tools {
 		gotToolNames = append(gotToolNames, tool.Name)
 		toolsByName[tool.Name] = tool
+		expectedDescription, ok := expectedV2Descriptions[tool.Name]
+		if !ok {
+			fatalf("unexpected non-v2 tool %q in tools/list", tool.Name)
+		}
+		if tool.Description != expectedDescription {
+			fatalf("%s description = %q, want %q", tool.Name, tool.Description, expectedDescription)
+		}
 		assertToolSchema(tool.Name, contracts.InputSchema, tool.InputSchema)
 		assertToolSchema(tool.Name, contracts.OutputSchema, tool.OutputSchema)
 	}
-	assertExactStrings("tool names", gotToolNames, wantToolNames)
+	assertExactStrings("v2 tool names", gotToolNames, append([]string(nil), wantToolNames...))
 	for _, name := range wantToolNames {
 		if _, ok := toolsByName[name]; !ok {
 			fatalf("tool %s missing from tools/list", name)

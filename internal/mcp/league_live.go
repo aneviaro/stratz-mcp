@@ -13,133 +13,119 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
 
+// registerLeagueLiveHandlers registers league queries and the consolidated
+// match dispatcher. The dispatcher is the sole MCP handler for
+// stratz_query_matches; it routes each validated mode to its owning domain.
 func registerLeagueLiveHandlers(
 	handlers map[string]ToolHandler,
 	options Options,
 	service *leaguelive.Service,
 	heroes *heroconstants.Service,
+	playerServices ...*playermatch.Service,
 ) {
-	if handlers["stratz_get_league"] == nil {
-		handlers["stratz_get_league"] = func(ctx context.Context, input any) (any, error) {
+	if handlers["stratz_query_leagues"] == nil {
+		handlers["stratz_query_leagues"] = func(ctx context.Context, input any) (any, error) {
 			object, err := inputObject(input)
 			if err != nil {
 				return nil, err
 			}
-			if err := rejectPlayersDetail(object); err != nil {
-				return nil, err
-			}
-			leagueID, err := requiredString(object, "league_id")
-			if err != nil {
-				return nil, err
-			}
-			result, err := service.FetchLeague(ctx, leagueID)
-			if err != nil {
-				return nil, leagueLiveExecutionError(err)
-			}
-			return leagueLiveEnvelope(options, "get_league", detailInput(object), result, includeRaw(object), nil), nil
-		}
-	}
-	if handlers["stratz_list_leagues"] == nil {
-		handlers["stratz_list_leagues"] = func(ctx context.Context, input any) (any, error) {
-			object, err := inputObject(input)
-			if err != nil {
-				return nil, err
-			}
-			filters, err := decodeLeagueFilters(object)
-			if err != nil {
-				return nil, err
-			}
-			result, domainErr := service.ListLeagues(ctx, filters)
+			result, domainErr := service.QueryLeagues(ctx, contracts.StratzQueryLeaguesRequest(object))
 			if domainErr != nil {
 				return nil, leagueLiveExecutionError(domainErr)
 			}
-			return leagueLiveEnvelope(options, "list_leagues", "", result, includeRaw(object), dateRange(filters.From, filters.To)), nil
+			data := map[string]any{
+				"mode":  result.Data.Mode,
+				"items": result.Data.Items,
+			}
+			if result.Data.Page != nil {
+				data["page"] = result.Data.Page
+			}
+			return leagueLiveEnvelope(options, "query_leagues", "", result, includeRaw(object), nil, data), nil
 		}
 	}
-	if handlers["stratz_list_league_matches"] == nil {
-		handlers["stratz_list_league_matches"] = func(ctx context.Context, input any) (any, error) {
-			object, err := inputObject(input)
-			if err != nil {
-				return nil, err
-			}
-			if err := rejectPlayersDetail(object); err != nil {
-				return nil, err
-			}
-			filters, err := decodeLeagueMatchFilters(object)
-			if err != nil {
-				return nil, err
-			}
-			result, domainErr := service.ListLeagueMatches(ctx, filters)
+
+	if len(playerServices) == 0 || playerServices[0] == nil {
+		return
+	}
+	playerService := playerServices[0]
+	if handlers["stratz_query_matches"] != nil {
+		return
+	}
+	handlers["stratz_query_matches"] = func(ctx context.Context, input any) (any, error) {
+		object, err := inputObject(input)
+		if err != nil {
+			return nil, err
+		}
+		mode, ok := object["mode"].(string)
+		if !ok {
+			return nil, invalidArgumentsError()
+		}
+		var (
+			resultData any
+			raw        any
+			warnings   []string
+			rates      []stratz.RateLimit
+		)
+		switch mode {
+		case "exact":
+			result, domainErr := playerService.QueryMatches(ctx, contracts.StratzQueryMatchesRequest(object))
 			if domainErr != nil {
-				return nil, leagueLiveExecutionError(domainErr)
+				return nil, playerMatchExecutionError(domainErr)
 			}
-			return leagueLiveEnvelope(options, "list_league_matches", detailInput(object), result, includeRaw(object), dateRange(filters.From, filters.To)), nil
-		}
-	}
-	if handlers["stratz_list_live_matches"] == nil {
-		handlers["stratz_list_live_matches"] = func(ctx context.Context, input any) (any, error) {
-			object, err := inputObject(input)
-			if err != nil {
-				return nil, err
-			}
+			resultData, raw, warnings, rates = result.Data, result.Raw, result.Warnings, result.RateLimits
+		case "player_history":
 			budget, budgetErr := stratz.NewRequestBudget(options.Config.Limits.MaxUpstreamRequests)
 			if budgetErr != nil {
 				return nil, budgetErr
 			}
-			filters, err := decodeLiveFilters(ctx, object, heroes, budget)
-			if err != nil {
-				return nil, err
+			filters, filterErr := decodeQueryPlayerHistoryFilters(ctx, object, heroes, budget)
+			if filterErr != nil {
+				return nil, filterErr
+			}
+			result, domainErr := playerService.ListPlayerMatchesWithBudget(ctx, filters, budget)
+			if domainErr != nil {
+				return nil, playerMatchExecutionError(domainErr)
+			}
+			page := &contracts.Page{NextCursor: result.Data.Page.NextCursor, HasMore: result.Data.Page.HasMore}
+			resultData = playermatch.MatchQueryData{Mode: mode, Items: result.Data.Items, Page: page}
+			raw, warnings, rates = result.Raw, result.Warnings, result.RateLimits
+		case "league_history":
+			result, domainErr := service.QueryMatches(ctx, contracts.StratzQueryMatchesRequest(object))
+			if domainErr != nil {
+				return nil, leagueLiveExecutionError(domainErr)
+			}
+			resultData, raw, warnings, rates = result.Data, result.Raw, result.Warnings, result.RateLimits
+		case "live":
+			budget, budgetErr := stratz.NewRequestBudget(options.Config.Limits.MaxUpstreamRequests)
+			if budgetErr != nil {
+				return nil, budgetErr
+			}
+			filters, filterErr := decodeQueryLiveFilters(ctx, object, heroes, budget)
+			if filterErr != nil {
+				return nil, filterErr
 			}
 			result, domainErr := service.ListLiveMatchesWithBudget(ctx, filters, budget)
 			if domainErr != nil {
 				return nil, leagueLiveExecutionError(domainErr)
 			}
-			return leagueLiveEnvelope(options, "list_live_matches", "", result, includeRaw(object), nil), nil
+			page := &contracts.Page{NextCursor: result.Data.Page.NextCursor, HasMore: result.Data.Page.HasMore}
+			resultData = leaguelive.MatchQueryData{Mode: mode, Items: result.Data.Items, Page: page}
+			raw, warnings, rates = result.Raw, result.Warnings, result.RateLimits
+		default:
+			return nil, invalidArgumentsError()
 		}
+		return queryMatchesEnvelope(options, resultData, raw, warnings, rates, includeRaw(object), matchDetailInput(object)), nil
 	}
 }
 
-func leagueLiveEnvelope[T any](options Options, operation string, detail contracts.DetailLevel, result *leaguelive.Result[T], includeRaw bool, dates map[string]any) map[string]any {
-	output := curatedEnvelope(options, operation, detail, result.Data, result.Raw, includeRaw, result.RateLimits, dates)
-	warnings := make([]string, len(result.Warnings))
-	copy(warnings, result.Warnings)
-	output["warnings"] = warnings
-	return output
-}
-
-func decodeLeagueFilters(input map[string]any) (leaguelive.LeagueFilters, error) {
-	var filters leaguelive.LeagueFilters
-	if err := decodeListFields(input, &filters.Limit, &filters.Cursor, &filters.From, &filters.To); err != nil {
-		return filters, err
-	}
-	for key, destination := range map[string]**string{"query": &filters.Query, "status": &filters.Status, "tier": &filters.Tier} {
-		if value, ok := input[key].(string); ok {
-			copy := value
-			*destination = &copy
-		}
-	}
-	return filters, nil
-}
-
-func decodeLeagueMatchFilters(input map[string]any) (leaguelive.LeagueMatchFilters, error) {
-	filters := leaguelive.LeagueMatchFilters{LeagueID: input["league_id"].(string)}
-	if err := decodeListFields(input, &filters.Limit, &filters.Cursor, &filters.From, &filters.To); err != nil {
-		return filters, err
-	}
-	if value, ok := input["patch_id"].(string); ok {
-		filters.PatchID = &value
-	}
-	return filters, nil
-}
-
-func decodeLiveFilters(
+func decodeQueryLiveFilters(
 	ctx context.Context,
 	input map[string]any,
 	heroes *heroconstants.Service,
 	budget *stratz.RequestBudget,
 ) (leaguelive.LiveFilters, error) {
-	var filters leaguelive.LiveFilters
-	if value, ok := input["limit"]; ok {
+	filters := leaguelive.LiveFilters{}
+	if value, present := input["limit"]; present {
 		number, valid := rawInteger(value)
 		if !valid {
 			return filters, invalidArgumentsError()
@@ -155,7 +141,7 @@ func decodeLiveFilters(
 	for key, destination := range map[string]**int64{
 		"game_mode_id": &filters.GameModeID, "minimum_spectators": &filters.MinimumSpectators,
 	} {
-		if value, ok := input[key]; ok {
+		if value, present := input[key]; present {
 			number, valid := rawInteger(value)
 			if !valid {
 				return filters, invalidArgumentsError()
@@ -163,31 +149,33 @@ func decodeLiveFilters(
 			*destination = &number
 		}
 	}
-	if value, ok := input["player_id"].(string); ok {
-		identifier, err := playermatch.NormalizePlayerID(value)
-		if err != nil {
-			return filters, playerMatchExecutionError(err)
+	if value, present := input["player_id"]; present {
+		text, ok := value.(string)
+		if !ok {
+			return filters, invalidArgumentsError()
+		}
+		identifier, normalizeErr := playermatch.NormalizePlayerID(text)
+		if normalizeErr != nil {
+			return filters, playerMatchExecutionError(normalizeErr)
 		}
 		number := int64(identifier.AccountID)
 		filters.PlayerID = &number
 	}
-	if value, ok := input["hero"]; ok {
-		number, err := heroes.ResolveHeroIDWithBudget(ctx, value, budget)
-		if err != nil {
-			return filters, heroConstantsExecutionError(err)
+	if value, present := input["hero"]; present {
+		if heroes == nil {
+			return filters, invalidArgumentsError()
+		}
+		number, resolveErr := heroes.ResolveHeroIDWithBudget(ctx, value, budget)
+		if resolveErr != nil {
+			return filters, heroConstantsExecutionError(resolveErr)
 		}
 		filters.HeroID = &number
 	}
-	for key, destination := range map[string]**int64{
-		"team_id": &filters.TeamID, "league_id": &filters.LeagueID,
-	} {
-		if value, ok := input[key]; ok {
+	for key, destination := range map[string]**int64{"team_id": &filters.TeamID, "league_id": &filters.LeagueID} {
+		if value, present := input[key]; present {
 			number, valid := identifierInteger(value)
 			if !valid || number < 1 {
-				return filters, &ExecutionError{
-					Code: contracts.ErrorCodeInvalidArgument, Message: key + " must be a positive numeric identifier",
-					Details: map[string]any{}, Retryable: false,
-				}
+				return filters, invalidArgumentsError()
 			}
 			*destination = &number
 		}
@@ -200,29 +188,6 @@ func decodeLiveFilters(
 		return filters, invalidArgumentsError()
 	}
 	return filters, nil
-}
-
-func decodeListFields(input map[string]any, limit *int, cursor *string, from, to **time.Time) error {
-	if value, ok := input["limit"]; ok {
-		number, valid := rawInteger(value)
-		if !valid {
-			return invalidArgumentsError()
-		}
-		*limit = int(number)
-	}
-	if value, ok := input["cursor"].(string); ok {
-		*cursor = value
-	}
-	for key, destination := range map[string]**time.Time{"from": from, "to": to} {
-		if value, ok := input[key].(string); ok {
-			parsed, err := time.Parse(time.RFC3339, value)
-			if err != nil {
-				return invalidArgumentsError()
-			}
-			*destination = &parsed
-		}
-	}
-	return nil
 }
 
 func identifierInteger(value any) (int64, bool) {
@@ -244,18 +209,24 @@ func stringSliceOptional(value any) ([]string, error) {
 	return stringSlice(value)
 }
 
-func dateRange(from, to *time.Time) map[string]any {
-	if from == nil && to == nil {
-		return nil
+func leagueLiveEnvelope[T any](
+	options Options,
+	operation string,
+	detail contracts.DetailLevel,
+	result *leaguelive.Result[T],
+	includeRaw bool,
+	dates map[string]any,
+	data ...any,
+) map[string]any {
+	value := any(result.Data)
+	if len(data) > 0 {
+		value = data[0]
 	}
-	result := map[string]any{"from": nil, "to": nil}
-	if from != nil {
-		result["from"] = from.UTC().Format(time.RFC3339)
-	}
-	if to != nil {
-		result["to"] = to.UTC().Format(time.RFC3339)
-	}
-	return result
+	output := curatedEnvelope(options, operation, detail, value, result.Raw, includeRaw, result.RateLimits, dates)
+	warnings := make([]string, len(result.Warnings))
+	copy(warnings, result.Warnings)
+	output["warnings"] = warnings
+	return output
 }
 
 func leagueLiveExecutionError(err error) error {
