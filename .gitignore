@@ -4,7 +4,8 @@
 /.bin/
 /dist/
 /docs/plans/*
-!/docs/plans/20260913-migrate-to-mcp-2026-07-28.md
+!/docs/plans/completed/
+!/docs/plans/completed/20260913-migrate-to-mcp-2026-07-28.md
 /docs/implementation-plan.md
 /docs/future-improvements.md
 public-repo-import.md

@@ -60,6 +60,6 @@ The MCP package is a stdio adapter; domain packages own normalization and pagina
 
 Never commit `.env`, tokens, cache databases, introspection responses, fetched schemas, fetched constants, or `.stratz-restricted`.
 
-This repository does not publish official binaries, archives, containers, or release tags. Build from source.
+This repository publishes semantic version tags and GitHub-generated source archives only. It does not publish official binaries or container images; build those from source.
 
 CI additionally runs vulnerability, license, secret, race, Docker, SBOM, and interoperability jobs. Dependency updates are proposed weekly. Security updates can bypass the normal cadence; exceptions require an owner, rationale, compensating controls, and expiry.
