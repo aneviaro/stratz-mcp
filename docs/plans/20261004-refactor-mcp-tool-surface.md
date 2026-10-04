@@ -96,16 +96,16 @@ Files:
 - Modify: `docs/stratz-schema-feasibility.md` — map each new mode to native or bounded local behavior.
 
 Steps:
-- [ ] Bump `contractVersion` to `2.0.0-draft.1` and replace the thirteen affected definitions with the five `stratz_query_*` definitions while retaining server info and guarded raw GraphQL.
-- [ ] Use explicit `mode` constants and `oneOf` branches with `additionalProperties: false`; reject mixed selectors/filters from different modes at schema validation.
-- [ ] Define `stratz_query_heroes` exact and search modes, typed per-item optional statistics, supported date/rank/role filters, and default-off statistics behavior.
-- [ ] Define `stratz_query_players` exact mode, normalized identifiers, optional profile statistics, and no unsupported general search mode.
-- [ ] Define `stratz_query_leagues` exact and search modes, including existing status/tier/date filters and authenticated pagination for search.
-- [ ] Define `stratz_query_matches` exact, player-history, league-history, and live modes as a discriminator-based input/output union with mode-appropriate details and filters.
-- [ ] Define `stratz_query_constants` `types` and typed `selectors` modes; remove the ambiguous `all` shortcut because a types array expresses multi-type retrieval.
-- [ ] Standardize `data.mode`, `data.items`, optional `data.page`, warnings, provenance, and exact-selector atomicity across the new tools without forcing heterogeneous item shapes into one branch.
-- [ ] Shorten every discovery description to one sentence of at most 96 UTF-8 bytes and keep operational guidance in Markdown/workflows.
-- [ ] Add an old-to-new migration table covering argument translation, response-shape changes, statistics opt-in, removed names, invalidated cursors, and cache cold starts.
+- [x] Bump `contractVersion` to `2.0.0-draft.1` and replace the thirteen affected definitions with the five `stratz_query_*` definitions while retaining server info and guarded raw GraphQL.
+- [x] Use explicit `mode` constants and `oneOf` branches with `additionalProperties: false`; reject mixed selectors/filters from different modes at schema validation.
+- [x] Define `stratz_query_heroes` exact and search modes, typed per-item optional statistics, supported date/rank/role filters, and default-off statistics behavior.
+- [x] Define `stratz_query_players` exact mode, normalized identifiers, optional profile statistics, and no unsupported general search mode.
+- [x] Define `stratz_query_leagues` exact and search modes, including existing status/tier/date filters and authenticated pagination for search.
+- [x] Define `stratz_query_matches` exact, player-history, league-history, and live modes as a discriminator-based input/output union with mode-appropriate details and filters.
+- [x] Define `stratz_query_constants` `types` and typed `selectors` modes; remove the ambiguous `all` shortcut because a types array expresses multi-type retrieval.
+- [x] Standardize `data.mode`, `data.items`, optional `data.page`, warnings, provenance, and exact-selector atomicity across the new tools without forcing heterogeneous item shapes into one branch.
+- [x] Shorten every discovery description to one sentence of at most 96 UTF-8 bytes and keep operational guidance in Markdown/workflows.
+- [x] Add an old-to-new migration table covering argument translation, response-shape changes, statistics opt-in, removed names, invalidated cursors, and cache cold starts.
 
 Verification:
 - `python3 -m json.tool docs/tool-contracts.json >/dev/null`
@@ -135,12 +135,12 @@ Files:
 - Generated: `docs/generated-tool-contracts.md`.
 
 Steps:
-- [ ] Replace `expectedContract` and `expectedTools` with the approved v2 values and exact seven-name catalog.
-- [ ] Enforce the 96-byte description limit in registry validation and test that the published descriptions equal the canonical source.
-- [ ] Replace fragile literal artifact-count assertions with a formula based on the exact expected catalog while retaining checks for every required artifact class.
-- [ ] Add generated-schema tests for each mode, invalid mixed-mode inputs, 25-item bounds, statistics default-off behavior, typed constant selectors, and tagged match outputs.
-- [ ] Run generation and verify obsolete schemas/examples/protocol fixtures for removed tools are deleted rather than left untracked.
-- [ ] Record the generated Go type names used by Tasks 3–6 in those implementations rather than adding handwritten duplicate contract types.
+- [x] Replace `expectedContract` and `expectedTools` with the approved v2 values and exact seven-name catalog.
+- [x] Enforce the 96-byte description limit in registry validation and test that the published descriptions equal the canonical source.
+- [x] Replace fragile literal artifact-count assertions with a formula based on the exact expected catalog while retaining checks for every required artifact class.
+- [x] Add generated-schema tests for each mode, invalid mixed-mode inputs, 25-item bounds, statistics default-off behavior, typed constant selectors, and tagged match outputs.
+- [x] Run generation and verify obsolete schemas/examples/protocol fixtures for removed tools are deleted rather than left untracked.
+- [x] Record the generated Go type names used by Tasks 3–6 in those implementations rather than adding handwritten duplicate contract types.
 
 Verification:
 - `make generate`
@@ -170,13 +170,13 @@ Files:
 - Generated if GraphQL changes: `internal/graphql/generated/operations.go` and `operations.json`.
 
 Steps:
-- [ ] Add domain-owned `QueryHeroes` and `QueryConstants` operations that accept already-validated generated request types but perform normalization, ambiguity checks, bounds, and upstream mapping in the domain package.
-- [ ] Reuse hero indexing and `domain/batch` reconstruction so exact mode remains atomic, ordered, duplicate-preserving, and capped at 25.
-- [ ] Add deterministic local hero search filters and authenticated cursor state over the cached constants set; bind mode, effective filters, page size, token namespace, schema version, and operation version.
-- [ ] Fetch statistics only when the optional statistics object is present, use one shared request budget, aggregate only `[from,to)`, and key results by resolved `hero_id`.
-- [ ] Keep pick/ban rates explicitly unavailable with warnings and reject unsupported patch/lane/matchup/synergy fields rather than fabricating values.
-- [ ] Support one or multiple constant types and typed `(type,id|name)` selectors; preserve deterministic sorting and the existing 20,000-record response guard.
-- [ ] Preserve constants-cache `singleflight`, stale behavior, sanitization, and warning provenance.
+- [x] Add domain-owned `QueryHeroes` and `QueryConstants` operations that accept already-validated generated request types but perform normalization, ambiguity checks, bounds, and upstream mapping in the domain package.
+- [x] Reuse hero indexing and `domain/batch` reconstruction so exact mode remains atomic, ordered, duplicate-preserving, and capped at 25.
+- [x] Add deterministic local hero search filters and authenticated cursor state over the cached constants set; bind mode, effective filters, page size, token namespace, schema version, and operation version.
+- [x] Fetch statistics only when the optional statistics object is present, use one shared request budget, aggregate only `[from,to)`, and key results by resolved `hero_id`.
+- [x] Keep pick/ban rates explicitly unavailable with warnings and reject unsupported patch/lane/matchup/synergy fields rather than fabricating values.
+- [x] Support one or multiple constant types and typed `(type,id|name)` selectors; preserve deterministic sorting and the existing 20,000-record response guard.
+- [x] Preserve constants-cache `singleflight`, stale behavior, sanitization, and warning provenance.
 
 Verification:
 - `go test ./internal/domain/heroconstants ./internal/domain/pagination ./internal/domain/batch`
@@ -205,12 +205,12 @@ Files:
 - Modify if needed: `internal/graphql/schema/bootstrap.graphql` and generated GraphQL outputs.
 
 Steps:
-- [ ] Add an exact-only player query using existing account-ID, SteamID64, and STRATZ URL normalization plus native plural retrieval.
-- [ ] Keep player exact queries capped at 25, atomic, ordered, and duplicate-preserving; reject search-like fields not backed by an approved source.
-- [ ] Move `match_count` and `win_count` into an optional per-player statistics object and ensure they are absent by default; use a lean GraphQL selection when feasible rather than only discarding fetched fields.
-- [ ] Add league exact-ID and bounded search modes, reusing upstream-native ID/status/tier/date filters and the existing bounded local text scan.
-- [ ] Bind league search cursors to the new tool, `mode`, all effective filters, page size, token, schema version, and operation version.
-- [ ] Preserve deterministic incomplete-scan warnings, sanitization, provenance, and exact-ID `NOT_FOUND` versus empty search-page behavior.
+- [x] Add an exact-only player query using existing account-ID, SteamID64, and STRATZ URL normalization plus native plural retrieval.
+- [x] Keep player exact queries capped at 25, atomic, ordered, and duplicate-preserving; reject search-like fields not backed by an approved source.
+- [x] Move `match_count` and `win_count` into an optional per-player statistics object and ensure they are absent by default; use a lean GraphQL selection when feasible rather than only discarding fetched fields.
+- [x] Add league exact-ID and bounded search modes, reusing upstream-native ID/status/tier/date filters and the existing bounded local text scan.
+- [x] Bind league search cursors to the new tool, `mode`, all effective filters, page size, token, schema version, and operation version.
+- [x] Preserve deterministic incomplete-scan warnings, sanitization, provenance, and exact-ID `NOT_FOUND` versus empty search-page behavior.
 
 Verification:
 - `go test ./internal/domain/playermatch ./internal/domain/leaguelive ./internal/domain/pagination ./internal/domain/batch`
@@ -238,14 +238,14 @@ Files:
 - Modify if needed: `internal/graphql/schema/bootstrap.graphql` and generated GraphQL outputs.
 
 Steps:
-- [ ] Map `exact` mode to existing summary/standard/full match operations and batch chunking while retaining five-attempt limits, detail availability errors, order, duplicates, and atomic failure.
-- [ ] Map `player_history` mode to native player/date/hero/role/game-mode/lobby/result/patch filters plus bounded minimum-duration filtering and optional player rows.
-- [ ] Map `league_history` mode to direct offset pagination and existing league/date/patch/detail semantics.
-- [ ] Map `live` mode to native league/hero/state/tier/order filters plus bounded player/team/game-mode/minimum-spectator filtering.
-- [ ] Return a tagged output branch per mode (`Match`, `PlayerMatchSummary`, `MatchSummary`, or `LiveMatch`) and reject detail/filter combinations that do not apply to the selected mode.
-- [ ] Change every pagination binding to `stratz_query_matches` and include `mode` in the canonical filter hash; increment operation versions where traversal state changes.
-- [ ] Add adversarial tests proving cursors cannot cross player-history, league-history, and live modes and old tool-name cursors fail with `CURSOR_INVALID`.
-- [ ] Preserve live 5-minute, recent 1-hour, and historical 24-hour lifetimes and the warning that live cursors are not snapshots.
+- [x] Map `exact` mode to existing summary/standard/full match operations and batch chunking while retaining five-attempt limits, detail availability errors, order, duplicates, and atomic failure.
+- [x] Map `player_history` mode to native player/date/hero/role/game-mode/lobby/result/patch filters plus bounded minimum-duration filtering and optional player rows.
+- [x] Map `league_history` mode to direct offset pagination and existing league/date/patch/detail semantics.
+- [x] Map `live` mode to native league/hero/state/tier/order filters plus bounded player/team/game-mode/minimum-spectator filtering.
+- [x] Return a tagged output branch per mode (`Match`, `PlayerMatchSummary`, `MatchSummary`, or `LiveMatch`) and reject detail/filter combinations that do not apply to the selected mode.
+- [x] Change every pagination binding to `stratz_query_matches` and include `mode` in the canonical filter hash; increment operation versions where traversal state changes.
+- [x] Add adversarial tests proving cursors cannot cross player-history, league-history, and live modes and old tool-name cursors fail with `CURSOR_INVALID`.
+- [x] Preserve live 5-minute, recent 1-hour, and historical 24-hour lifetimes and the warning that live cursors are not snapshots.
 
 Verification:
 - `go test ./internal/domain/playermatch ./internal/domain/leaguelive ./internal/domain/pagination ./internal/domain/batch`
@@ -274,14 +274,14 @@ Files:
 - Modify: `internal/cache/key.go` tests if canonical query-mode key coverage is missing.
 
 Steps:
-- [ ] Register exactly one handler for every generated query definition and remove all superseded registrations and operation labels.
-- [ ] Keep adapters thin: decode generated input, select the owning domain method by validated mode, share one request budget where enrichment needs it, and pass results through centralized envelope/schema validation.
-- [ ] Replace the fixed cache map with a resolver over validated arguments: heroes are `PublicReference` or `PublicRecent` with statistics; players are `ProfileSensitive`; leagues are `PublicReference` for exact and `PublicRecent` for search; matches are `PublicRecent`, `ProfileSensitive`, or `PublicLive` by mode; constants are `PublicReference`.
-- [ ] Fail closed to the stricter/shorter-lived classification when a future valid combination spans classes, and preserve `include_raw` cache bypass and token namespaces.
-- [ ] Make detail-level authorization mode-aware so player rows are accepted only for applicable match modes.
-- [ ] Update server-info catalog/version metadata and assertions for the seven-tool v2 surface.
-- [ ] Add `tools/list` tests for exact names, generated schemas, 96-byte descriptions, and absence of old names under both preferred and legacy protocol lifecycles.
-- [ ] Test cache keys and stale fallback separately for each mode, statistics setting, detail level, filters, cursor, and privacy class.
+- [x] Register exactly one handler for every generated query definition and remove all superseded registrations and operation labels.
+- [x] Keep adapters thin: decode generated input, select the owning domain method by validated mode, share one request budget where enrichment needs it, and pass results through centralized envelope/schema validation.
+- [x] Replace the fixed cache map with a resolver over validated arguments: heroes are `PublicReference` or `PublicRecent` with statistics; players are `ProfileSensitive`; leagues are `PublicReference` for exact and `PublicRecent` for search; matches are `PublicRecent`, `ProfileSensitive`, or `PublicLive` by mode; constants are `PublicReference`.
+- [x] Fail closed to the stricter/shorter-lived classification when a future valid combination spans classes, and preserve `include_raw` cache bypass and token namespaces.
+- [x] Make detail-level authorization mode-aware so player rows are accepted only for applicable match modes.
+- [x] Update server-info catalog/version metadata and assertions for the seven-tool v2 surface.
+- [x] Add `tools/list` tests for exact names, generated schemas, 96-byte descriptions, and absence of old names under both preferred and legacy protocol lifecycles.
+- [x] Test cache keys and stale fallback separately for each mode, statistics setting, detail level, filters, cursor, and privacy class.
 
 Verification:
 - `go test ./internal/mcp ./internal/cache`
@@ -311,12 +311,12 @@ Files:
 - Modify: `docs/troubleshooting.md` — old cursor invalidation and cache cold-start guidance.
 
 Steps:
-- [ ] Rewrite all canonical workflows to use query modes, requesting hero/player statistics only when the workflow consumes them.
-- [ ] Add workflow validation that every referenced `stratz_*` tool exists in `contracts.Definitions()` so stale names fail generation/tests.
-- [ ] Regenerate prompts, skills, and installation documentation; preserve prompt-injection defenses and treatment of STRATZ strings as untrusted data.
-- [ ] Replace active documentation references to the 15-tool catalog and old invocations while leaving completed historical plans unchanged.
-- [ ] Document request-aware cache classes, invalidated v1 cursors, cold cache behavior, and the lack of compatibility aliases.
-- [ ] Keep static constants resource URIs and raw GraphQL guidance unchanged except where examples refer to removed tools.
+- [x] Rewrite all canonical workflows to use query modes, requesting hero/player statistics only when the workflow consumes them.
+- [x] Add workflow validation that every referenced `stratz_*` tool exists in `contracts.Definitions()` so stale names fail generation/tests.
+- [x] Regenerate prompts, skills, and installation documentation; preserve prompt-injection defenses and treatment of STRATZ strings as untrusted data.
+- [x] Replace active documentation references to the 15-tool catalog and old invocations while leaving completed historical plans unchanged.
+- [x] Document request-aware cache classes, invalidated v1 cursors, cold cache behavior, and the lack of compatibility aliases.
+- [x] Keep static constants resource URIs and raw GraphQL guidance unchanged except where examples refer to removed tools.
 
 Verification:
 - `make generate`
@@ -344,12 +344,12 @@ Files:
 - Modify if needed: `.github/workflows/foundation.yml`, `container.yml`, and `release.yml` only when existing commands do not exercise the new checks.
 
 Steps:
-- [ ] Replace old live calls with exact and paginated coverage for all five query tools and every supported mode.
-- [ ] Assert hero/player statistics are absent by default and carry representative non-zero semantic values when requested.
-- [ ] Cover constants single-type, multi-type, and typed-selector requests and all retained approved GraphQL operations.
-- [ ] Probe playback detail one match at a time and retain semantic assertions for non-empty objectives/timeline/player rows.
-- [ ] Verify Codex and Claude profiles discover the same exact seven-tool catalog and schemas under modern `2026-07-28` and legacy `2025-11-25` lifecycles.
-- [ ] Run generation twice, the full race suite, public/restricted-source checks, notices, and live tests; resolve every stale artifact or semantic mismatch.
+- [x] Replace old live calls with exact and paginated coverage for all five query tools and every supported mode.
+- [x] Assert hero/player statistics are absent by default and carry representative non-zero semantic values when requested.
+- [x] Cover constants single-type, multi-type, and typed-selector requests and all retained approved GraphQL operations.
+- [x] Probe playback detail one match at a time and retain semantic assertions for non-empty objectives/timeline/player rows.
+- [x] Verify Codex and Claude profiles discover the same exact seven-tool catalog and schemas under modern `2026-07-28` and legacy `2025-11-25` lifecycles.
+- [x] Run generation twice, the full race suite, public/restricted-source checks, notices, and live tests; resolve every stale artifact or semantic mismatch.
 
 Verification:
 - `make generate && make check-generated`

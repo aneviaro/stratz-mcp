@@ -35,8 +35,8 @@ func (serverExecutor) Execute(
 	limit := int64(150)
 	remaining := int64(149)
 	data := json.RawMessage(`{"match":{"id":"1"}}`)
-	if request.OperationName == "StratzGetPlayer" {
-		data = json.RawMessage(`{"player":{"steamAccountId":1,"isPrivate":false}}`)
+	if request.OperationName == "StratzGetPlayers" || request.OperationName == "StratzGetPlayersLean" {
+		data = json.RawMessage(`{"players":[{"steamAccountId":1,"isPrivate":false}]}`)
 	}
 	return &stratz.Response{
 		HTTPStatus: 200,
@@ -52,7 +52,35 @@ func (serverExecutor) Execute(
 	}, nil
 }
 
+type heroCursorExecutor struct{}
+
+func (heroCursorExecutor) Execute(
+	_ context.Context,
+	_ *stratz.RequestBudget,
+	request stratz.Request,
+) (*stratz.Response, error) {
+	if request.OperationName != "StratzGetConstants" {
+		return &stratz.Response{HTTPStatus: 200, Data: json.RawMessage(`{"match":{"id":"1"}}`)}, nil
+	}
+	return &stratz.Response{HTTPStatus: 200, Data: json.RawMessage(`{"constants":{"heroes":[
+		{"id":1,"name":"npc_dota_hero_axe","localizedName":"Axe","primaryAttribute":"strength","attackType":"melee","roles":[]},
+		{"id":2,"name":"npc_dota_hero_bane","localizedName":"Bane","primaryAttribute":"intelligence","attackType":"ranged","roles":[]}
+	]}}`)}, nil
+}
+
 func testServer(t *testing.T, logger *slog.Logger, handlers ...map[string]ToolHandler) *Server {
+	t.Helper()
+	return testServerWithExecutor(t, logger, serverExecutor{}, "fixture-token", "sha256:fixture", handlers...)
+}
+
+func testServerWithExecutor(
+	t *testing.T,
+	logger *slog.Logger,
+	executor stratz.Executor,
+	cursorToken string,
+	schemaVersion string,
+	handlers ...map[string]ToolHandler,
+) *Server {
 	t.Helper()
 	cfg := config.Defaults(t.TempDir())
 	cfg.Cache.Enabled = false
@@ -105,11 +133,11 @@ func testServer(t *testing.T, logger *slog.Logger, handlers ...map[string]ToolHa
 	}
 	server, err := New(Options{
 		Version:         "v1.2.3",
-		SchemaVersion:   "sha256:fixture",
+		SchemaVersion:   schemaVersion,
 		SchemaDirectory: schemaDirectory,
 		Config:          cfg,
-		Executor:        serverExecutor{},
-		CursorToken:     "fixture-token",
+		Executor:        executor,
+		CursorToken:     cursorToken,
 		Logger:          logger,
 		Handlers:        configuredHandlers,
 		Now: func() time.Time {
@@ -120,6 +148,76 @@ func testServer(t *testing.T, logger *slog.Logger, handlers ...map[string]ToolHa
 		t.Fatal(err)
 	}
 	return server
+}
+
+func callHeroSearch(t *testing.T, server *Server, arguments map[string]any) *sdk.CallToolResult {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	serverTransport, clientTransport := sdk.NewInMemoryTransports()
+	serverSession, err := server.SDK().Connect(ctx, serverTransport, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer serverSession.Close()
+	client := sdk.NewClient(
+		&sdk.Implementation{Name: "hero-cursor-test", Version: "1"},
+		&sdk.ClientOptions{},
+	)
+	clientSession, err := client.Connect(ctx, clientTransport, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clientSession.Close()
+	result, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
+		Name: "stratz_query_heroes", Arguments: arguments,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return result
+}
+
+func TestHeroSearchCursorUsesProductionServerBinding(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	firstServer := testServerWithExecutor(t, logger, heroCursorExecutor{}, "first-token", "schema-one")
+	first := callHeroSearch(t, firstServer, map[string]any{
+		"mode": "search", "query": "hero", "limit": 1,
+	})
+	if first.IsError {
+		t.Fatalf("first hero search failed: %#v", first.StructuredContent)
+	}
+	envelope, ok := first.StructuredContent.(map[string]any)
+	if !ok {
+		t.Fatalf("hero search envelope = %T", first.StructuredContent)
+	}
+	data, ok := envelope["data"].(map[string]any)
+	if !ok {
+		t.Fatalf("hero search data = %#v", envelope["data"])
+	}
+	page, ok := data["page"].(map[string]any)
+	if !ok {
+		t.Fatalf("hero search page = %#v", data["page"])
+	}
+	cursor, ok := page["next_cursor"].(string)
+	if !ok || cursor == "" {
+		t.Fatalf("hero search cursor = %#v", page["next_cursor"])
+	}
+
+	schemaServer := testServerWithExecutor(t, logger, heroCursorExecutor{}, "first-token", "schema-two")
+	schemaResult := callHeroSearch(t, schemaServer, map[string]any{
+		"mode": "search", "query": "hero", "limit": 1, "cursor": cursor,
+	})
+	if !schemaResult.IsError {
+		t.Fatalf("hero cursor accepted a different production schema: %#v", schemaResult.StructuredContent)
+	}
+	secondServer := testServerWithExecutor(t, logger, heroCursorExecutor{}, "second-token", "schema-one")
+	second := callHeroSearch(t, secondServer, map[string]any{
+		"mode": "search", "query": "hero", "limit": 1, "cursor": cursor,
+	})
+	if !second.IsError {
+		t.Fatalf("hero cursor accepted a different production token: %#v", second.StructuredContent)
+	}
 }
 
 func TestPublicRateLimitsDedupeAndCap(t *testing.T) {
@@ -192,6 +290,9 @@ func TestSDKConformance(t *testing.T) {
 	}
 	assertListedToolNames(t, listed.Tools)
 	for _, tool := range listed.Tools {
+		if len([]byte(tool.Description)) > 96 {
+			t.Fatalf("%s description is %d bytes, want <= 96", tool.Name, len([]byte(tool.Description)))
+		}
 		assertToolSchemaDraft(t, tool.Name, contracts.InputSchema, tool.InputSchema)
 		assertToolSchemaDraft(t, tool.Name, contracts.OutputSchema, tool.OutputSchema)
 		assertToolSchema(t, tool.Name, contracts.InputSchema, tool.InputSchema)
@@ -298,22 +399,22 @@ func TestSDKConformance(t *testing.T) {
 	assertResultConforms(t, "stratz_execute_graphql", rawCacheFailure, true)
 
 	curatedSuccess, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
-		Name:      "stratz_get_player",
-		Arguments: map[string]any{"player_id": "1"},
+		Name:      "stratz_query_players",
+		Arguments: map[string]any{"mode": "exact", "player_ids": []any{"1"}},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertResultConforms(t, "stratz_get_player", curatedSuccess, false)
+	assertResultConforms(t, "stratz_query_players", curatedSuccess, false)
 
 	invalid, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
-		Name:      "stratz_get_player",
-		Arguments: map[string]any{"player_id": ""},
+		Name:      "stratz_query_players",
+		Arguments: map[string]any{"mode": "exact", "player_ids": []any{""}},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertResultConforms(t, "stratz_get_player", invalid, true)
+	assertResultConforms(t, "stratz_query_players", invalid, true)
 
 	if _, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
 		Name:      "stratz_missing",
@@ -394,7 +495,7 @@ func TestRawModernStdioProtocolHarness(t *testing.T) {
 
 	var handlerCalls atomic.Int64
 	server := testServer(t, slog.New(slog.NewTextHandler(io.Discard, nil)), map[string]ToolHandler{
-		"stratz_get_player": func(context.Context, any) (any, error) {
+		"stratz_query_players": func(context.Context, any) (any, error) {
 			handlerCalls.Add(1)
 			return nil, fmt.Errorf("unexpected handler invocation")
 		},
@@ -415,8 +516,9 @@ func TestRawModernStdioProtocolHarness(t *testing.T) {
 	if !ok || listResult["resultType"] != "complete" || listResult["ttlMs"] != float64(protocolCatalogCacheTTL) || listResult["cacheScope"] != "public" {
 		t.Fatalf("modern tools/list result = %#v", list)
 	}
+	assertRawToolCatalog(t, listResult["tools"])
 
-	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"stratz_get_player","arguments":{"player_id":"1"}}}`)
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"stratz_query_players","arguments":{"mode":"exact","player_ids":["1"]}}}`)
 	missingMetadata := readRaw(t, reader, &rawLines)
 	missingMetadataError, ok := missingMetadata["error"].(map[string]any)
 	if !ok || missingMetadataError["code"] != float64(-32602) || missingMetadata["result"] != nil {
@@ -485,7 +587,7 @@ func TestRawModernStdioProtocolHarness(t *testing.T) {
 		t.Fatalf("unsupported version error = %#v, want -32022", unsupported)
 	}
 
-	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2025-11-25"},"name":"stratz_get_player","arguments":{"player_id":"1"}}}`)
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2025-11-25"},"name":"stratz_query_players","arguments":{"mode":"exact","player_ids":["1"]}}}`)
 	downgrade := readRaw(t, reader, &rawLines)
 	downgradeError, ok := downgrade["error"].(map[string]any)
 	if !ok || downgradeError["code"] != float64(-32602) || downgrade["result"] != nil {
@@ -540,6 +642,13 @@ func TestRawLegacyStdioProtocolHarness(t *testing.T) {
 		}
 	}
 	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}`)
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":10,"method":"tools/list","params":{}}`)
+	legacyTools := readRaw(t, reader, &rawLines)
+	legacyToolsResult, ok := legacyTools["result"].(map[string]any)
+	if !ok {
+		t.Fatalf("legacy tools/list result = %#v", legacyTools)
+	}
+	assertRawToolCatalog(t, legacyToolsResult["tools"])
 
 	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"stratz_server_info","arguments":{}}}`)
 	success := readRaw(t, reader, &rawLines)
@@ -552,7 +661,7 @@ func TestRawLegacyStdioProtocolHarness(t *testing.T) {
 	}
 	assertRawMirror(t, successResult)
 
-	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"stratz_get_player","arguments":{"player_id":"abc"}}}`)
+	writeRaw(t, clientWriter, `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"stratz_query_players","arguments":{"mode":"exact","player_ids":["abc"]}}}`)
 	executionFailure := readRaw(t, reader, &rawLines)
 	failureResult := executionFailure["result"].(map[string]any)
 	if failureResult["isError"] != true {
@@ -742,6 +851,34 @@ func closeRawHarness(
 			t.Fatalf("stdout contained non-JSON protocol data: %q", line)
 		}
 	}
+}
+
+func assertRawToolCatalog(t *testing.T, value any) {
+	t.Helper()
+	tools, ok := value.([]any)
+	if !ok || len(tools) != len(contracts.Definitions()) {
+		t.Fatalf("raw tool catalog = %#v", value)
+	}
+	got := make([]string, 0, len(tools))
+	for _, rawTool := range tools {
+		tool, ok := rawTool.(map[string]any)
+		if !ok {
+			t.Fatalf("raw tool = %#v", rawTool)
+		}
+		name, ok := tool["name"].(string)
+		if !ok {
+			t.Fatalf("raw tool name = %#v", tool["name"])
+		}
+		if description, ok := tool["description"].(string); !ok || len([]byte(description)) > 96 {
+			t.Fatalf("raw tool description = %#v", tool["description"])
+		}
+		got = append(got, name)
+	}
+	want := make([]string, 0, len(contracts.Definitions()))
+	for _, definition := range contracts.Definitions() {
+		want = append(want, definition.Name)
+	}
+	assertExactStrings(t, "raw tool names", got, want)
 }
 
 func assertRawSupportedVersions(t *testing.T, value any) {

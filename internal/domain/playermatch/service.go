@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	playerListOperationVersion   = "player-matches/v2"
+	playerListOperationVersion   = "matches-player-history/v3"
 	fullMatchAvailabilityWarning = "Fight and economy breakdowns are unavailable from the current STRATZ match playback data"
 	heroNameUnavailableWarning   = "Hero names are unavailable for this response because the STRATZ constants request failed or the per-call request budget was exhausted"
 	detailLevelPlayers           = contracts.DetailLevel("players")
@@ -111,7 +111,7 @@ func (s *Service) FetchPlayer(
 		return nil, private("The requested STRATZ player profile is private")
 	}
 	return &Result[contracts.Player]{
-		Data:       mapPlayer(envelope.Player),
+		Data:       mapPlayer(envelope.Player, true),
 		Raw:        rawData(response.Data),
 		RateLimits: response.RateLimits,
 	}, nil
@@ -162,7 +162,7 @@ func (s *Service) BatchPlayers(
 			domainErr.FailedInput = strconv.FormatInt(player.SteamAccountID, 10)
 			return nil, domainErr
 		}
-		results[strconv.FormatInt(player.SteamAccountID, 10)] = mapPlayer(player)
+		results[strconv.FormatInt(player.SteamAccountID, 10)] = mapPlayer(player, true)
 	}
 	items, reconstructErr := batch.Reconstruct(plan, results)
 	if reconstructErr != nil {
@@ -183,12 +183,300 @@ func (s *Service) BatchPlayers(
 	}, nil
 }
 
+// QueryPlayers resolves one to 25 exact player identifiers. Search-like input is
+// rejected because STRATZ has no bounded player directory source.
+func (s *Service) QueryPlayers(ctx context.Context, request contracts.StratzQueryPlayersRequest) (*Result[PlayerQueryData], error) {
+	input, err := playerRequestMap(request)
+	if err != nil {
+		return nil, invalid("Player query input is invalid", map[string]any{"reason": err.Error()})
+	}
+	if mode, _ := input["mode"].(string); mode != "exact" {
+		return nil, invalid("Unsupported player query mode", map[string]any{"mode": input["mode"]})
+	}
+	for key := range input {
+		switch key {
+		case "mode", "player_ids", "include_profile_statistics", "fresh", "include_raw":
+		default:
+			return nil, invalid("Player directory search is not supported", map[string]any{"field": key})
+		}
+	}
+	selectors, err := playerAnySlice(input["player_ids"])
+	if err != nil || len(selectors) < 1 || len(selectors) > 25 {
+		return nil, invalid("Player exact query requires between 1 and 25 identifiers", nil)
+	}
+	plan, err := batch.NewPlan(selectors, 25, func(value any) (string, error) {
+		text, ok := value.(string)
+		if !ok {
+			return "", invalid("Player identifier must be a string", nil)
+		}
+		id, normalizeErr := NormalizePlayerID(text)
+		if normalizeErr != nil {
+			return "", normalizeErr
+		}
+		return playerKey(id), nil
+	})
+	if err != nil {
+		return nil, invalid("Player exact query input is invalid", map[string]any{"reason": err.Error()})
+	}
+	ids := make([]int64, 0, len(plan.Unique()))
+	for index, value := range plan.Unique() {
+		id, normalizeErr := NormalizePlayerID(value.(string))
+		if normalizeErr != nil {
+			domainErr := normalizeErr.(*Error)
+			domainErr.FailedInput = failedInput(index, value)
+			return nil, domainErr
+		}
+		ids = append(ids, int64(id.AccountID))
+	}
+	includeStatistics, _ := input["include_profile_statistics"].(bool)
+	query, operation := generated.StratzGetPlayersLean_Operation, "StratzGetPlayersLean"
+	if includeStatistics {
+		query, operation = generated.StratzGetPlayers_Operation, "StratzGetPlayers"
+	}
+	response, err := s.execute(ctx, s.budget(), query, operation, map[string]any{"steamAccountIds": ids})
+	if err != nil {
+		return nil, err
+	}
+	var envelope playersEnvelope
+	if err := decodeData(response.Data, &envelope); err != nil {
+		return nil, protocol("STRATZ returned an invalid player batch payload")
+	}
+	results := make(map[string]contracts.Player, len(envelope.Players))
+	for _, player := range envelope.Players {
+		if player == nil {
+			continue
+		}
+		if player.IsPrivate {
+			domainErr := private("A requested STRATZ player profile is private")
+			domainErr.FailedInput = strconv.FormatInt(player.SteamAccountID, 10)
+			return nil, domainErr
+		}
+		results[strconv.FormatInt(player.SteamAccountID, 10)] = mapPlayer(player, includeStatistics)
+	}
+	items, reconstructErr := batch.Reconstruct(plan, results)
+	if reconstructErr != nil {
+		for index, value := range plan.Inputs() {
+			id, normalizeErr := NormalizePlayerID(value.(string))
+			if normalizeErr == nil {
+				if _, ok := results[playerKey(id)]; !ok {
+					domainErr := notFound("A requested player was not found", nil)
+					domainErr.FailedInput = failedInput(index, value)
+					return nil, domainErr
+				}
+			}
+		}
+		return nil, protocol("STRATZ returned an incomplete player batch")
+	}
+	return &Result[PlayerQueryData]{
+		Data: PlayerQueryData{Mode: "exact", Items: items}, Raw: rawData(response.Data), RateLimits: response.RateLimits,
+	}, nil
+}
+
+func matchRequestMap(request any) (map[string]any, error) {
+	if request == nil {
+		return nil, errors.New("request is nil")
+	}
+	if value, ok := request.(map[string]any); ok {
+		return value, nil
+	}
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	var value map[string]any
+	if err := json.Unmarshal(data, &value); err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
+func matchAnySlice(value any) ([]any, error) {
+	if value == nil {
+		return nil, errors.New("array is required")
+	}
+	if result, ok := value.([]any); ok {
+		return result, nil
+	}
+	data, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+	var result []any
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func queryDetail(input map[string]any, history bool) (contracts.DetailLevel, *Error) {
+	value, present := input["detail_level"]
+	if !present {
+		if history {
+			return contracts.DetailLevelSummary, nil
+		}
+		return contracts.DetailLevelStandard, nil
+	}
+	text, ok := value.(string)
+	if !ok {
+		return "", invalid("detail_level must be a string", nil)
+	}
+	detail := contracts.DetailLevel(text)
+	if _, detailErr := requireDetail(detail); detailErr != nil {
+		return "", detailErr.(*Error)
+	}
+	if history && detail != contracts.DetailLevelSummary && detail != detailLevelPlayers {
+		return "", invalid("Only summary or players detail is available for player history", nil)
+	}
+	return detail, nil
+}
+
+func queryPlayerMatchFilters(input map[string]any) (PlayerMatchFilters, *Error) {
+	for key := range input {
+		switch key {
+		case "mode", "cursor", "detail_level", "fresh", "include_raw", "player_id", "from", "to", "hero", "role", "game_mode_id", "lobby_type_id", "result", "minimum_duration_seconds", "patch_id", "limit":
+		default:
+			return PlayerMatchFilters{}, invalid("Unsupported player-history field", map[string]any{"field": key})
+		}
+	}
+	player, ok := input["player_id"].(string)
+	if !ok || strings.TrimSpace(player) == "" {
+		return PlayerMatchFilters{}, invalid("player_id is required", nil)
+	}
+	filters := PlayerMatchFilters{PlayerID: player, Limit: integerValue(input["limit"], 0)}
+	if value, exists := input["from"]; exists {
+		parsed, parseErr := queryDate(value, "from")
+		if parseErr != nil {
+			return PlayerMatchFilters{}, parseErr
+		}
+		filters.From = parsed
+	}
+	if value, exists := input["to"]; exists {
+		parsed, parseErr := queryDate(value, "to")
+		if parseErr != nil {
+			return PlayerMatchFilters{}, parseErr
+		}
+		filters.To = parsed
+	}
+	if value, exists := input["hero"]; exists {
+		id, parseErr := queryInteger(value, "hero")
+		if parseErr != nil {
+			return PlayerMatchFilters{}, parseErr
+		}
+		filters.HeroID = &id
+	}
+	if value, exists := input["role"]; exists {
+		role, roleOK := value.(string)
+		if !roleOK || strings.TrimSpace(role) == "" {
+			return PlayerMatchFilters{}, invalid("role must be a non-empty string", nil)
+		}
+		filters.Role = &role
+	}
+	for key, target := range map[string]**int64{"game_mode_id": &filters.GameModeID, "lobby_type_id": &filters.LobbyTypeID, "minimum_duration_seconds": &filters.MinimumDurationSeconds} {
+		if value, exists := input[key]; exists {
+			parsed, parseErr := queryInteger(value, key)
+			if parseErr != nil {
+				return PlayerMatchFilters{}, parseErr
+			}
+			*target = &parsed
+		}
+	}
+	if value, exists := input["result"]; exists {
+		result, resultOK := value.(string)
+		if !resultOK || (result != "win" && result != "loss") {
+			return PlayerMatchFilters{}, invalid("result must be win or loss", nil)
+		}
+		filters.Result = &result
+	}
+	if value, exists := input["patch_id"]; exists {
+		patch, patchOK := value.(string)
+		if !patchOK || strings.TrimSpace(patch) == "" {
+			return PlayerMatchFilters{}, invalid("patch_id must be a non-empty string", nil)
+		}
+		filters.PatchID = &patch
+	}
+	return filters, nil
+}
+
+func queryDate(value any, field string) (*time.Time, *Error) {
+	text, ok := value.(string)
+	if !ok {
+		return nil, invalid(field+" must be an RFC3339 date-time", nil)
+	}
+	parsed, err := time.Parse(time.RFC3339Nano, text)
+	if err != nil {
+		return nil, invalid(field+" must be an RFC3339 date-time", nil)
+	}
+	parsed = parsed.UTC()
+	return &parsed, nil
+}
+
+func queryInteger(value any, field string) (int64, *Error) {
+	switch number := value.(type) {
+	case int:
+		return int64(number), nil
+	case int64:
+		return number, nil
+	case float64:
+		if number != float64(int64(number)) {
+			return 0, invalid(field+" must be an integer", nil)
+		}
+		return int64(number), nil
+	case json.Number:
+		parsed, err := number.Int64()
+		if err == nil {
+			return parsed, nil
+		}
+	case string:
+		parsed, err := strconv.ParseInt(strings.TrimSpace(number), 10, 64)
+		if err == nil {
+			return parsed, nil
+		}
+	}
+	return 0, invalid(field+" must be an integer", nil)
+}
+
+func playerRequestMap(request any) (map[string]any, error) {
+	if request == nil {
+		return nil, errors.New("request is nil")
+	}
+	if value, ok := request.(map[string]any); ok {
+		return value, nil
+	}
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	var value map[string]any
+	if err := json.Unmarshal(data, &value); err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
+func playerAnySlice(value any) ([]any, error) {
+	if value == nil {
+		return nil, errors.New("array is required")
+	}
+	if result, ok := value.([]any); ok {
+		return result, nil
+	}
+	data, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+	var result []any
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 // FetchMatch returns one normalized match at the requested detail level.
 func (s *Service) FetchMatch(
 	ctx context.Context,
 	identifier string,
 	detail contracts.DetailLevel,
-) (*Result[contracts.Match], error) {
+) (*Result[Match], error) {
 	detail, err := requireDetail(detail)
 	if err != nil {
 		return nil, err
@@ -222,7 +510,7 @@ func (s *Service) FetchMatch(
 	rateLimits = append(rateLimits, nameRateLimits...)
 	warnings := matchWarnings(detail)
 	warnings = append(warnings, nameWarnings...)
-	return &Result[contracts.Match]{
+	return &Result[Match]{
 		Data:       matchData,
 		Raw:        rawData(response.Data),
 		RateLimits: rateLimits,
@@ -231,11 +519,81 @@ func (s *Service) FetchMatch(
 }
 
 // BatchMatches gets up to 25 matches atomically in caller order.
+// QueryMatches resolves the exact and player-history branches of the
+// consolidated match query. League-history and live are owned by leaguelive.
+func (s *Service) QueryMatches(ctx context.Context, request contracts.StratzQueryMatchesRequest) (*Result[MatchQueryData], error) {
+	input, err := matchRequestMap(request)
+	if err != nil {
+		return nil, invalid("Match query input is invalid", map[string]any{"reason": err.Error()})
+	}
+	mode, _ := input["mode"].(string)
+	switch mode {
+	case "exact":
+		return s.queryExactMatches(ctx, input)
+	case "player_history":
+		return s.queryPlayerHistory(ctx, input)
+	case "league_history", "live":
+		return nil, invalid("Match query mode is owned by the league-live domain", map[string]any{"mode": mode})
+	default:
+		return nil, invalid("Unsupported match query mode", map[string]any{"mode": mode})
+	}
+}
+
+func (s *Service) queryExactMatches(ctx context.Context, input map[string]any) (*Result[MatchQueryData], error) {
+	for key := range input {
+		switch key {
+		case "mode", "match_ids", "detail_level", "fresh", "include_raw":
+		default:
+			return nil, invalid("Unsupported exact match field", map[string]any{"field": key})
+		}
+	}
+	values, err := matchAnySlice(input["match_ids"])
+	if err != nil || len(values) < 1 || len(values) > s.maxBatchSize {
+		return nil, invalid("Exact match query requires between 1 and 25 IDs", nil)
+	}
+	ids := make([]string, 0, len(values))
+	for _, value := range values {
+		text, ok := value.(string)
+		if !ok {
+			return nil, invalid("Match ID must be a string", nil)
+		}
+		ids = append(ids, text)
+	}
+	detail, detailErr := queryDetail(input, false)
+	if detailErr != nil {
+		return nil, detailErr
+	}
+	result, err := s.BatchMatches(ctx, ids, detail)
+	if err != nil {
+		return nil, err
+	}
+	return &Result[MatchQueryData]{Data: MatchQueryData{Mode: "exact", Items: result.Data}, Raw: result.Raw, RateLimits: result.RateLimits, Warnings: result.Warnings}, nil
+}
+
+func (s *Service) queryPlayerHistory(ctx context.Context, input map[string]any) (*Result[MatchQueryData], error) {
+	filters, domainErr := queryPlayerMatchFilters(input)
+	if domainErr != nil {
+		return nil, domainErr
+	}
+	detail, detailErr := queryDetail(input, true)
+	if detailErr != nil {
+		return nil, detailErr
+	}
+	filters.IncludePlayer = detail == detailLevelPlayers
+	result, err := s.ListPlayerMatches(ctx, filters)
+	if err != nil {
+		return nil, err
+	}
+	page := &contracts.Page{NextCursor: result.Data.Page.NextCursor, HasMore: result.Data.Page.HasMore}
+	return &Result[MatchQueryData]{Data: MatchQueryData{Mode: "player_history", Items: result.Data.Items, Page: page}, Raw: result.Raw, RateLimits: result.RateLimits, Warnings: result.Warnings}, nil
+}
+
+// BatchMatches gets up to 25 matches atomically in caller order.
 func (s *Service) BatchMatches(
 	ctx context.Context,
 	identifiers []string,
 	detail contracts.DetailLevel,
-) (*Result[[]contracts.Match], error) {
+) (*Result[[]Match], error) {
 	detail, err := requireDetail(detail)
 	if err != nil {
 		return nil, err
@@ -257,7 +615,7 @@ func (s *Service) BatchMatches(
 	}
 	query, operation := batchMatchOperation(detail)
 	budget := s.budget()
-	results := make(map[string]contracts.Match, len(ids))
+	results := make(map[string]Match, len(ids))
 	rawMatches := make([]any, 0, len(ids))
 	var rateLimits []stratz.RateLimit
 	const matchesPerRequest = 5
@@ -324,7 +682,7 @@ func (s *Service) BatchMatches(
 		rateLimits = append(rateLimits, nameRateLimits...)
 		warnings = append(warnings, nameWarnings...)
 	}
-	return &Result[[]contracts.Match]{
+	return &Result[[]Match]{
 		Data:       items,
 		Raw:        map[string]any{"matches": rawMatches},
 		RateLimits: rateLimits,
@@ -360,7 +718,7 @@ type PlayerMatchFilters struct {
 func (s *Service) ListPlayerMatches(
 	ctx context.Context,
 	filters PlayerMatchFilters,
-) (*Result[contracts.StratzListPlayerMatchesData], error) {
+) (*Result[PlayerMatchesData], error) {
 	return s.ListPlayerMatchesWithBudget(ctx, filters, s.budget())
 }
 
@@ -370,7 +728,7 @@ func (s *Service) ListPlayerMatchesWithBudget(
 	ctx context.Context,
 	filters PlayerMatchFilters,
 	budget *stratz.RequestBudget,
-) (*Result[contracts.StratzListPlayerMatchesData], error) {
+) (*Result[PlayerMatchesData], error) {
 	playerID, err := NormalizePlayerID(filters.PlayerID)
 	if err != nil {
 		return nil, err
@@ -389,7 +747,7 @@ func (s *Service) ListPlayerMatchesWithBudget(
 		return nil, invalid("minimum_duration_seconds must be between 0 and 21600", nil)
 	}
 	binding := pagination.Binding{
-		Tool:             "stratz_list_player_matches",
+		Tool:             "stratz_query_matches",
 		Filters:          filterBinding(playerID, filters),
 		PageSize:         filters.Limit,
 		Token:            s.token,
@@ -458,7 +816,7 @@ func (s *Service) ListPlayerMatchesWithBudget(
 	if err != nil {
 		return nil, err
 	}
-	items := make([]contracts.PlayerMatchSummary, 0, len(scan.Items))
+	items := make([]PlayerMatchSummary, 0, len(scan.Items))
 	for index := range scan.Items {
 		items = append(items, mapPlayerMatchSummary(&scan.Items[index], int64(playerID.AccountID), filters.IncludePlayer))
 	}
@@ -479,10 +837,10 @@ func (s *Service) ListPlayerMatchesWithBudget(
 		}
 		nextCursor = &encoded
 	}
-	return &Result[contracts.StratzListPlayerMatchesData]{
-		Data: contracts.StratzListPlayerMatchesData{
+	return &Result[PlayerMatchesData]{
+		Data: PlayerMatchesData{
 			Items: items,
-			Page: contracts.PageInfo{
+			Page: PageInfo{
 				NextCursor: nextCursor,
 				HasMore:    nextCursor != nil,
 			},
@@ -624,6 +982,7 @@ func nativePlayerMatchRequest(filters PlayerMatchFilters, take int, skip int64) 
 
 func filterBinding(id PlayerID, filters PlayerMatchFilters) map[string]any {
 	result := map[string]any{
+		"mode":      "player_history",
 		"player_id": playerKey(id),
 	}
 	if filters.From != nil {
@@ -657,6 +1016,23 @@ func filterBinding(id PlayerID, filters PlayerMatchFilters) map[string]any {
 		result["include_player"] = true
 	}
 	return result
+}
+
+func integerValue(value any, fallback int) int {
+	switch number := value.(type) {
+	case int:
+		return number
+	case int64:
+		return int(number)
+	case float64:
+		return int(number)
+	case json.Number:
+		parsed, err := number.Int64()
+		if err == nil {
+			return int(parsed)
+		}
+	}
+	return fallback
 }
 
 func optionalState(cursor string, state *pagination.ScanState[int64]) *pagination.ScanState[int64] {

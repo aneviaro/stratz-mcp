@@ -1,0 +1,122 @@
+{
+  "$id": "urn:stratz-mcp:contract:2.0.0-draft.1:stratz_query_heroes:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "fresh": {
+          "default": false,
+          "type": "boolean"
+        },
+        "from": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "heroes": {
+          "items": {
+            "oneOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              }
+            ]
+          },
+          "maxItems": 25,
+          "minItems": 1,
+          "type": "array"
+        },
+        "include_raw": {
+          "default": false,
+          "type": "boolean"
+        },
+        "include_statistics": {
+          "default": false,
+          "type": "boolean"
+        },
+        "mode": {
+          "const": "exact"
+        },
+        "rank_bracket": {
+          "maxLength": 64,
+          "type": "string"
+        },
+        "role": {
+          "maxLength": 64,
+          "type": "string"
+        },
+        "to": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "heroes"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "cursor": {
+          "maxLength": 4096,
+          "type": "string"
+        },
+        "fresh": {
+          "default": false,
+          "type": "boolean"
+        },
+        "from": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "include_raw": {
+          "default": false,
+          "type": "boolean"
+        },
+        "include_statistics": {
+          "default": false,
+          "type": "boolean"
+        },
+        "limit": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "mode": {
+          "const": "search"
+        },
+        "query": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "rank_bracket": {
+          "maxLength": 64,
+          "type": "string"
+        },
+        "role": {
+          "maxLength": 64,
+          "type": "string"
+        },
+        "to": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "query"
+      ],
+      "type": "object"
+    }
+  ],
+  "type": "object"
+}

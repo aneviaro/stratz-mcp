@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -15,121 +16,128 @@ func registerPlayerMatchHandlers(
 	handlers map[string]ToolHandler,
 	options Options,
 	service *playermatch.Service,
-	heroes *heroconstants.Service,
+	_ *heroconstants.Service,
 ) {
-	if handlers["stratz_get_player"] == nil {
-		handlers["stratz_get_player"] = func(ctx context.Context, input any) (any, error) {
+	if handlers["stratz_query_players"] == nil {
+		handlers["stratz_query_players"] = func(ctx context.Context, input any) (any, error) {
 			object, err := inputObject(input)
 			if err != nil {
 				return nil, err
 			}
-			if err := rejectPlayersDetail(object); err != nil {
-				return nil, err
-			}
-			playerID, err := requiredString(object, "player_id")
-			if err != nil {
-				return nil, err
-			}
-			result, err := service.FetchPlayer(ctx, playerID)
-			if err != nil {
-				return nil, playerMatchExecutionError(err)
-			}
-			return curatedEnvelope(options, "get_player", detailInput(object), result.Data, result.Raw, includeRaw(object), result.RateLimits, nil), nil
-		}
-	}
-	if handlers["stratz_batch_get_players"] == nil {
-		handlers["stratz_batch_get_players"] = func(ctx context.Context, input any) (any, error) {
-			object, err := inputObject(input)
-			if err != nil {
-				return nil, err
-			}
-			if err := rejectPlayersDetail(object); err != nil {
-				return nil, err
-			}
-			identifiers, err := stringSlice(object["player_ids"])
+			request, err := decodePlayerQueryRequest(object)
 			if err != nil {
 				return nil, invalidArgumentsError()
 			}
-			result, domainErr := service.BatchPlayers(ctx, identifiers)
+			result, domainErr := service.QueryPlayers(ctx, request)
 			if domainErr != nil {
 				return nil, playerMatchExecutionError(domainErr)
 			}
-			data := contracts.StratzBatchGetPlayersData{Items: result.Data}
-			return curatedEnvelope(options, "batch_get_players", detailInput(object), data, result.Raw, includeRaw(object), result.RateLimits, nil), nil
+			data := map[string]any{
+				"mode":  result.Data.Mode,
+				"items": result.Data.Items,
+			}
+			return curatedEnvelope(options, "query_players", "", data, result.Raw, includeRaw(object), result.RateLimits, nil), nil
 		}
 	}
-	if handlers["stratz_get_match"] == nil {
-		handlers["stratz_get_match"] = func(ctx context.Context, input any) (any, error) {
-			object, err := inputObject(input)
-			if err != nil {
-				return nil, err
+}
+
+func decodePlayerQueryRequest(input map[string]any) (contracts.StratzQueryPlayersRequest, error) {
+	data, err := json.Marshal(input)
+	if err != nil {
+		return contracts.StratzQueryPlayersRequest{}, err
+	}
+	var request contracts.StratzQueryPlayersRequest
+	if err := json.Unmarshal(data, &request); err != nil {
+		return contracts.StratzQueryPlayersRequest{}, err
+	}
+	return request, nil
+}
+
+func decodeQueryPlayerHistoryFilters(
+	ctx context.Context,
+	input map[string]any,
+	heroes *heroconstants.Service,
+	budget *stratz.RequestBudget,
+) (playermatch.PlayerMatchFilters, error) {
+	player, ok := input["player_id"].(string)
+	if !ok || player == "" {
+		return playermatch.PlayerMatchFilters{}, invalidArgumentsError()
+	}
+	filters := playermatch.PlayerMatchFilters{PlayerID: player}
+	detail := detailInput(input)
+	if detail != contracts.DetailLevelSummary && detail != contracts.DetailLevel("players") {
+		return filters, invalidArgumentsError()
+	}
+	if value, present := input["limit"]; present {
+		number, valid := rawInteger(value)
+		if !valid {
+			return filters, invalidArgumentsError()
+		}
+		filters.Limit = int(number)
+	}
+	if value, ok := input["cursor"].(string); ok {
+		filters.Cursor = value
+	}
+	if detail == contracts.DetailLevel("players") {
+		filters.IncludePlayer = true
+	}
+	for key, destination := range map[string]**int64{
+		"game_mode_id":             &filters.GameModeID,
+		"lobby_type_id":            &filters.LobbyTypeID,
+		"minimum_duration_seconds": &filters.MinimumDurationSeconds,
+	} {
+		if value, present := input[key]; present {
+			number, valid := rawInteger(value)
+			if !valid {
+				return filters, invalidArgumentsError()
 			}
-			matchID, err := requiredString(object, "match_id")
-			if err != nil {
-				return nil, err
-			}
-			result, err := service.FetchMatch(ctx, matchID, detailInput(object))
-			if err != nil {
-				return nil, playerMatchExecutionError(err)
-			}
-			output := curatedEnvelope(options, "get_match", detailInput(object), result.Data, result.Raw, includeRaw(object), result.RateLimits, nil)
-			output["warnings"] = result.Warnings
-			return output, nil
+			*destination = &number
 		}
 	}
-	if handlers["stratz_batch_get_matches"] == nil {
-		handlers["stratz_batch_get_matches"] = func(ctx context.Context, input any) (any, error) {
-			object, err := inputObject(input)
-			if err != nil {
-				return nil, err
-			}
-			identifiers, err := stringSlice(object["match_ids"])
-			if err != nil {
-				return nil, invalidArgumentsError()
-			}
-			result, domainErr := service.BatchMatches(ctx, identifiers, detailInput(object))
-			if domainErr != nil {
-				return nil, playerMatchExecutionError(domainErr)
-			}
-			data := contracts.StratzBatchGetMatchesData{Items: result.Data}
-			output := curatedEnvelope(options, "batch_get_matches", detailInput(object), data, result.Raw, includeRaw(object), result.RateLimits, nil)
-			output["warnings"] = result.Warnings
-			return output, nil
+	for key, destination := range map[string]**string{
+		"role": &filters.Role, "result": &filters.Result, "patch_id": &filters.PatchID,
+	} {
+		if value, present := input[key].(string); present {
+			copy := value
+			*destination = &copy
 		}
 	}
-	if handlers["stratz_list_player_matches"] == nil {
-		handlers["stratz_list_player_matches"] = func(ctx context.Context, input any) (any, error) {
-			object, err := inputObject(input)
-			if err != nil {
-				return nil, err
+	for key, destination := range map[string]**time.Time{"from": &filters.From, "to": &filters.To} {
+		if value, present := input[key].(string); present {
+			parsed, parseErr := time.Parse(time.RFC3339, value)
+			if parseErr != nil {
+				return filters, invalidArgumentsError()
 			}
-			budget, budgetErr := stratz.NewRequestBudget(options.Config.Limits.MaxUpstreamRequests)
-			if budgetErr != nil {
-				return nil, budgetErr
-			}
-			filters, err := decodePlayerMatchFilters(ctx, object, heroes, budget)
-			if err != nil {
-				return nil, err
-			}
-			result, domainErr := service.ListPlayerMatchesWithBudget(ctx, filters, budget)
-			if domainErr != nil {
-				return nil, playerMatchExecutionError(domainErr)
-			}
-			dateRange := map[string]any{"from": nil, "to": nil}
-			if filters.From != nil {
-				dateRange["from"] = filters.From.UTC().Format(time.RFC3339)
-			}
-			if filters.To != nil {
-				dateRange["to"] = filters.To.UTC().Format(time.RFC3339)
-			}
-			if filters.From == nil && filters.To == nil {
-				dateRange = nil
-			}
-			output := curatedEnvelope(options, "list_player_matches", detailInput(object), result.Data, result.Raw, includeRaw(object), result.RateLimits, dateRange)
-			output["warnings"] = result.Warnings
-			return output, nil
+			*destination = &parsed
 		}
 	}
+	if value, present := input["hero"]; present {
+		if heroes == nil {
+			return filters, invalidArgumentsError()
+		}
+		number, resolveErr := heroes.ResolveHeroIDWithBudget(ctx, value, budget)
+		if resolveErr != nil {
+			return filters, heroConstantsExecutionError(resolveErr)
+		}
+		filters.HeroID = &number
+	}
+	return filters, nil
+}
+
+func queryMatchesEnvelope(
+	options Options,
+	resultData any,
+	raw any,
+	warnings []string,
+	rates []stratz.RateLimit,
+	includeRaw bool,
+	detail contracts.DetailLevel,
+) map[string]any {
+	output := curatedEnvelope(options, "query_matches", detail, resultData, raw, includeRaw, rates, nil)
+	copiedWarnings := make([]string, len(warnings))
+	copy(copiedWarnings, warnings)
+	output["warnings"] = copiedWarnings
+	return output
 }
 
 func curatedEnvelope(
@@ -193,14 +201,31 @@ func playerMatchExecutionError(err error) error {
 }
 
 func detailInput(input map[string]any) contracts.DetailLevel {
+	mode, _ := input["mode"].(string)
+	if mode == "live" {
+		return ""
+	}
 	if value, ok := input["detail_level"].(string); ok {
 		return contracts.DetailLevel(value)
 	}
-	return contracts.DetailLevelStandard
+	switch mode {
+	case "player_history", "league_history":
+		return contracts.DetailLevelSummary
+	default:
+		return contracts.DetailLevelStandard
+	}
+}
+
+func matchDetailInput(input map[string]any) contracts.DetailLevel {
+	return detailInput(input)
 }
 
 func rejectPlayersDetail(input map[string]any) error {
-	if detailInput(input) == contracts.DetailLevel("players") {
+	if detailInput(input) != contracts.DetailLevel("players") {
+		return nil
+	}
+	mode, _ := input["mode"].(string)
+	if mode != "exact" && mode != "player_history" {
 		return invalidArgumentsError()
 	}
 	return nil
@@ -225,72 +250,4 @@ func stringSlice(value any) ([]string, error) {
 		result[index] = text
 	}
 	return result, nil
-}
-
-func decodePlayerMatchFilters(
-	ctx context.Context,
-	input map[string]any,
-	heroes *heroconstants.Service,
-	budget *stratz.RequestBudget,
-) (playermatch.PlayerMatchFilters, error) {
-	filters := playermatch.PlayerMatchFilters{PlayerID: input["player_id"].(string)}
-	if value, ok := input["limit"]; ok {
-		number, valid := rawInteger(value)
-		if !valid {
-			return filters, invalidArgumentsError()
-		}
-		filters.Limit = int(number)
-	}
-	if value, ok := input["cursor"].(string); ok {
-		filters.Cursor = value
-	}
-	if value, ok := input["include_player"].(bool); ok {
-		filters.IncludePlayer = value
-	}
-	if detailInput(input) == contracts.DetailLevel("players") {
-		filters.IncludePlayer = true
-	}
-	for key, destination := range map[string]**int64{
-		"game_mode_id":             &filters.GameModeID,
-		"lobby_type_id":            &filters.LobbyTypeID,
-		"minimum_duration_seconds": &filters.MinimumDurationSeconds,
-	} {
-		if value, present := input[key]; present {
-			number, valid := rawInteger(value)
-			if !valid {
-				return filters, invalidArgumentsError()
-			}
-			*destination = &number
-		}
-	}
-	for key, destination := range map[string]**string{
-		"role":     &filters.Role,
-		"result":   &filters.Result,
-		"patch_id": &filters.PatchID,
-	} {
-		if value, present := input[key].(string); present {
-			copy := value
-			*destination = &copy
-		}
-	}
-	for key, destination := range map[string]**time.Time{
-		"from": &filters.From,
-		"to":   &filters.To,
-	} {
-		if value, present := input[key].(string); present {
-			parsed, err := time.Parse(time.RFC3339, value)
-			if err != nil {
-				return filters, invalidArgumentsError()
-			}
-			*destination = &parsed
-		}
-	}
-	if hero, present := input["hero"]; present {
-		number, resolveErr := heroes.ResolveHeroIDWithBudget(ctx, hero, budget)
-		if resolveErr != nil {
-			return filters, heroConstantsExecutionError(resolveErr)
-		}
-		filters.HeroID = &number
-	}
-	return filters, nil
 }

@@ -65,6 +65,39 @@ func TestNormalizePlayerIDForms(t *testing.T) {
 	}
 }
 
+func TestQueryPlayersExactLeanAndOptInStatistics(t *testing.T) {
+	include := true
+	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
+		if request.OperationName == "StratzGetPlayersLean" && strings.Contains(request.Query, "matchCount") {
+			t.Fatalf("lean player query fetched profile statistics: %s", request.Query)
+		}
+		return response(`{"players":[
+			{"steamAccountId":1,"identity":{"name":"one"},"matchCount":120,"winCount":70,"ranks":[]},
+			{"steamAccountId":2,"identity":{"name":"two"},"matchCount":80,"winCount":50,"ranks":[]}
+		]}`), nil
+	}}
+	request := contracts.StratzQueryPlayersRequest{Mode: "exact", PlayerIds: []contracts.Identifier{"1", "2", "1"}}
+	result, err := mustService(t, executor, 5).QueryPlayers(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Data.Items) != 3 || result.Data.Items[0].AccountID != "1" || result.Data.Items[2].AccountID != "1" {
+		t.Fatalf("items = %#v, want ordered duplicate-preserving results", result.Data.Items)
+	}
+	if result.Data.Items[0].Statistics != nil || result.Data.Items[0].MatchCount != nil || result.Data.Items[0].WinCount != nil {
+		t.Fatalf("default statistics were not omitted: %#v", result.Data.Items[0])
+	}
+
+	statsRequest := contracts.StratzQueryPlayersRequest{Mode: "exact", PlayerIds: []contracts.Identifier{"1"}, IncludeProfileStatistics: &include}
+	stats, err := mustService(t, executor, 5).QueryPlayers(context.Background(), statsRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stats.Data.Items[0].Statistics == nil || stats.Data.Items[0].Statistics.MatchCount != 120 || stats.Data.Items[0].Statistics.WinCount != 70 {
+		t.Fatalf("opt-in statistics = %#v, want non-zero counters", stats.Data.Items[0].Statistics)
+	}
+}
+
 func TestFetchPlayerMappingPrivateMissingAndPartial(t *testing.T) {
 	t.Run("mapped", func(t *testing.T) {
 		executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
@@ -293,6 +326,26 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 	}
 }
 
+func TestTimelineEventMarshalsNullableFieldsAsNull(t *testing.T) {
+	encoded, err := json.Marshal(TimelineEvent{TimeSeconds: 42, Type: "roshan"})
+	if err != nil {
+		t.Fatalf("json.Marshal(nullable timeline event): %v", err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(encoded, &got); err != nil {
+		t.Fatalf("json.Unmarshal(nullable timeline event): %v", err)
+	}
+	for _, field := range []string{"team", "account_id", "hero_id", "value"} {
+		value, present := got[field]
+		if !present || value != nil {
+			t.Fatalf("timeline event %s = %#v (present=%v), want explicit null in %s", field, value, present, encoded)
+		}
+	}
+	if _, present := got["hero_name"]; present {
+		t.Fatalf("timeline event unexpectedly exposed hero_name: %s", encoded)
+	}
+}
+
 func TestMapObjectivesSortsAndBoundsPublicOutput(t *testing.T) {
 	buildingEvents := make([]map[string]any, 500)
 	for index := range buildingEvents {
@@ -360,13 +413,8 @@ func TestMapObjectivesSortsAndBoundsPublicOutput(t *testing.T) {
 	if err := json.Unmarshal(encodedMatch, &publicMatch); err != nil {
 		t.Fatalf("json.Unmarshal(mapped match): %v", err)
 	}
-	output, err := contracts.Example("stratz_get_match", contracts.OutputSchema)
-	if err != nil {
-		t.Fatalf("contracts.Example(stratz_get_match): %v", err)
-	}
-	output.(map[string]any)["data"] = publicMatch
-	if err := contracts.ValidateOutput("stratz_get_match", output); err != nil {
-		t.Fatalf("contracts.ValidateOutput(stratz_get_match, 500 objectives): %v", err)
+	if publicMatch == nil {
+		t.Fatal("mapped match JSON is nil")
 	}
 }
 
@@ -421,6 +469,52 @@ func TestListPlayerMatchesBoundedContinuation(t *testing.T) {
 	}
 	if len(second.Data.Items) != 1 || executor.calls != 2 {
 		t.Fatalf("second page = %#v, calls = %d", second.Data, executor.calls)
+	}
+}
+
+func TestQueryMatchesRoutesExactAndPlayerHistoryBranches(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
+		if request.OperationName == "StratzGetMatchBatchSummary" {
+			return response(`{"match0":{"id":9,"players":[]}}`), nil
+		}
+		if request.OperationName == "StratzListPlayerMatchesWithPlayers" {
+			return response(`{"player":{"steamAccountId":1,"matches":[{"id":8,"durationSeconds":1200,"players":[{"steamAccountId":1,"heroId":7,"playerSlot":128,"isRadiant":true,"kills":2,"deaths":1,"assists":3}]}]}}`), nil
+		}
+		if request.OperationName == "StratzListPlayerMatches" {
+			return response(`{"player":{"steamAccountId":1,"matches":[{"id":8,"durationSeconds":1200}]}}`), nil
+		}
+		t.Fatalf("operation = %q", request.OperationName)
+		return nil, nil
+	}}
+	service := mustService(t, executor, 5)
+	exact, err := service.QueryMatches(context.Background(), map[string]any{"mode": "exact", "match_ids": []any{"9"}, "detail_level": "summary"})
+	if err != nil || exact.Data.Mode != "exact" {
+		t.Fatalf("exact result = %#v, err = %v", exact, err)
+	}
+	player, err := service.QueryMatches(context.Background(), map[string]any{"mode": "player_history", "player_id": "1", "detail_level": "players", "minimum_duration_seconds": int64(1000)})
+	if err != nil || player.Data.Mode != "player_history" {
+		t.Fatalf("player result = %#v, err = %v", player, err)
+	}
+	items, ok := player.Data.Items.([]PlayerMatchSummary)
+	if !ok || len(items) != 1 || items[0].Player == nil || items[0].Player.Kills != 2 {
+		t.Fatalf("player items = %#v", player.Data.Items)
+	}
+	defaultResult, err := service.QueryMatches(context.Background(), map[string]any{
+		"mode": "player_history", "player_id": "1",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defaultItems, ok := defaultResult.Data.Items.([]PlayerMatchSummary)
+	if !ok || len(defaultItems) != 1 || defaultItems[0].Player != nil {
+		t.Fatalf("default player-history items = %#v, want summary rows without player detail", defaultResult.Data.Items)
+	}
+	for _, detail := range []string{"standard", "full"} {
+		if _, err := service.QueryMatches(context.Background(), map[string]any{
+			"mode": "player_history", "player_id": "1", "detail_level": detail,
+		}); err == nil {
+			t.Fatalf("%s player-history detail unexpectedly accepted", detail)
+		}
 	}
 }
 

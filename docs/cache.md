@@ -4,6 +4,22 @@ The SQLite response cache is the application data cache for STRATZ-derived tool 
 
 The SQLite response cache defaults to the platform user cache directory under `stratz-mcp`. Curated tools read it before calling STRATZ, asynchronously populate successful eligible responses, honor `fresh`, and use stale data only after an upstream failure. `include_raw` bypasses cache reads and writes. Raw GraphQL caching remains disabled pending field-classification approval.
 
+Cache classification is request-aware: it is selected only after schema validation from the query tool and its mode/options, never from the consolidated tool name alone.
+
+| Request | Class | TTL | Stale window |
+| --- | --- | ---: | ---: |
+| `stratz_query_constants` (`types` or `typed_selectors`) | Public reference | 24h | 24h |
+| `stratz_query_heroes` (`exact` or `search`) without statistics | Public reference | 24h | 24h |
+| `stratz_query_heroes` with `include_statistics: true` | Public recent | 5m | 15m |
+| `stratz_query_leagues` (`exact`) | Public reference | 24h | 24h |
+| `stratz_query_leagues` (`search`) | Public recent | 5m | 15m |
+| `stratz_query_players` (`exact`) | Profile-sensitive | 15m | 1h |
+| `stratz_query_matches` (`exact` or `league_history`) | Public recent | 5m | 15m |
+| `stratz_query_matches` (`player_history`) | Profile-sensitive | 15m | 1h |
+| `stratz_query_matches` (`live`) | Public live | 30s | 2m |
+
+An unknown or mixed future request fails closed rather than receiving a broader cache class. `fresh` bypasses reads and stale fallback; cache failures degrade to no-cache behavior.
+
 Commands:
 
 ```sh
@@ -13,15 +29,7 @@ stratz-mcp cache clear --domain matches
 stratz-mcp cache clear --current-token
 ```
 
-| Class | TTL | Stale window |
-| --- | ---: | ---: |
-| Public reference | 24h | 24h |
-| Public historical | 6h | 24h |
-| Profile-sensitive | 15m | 1h |
-| Public recent | 5m | 15m |
-| Public live | 30s | 2m |
-
-Keys include the token-derived namespace, operation, normalized arguments, detail level, schema version, and cache class. Token rotation therefore starts a separate namespace. Payloads of at least 4 KiB use Zstandard compression; the default size ceiling is 512 MiB with LRU eviction.
+Keys include the token-derived namespace, operation, normalized arguments, mode, detail level, schema version, and cache class. Token rotation therefore starts a separate namespace, and the v2 tool cutover cold-starts cache keys rather than reusing v1 entries. Payloads of at least 4 KiB use Zstandard compression; the default size ceiling is 512 MiB with LRU eviction.
 
 Use `STRATZ_CACHE_ENABLED=false` to disable caching or `STRATZ_CACHE_DIR` to select a private directory. Directories use mode `0700`; the database and WAL/SHM files use `0600` on POSIX. Docker deployments should mount `/cache` as the writable volume. Cache initialization or operation failures degrade to no-cache behavior and are reported by `doctor`.
 

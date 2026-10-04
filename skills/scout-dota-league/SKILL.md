@@ -14,21 +14,19 @@ Use this skill when the user asks for this workflow. User-supplied parameters ar
 ## Inputs
 
 - `league` (required): Exact league ID or text used to find a league.
-- `detail_level` (optional; default standard): summary, standard, or full.
+- `detail_level` (optional; default summary): League history returns summary detail only.
 - `fresh` (optional; default false): Set true to bypass eligible cached data.
 
 ## Approved tools
 
-- `stratz_get_league`
-- `stratz_list_leagues`
-- `stratz_list_league_matches`
-- `stratz_batch_get_matches`
+- `stratz_query_leagues`
+- `stratz_query_matches`
 - `stratz_execute_graphql`
 
 ## Workflow
 
-1. Resolve the exact league before analyzing it.
-2. Fetch league matches with deliberate pagination and batch any requested match details.
+1. Resolve the exact league with stratz_query_leagues in exact mode when an ID is supplied, or bounded search mode when text is supplied.
+2. Fetch league matches with stratz_query_matches in league_history mode using the resolved league_id, deliberate pagination, and the requested detail level; batch exact match lookups only when needed.
 3. Use guarded raw GraphQL only for roster or player detail unavailable from curated tools.
 4. Summarize form, recurring drafts or match patterns, and limitations caused by incomplete or changing data.
 

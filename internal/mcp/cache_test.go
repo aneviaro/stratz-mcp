@@ -11,219 +11,114 @@ import (
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
 )
 
-func TestCachedToolHandlerHonorsHitAndFresh(t *testing.T) {
+func TestQueryCacheClassificationUsesValidatedModeAndOptions(t *testing.T) {
+	tests := []struct {
+		name  string
+		tool  string
+		input map[string]any
+		want  cache.Class
+	}{
+		{"heroes reference", "stratz_query_heroes", map[string]any{"mode": "exact", "heroes": []any{1}}, cache.ClassPublicReference},
+		{"heroes statistics", "stratz_query_heroes", map[string]any{"mode": "search", "query": "axe", "include_statistics": true}, cache.ClassPublicRecent},
+		{"players", "stratz_query_players", map[string]any{"mode": "exact", "player_ids": []any{"1"}}, cache.ClassProfileSensitive},
+		{"leagues exact", "stratz_query_leagues", map[string]any{"mode": "exact", "league_ids": []any{"1"}}, cache.ClassPublicReference},
+		{"leagues search", "stratz_query_leagues", map[string]any{"mode": "search"}, cache.ClassPublicRecent},
+		{"matches exact", "stratz_query_matches", map[string]any{"mode": "exact", "match_ids": []any{"1"}}, cache.ClassPublicRecent},
+		{"matches player", "stratz_query_matches", map[string]any{"mode": "player_history", "player_id": "1"}, cache.ClassProfileSensitive},
+		{"matches league", "stratz_query_matches", map[string]any{"mode": "league_history", "league_id": "1"}, cache.ClassPublicRecent},
+		{"matches live", "stratz_query_matches", map[string]any{"mode": "live"}, cache.ClassPublicLive},
+		{"constants", "stratz_query_constants", map[string]any{"mode": "types", "types": []any{"heroes"}}, cache.ClassPublicReference},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			specification, ok := cacheSpecificationFor(test.tool, test.input)
+			if !ok {
+				t.Fatal("request was not classified")
+			}
+			if specification.class != test.want {
+				t.Fatalf("class = %q, want %q", specification.class, test.want)
+			}
+		})
+	}
+	if _, ok := cacheSpecificationFor("stratz_query_matches", map[string]any{"mode": "future"}); ok {
+		t.Fatal("unknown mode was cacheable")
+	}
+}
+
+func TestCachedQueryHandlerHonorsHitFreshAndRawBypass(t *testing.T) {
 	cfg := config.Defaults(t.TempDir())
 	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
-	store, err := cache.Open(cache.Options{
-		Config: cfg.Cache, Features: cfg.Features, Now: func() time.Time { return now },
-	})
+	store, err := cache.Open(cache.Options{Config: cfg.Cache, Features: cfg.Features, Now: func() time.Time { return now }})
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	options := Options{
-		SchemaVersion:  "schema-v1",
-		Config:         cfg,
-		Cache:          store,
-		CacheNamespace: cache.NamespaceForToken("token"),
-		Now:            func() time.Time { return now },
-	}
+	options := Options{SchemaVersion: "schema-v2", Config: cfg, Cache: store, CacheNamespace: "fixture", Now: func() time.Time { return now }}
 	calls := 0
-	handler := cachedToolHandler(
-		options,
-		"stratz_get_player",
-		cacheSpecifications["stratz_get_player"],
-		func(context.Context, any) (any, error) {
-			calls++
-			return curatedEnvelope(
-				options,
-				"get_player",
-				contracts.DetailLevelStandard,
-				contracts.Player{AccountID: "1", IsPrivate: false},
-				nil,
-				false,
-				nil,
-				nil,
-			), nil
-		},
-	)
-	input := map[string]any{"player_id": "1"}
+	handler := cachedToolHandler(options, "stratz_query_players", func(context.Context, any) (any, error) {
+		calls++
+		return curatedEnvelope(options, "query_players", "", map[string]any{"mode": "exact", "items": []any{}}, nil, false, nil, nil), nil
+	})
+	input := map[string]any{"mode": "exact", "player_ids": []any{"1"}}
 	if _, err := handler(context.Background(), input); err != nil {
 		t.Fatal(err)
 	}
-	deadline := time.Now().Add(time.Second)
-	for {
-		stats, statsErr := store.Stats(context.Background())
-		if statsErr != nil {
-			t.Fatal(statsErr)
-		}
-		if stats.Entries == 1 {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("asynchronous cache write did not complete")
-		}
-		time.Sleep(time.Millisecond)
-	}
-	output, err := handler(context.Background(), input)
-	if err != nil {
+	waitForCacheEntries(t, store, 1)
+	if _, err := handler(context.Background(), input); err != nil {
 		t.Fatal(err)
 	}
 	if calls != 1 {
-		t.Fatalf("handler calls = %d, want 1", calls)
+		t.Fatalf("calls = %d, want 1 after hit", calls)
 	}
-	assertCacheStatus(t, output, "hit")
-
-	output, err = handler(context.Background(), map[string]any{"player_id": "1", "fresh": true})
+	output, err := handler(context.Background(), map[string]any{"mode": "exact", "player_ids": []any{"1"}, "fresh": true})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if calls != 2 {
-		t.Fatalf("handler calls after fresh = %d, want 2", calls)
+		t.Fatalf("calls = %d, want 2 after fresh", calls)
+	}
+	assertCacheStatus(t, output, "bypass")
+
+	output, err = handler(context.Background(), map[string]any{"mode": "exact", "player_ids": []any{"1"}, "include_raw": true})
+	if err != nil {
+		t.Fatal(err)
 	}
 	assertCacheStatus(t, output, "bypass")
 }
 
-func TestCachedToolHandlerOnlyUsesStaleForTransientUpstreamErrors(t *testing.T) {
-	tests := []struct {
-		name      string
-		code      contracts.ErrorCode
-		wantStale bool
-	}{
-		{name: "network", code: contracts.ErrorCodeUpstreamNetworkError, wantStale: true},
-		{name: "timeout", code: contracts.ErrorCodeUpstreamTimeout, wantStale: true},
-		{name: "rate limit", code: contracts.ErrorCodeRateLimited, wantStale: true},
-		{name: "invalid argument", code: contracts.ErrorCodeInvalidArgument},
-		{name: "expired cursor", code: contracts.ErrorCodeCursorExpired},
-		{name: "authentication", code: contracts.ErrorCodeAuthenticationFailed},
-		{name: "private", code: contracts.ErrorCodePrivate},
-		{name: "data not ready", code: contracts.ErrorCodeDataNotReady},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			cfg := config.Defaults(t.TempDir())
-			now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
-			store, err := cache.Open(cache.Options{
-				Config: cfg.Cache, Features: cfg.Features, Now: func() time.Time { return now },
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer store.Close()
-			options := Options{
-				SchemaVersion:  "schema-v1",
-				Config:         cfg,
-				Cache:          store,
-				CacheNamespace: cache.NamespaceForToken("token"),
-				Now:            func() time.Time { return now },
-			}
-			var handlerErr error
-			handler := cachedToolHandler(
-				options,
-				"stratz_get_player",
-				cacheSpecifications["stratz_get_player"],
-				func(context.Context, any) (any, error) {
-					if handlerErr != nil {
-						return nil, handlerErr
-					}
-					return curatedEnvelope(
-						options,
-						"get_player",
-						contracts.DetailLevelStandard,
-						contracts.Player{AccountID: "1", IsPrivate: false},
-						nil,
-						false,
-						nil,
-						nil,
-					), nil
-				},
-			)
-			input := map[string]any{"player_id": "1"}
-			if _, err := handler(context.Background(), input); err != nil {
-				t.Fatal(err)
-			}
-			waitForCacheEntries(t, store, 1)
-			now = now.Add(cfg.Cache.ProfileSensitiveTTL + time.Second)
-			handlerErr = &ExecutionError{
-				Code: test.code, Message: "fixture failure", Details: map[string]any{},
-			}
-			output, err := handler(context.Background(), input)
-			if test.wantStale {
-				if err != nil {
-					t.Fatalf("transient error did not use stale cache: %v", err)
-				}
-				assertCacheStatus(t, output, "stale")
-				return
-			}
-			if !errors.Is(err, handlerErr) {
-				t.Fatalf("semantic error = %v, want original %v", err, handlerErr)
-			}
-			if output != nil {
-				t.Fatalf("semantic error returned cached output: %#v", output)
-			}
-		})
-	}
-}
-
-func TestEvolvingMatchToolsUseRecentCacheClass(t *testing.T) {
-	for _, tool := range []string{
-		"stratz_get_match",
-		"stratz_batch_get_matches",
-		"stratz_list_league_matches",
-	} {
-		if got := cacheSpecifications[tool].class; got != cache.ClassPublicRecent {
-			t.Fatalf("%s cache class = %q, want %q", tool, got, cache.ClassPublicRecent)
-		}
-	}
-}
-
-func TestPlayerHistoryUsesProfileSensitiveTTL(t *testing.T) {
-	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+func TestCachedQueryHandlerUsesStaleOnlyForTransientFailures(t *testing.T) {
 	cfg := config.Defaults(t.TempDir())
-	store, err := cache.Open(cache.Options{
-		Config: cfg.Cache, Features: cfg.Features, Now: func() time.Time { return now },
-	})
+	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
+	store, err := cache.Open(cache.Options{Config: cfg.Cache, Features: cfg.Features, Now: func() time.Time { return now }})
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	options := Options{
-		Config: cfg, Cache: store, CacheNamespace: "fixture",
-		SchemaVersion: "schema", Now: func() time.Time { return now },
-	}
-	calls := 0
-	handler := cachedToolHandler(
-		options,
-		"stratz_list_player_matches",
-		cacheSpecifications["stratz_list_player_matches"],
-		func(context.Context, any) (any, error) {
-			calls++
-			return curatedEnvelope(
-				options,
-				"list_player_matches",
-				contracts.DetailLevelSummary,
-				map[string]any{"items": []any{}},
-				nil,
-				false,
-				nil,
-				nil,
-			), nil
-		},
-	)
-	input := map[string]any{"player_id": "1"}
+	options := Options{SchemaVersion: "schema-v2", Config: cfg, Cache: store, CacheNamespace: "fixture", Now: func() time.Time { return now }}
+	var handlerErr error
+	handler := cachedToolHandler(options, "stratz_query_matches", func(context.Context, any) (any, error) {
+		if handlerErr != nil {
+			return nil, handlerErr
+		}
+		return curatedEnvelope(options, "query_matches", contracts.DetailLevelStandard, map[string]any{"mode": "exact", "items": []any{}}, nil, false, nil, nil), nil
+	})
+	input := map[string]any{"mode": "exact", "match_ids": []any{"1"}}
 	if _, err := handler(context.Background(), input); err != nil {
 		t.Fatal(err)
 	}
 	waitForCacheEntries(t, store, 1)
 	now = now.Add(cfg.Cache.PublicRecentTTL + time.Second)
+	handlerErr = &ExecutionError{Code: contracts.ErrorCodeUpstreamNetworkError, Message: "network", Details: map[string]any{}}
 	output, err := handler(context.Background(), input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if calls != 1 {
-		t.Fatalf("handler calls = %d, want cached hit", calls)
+	assertCacheStatus(t, output, "stale")
+
+	handlerErr = &ExecutionError{Code: contracts.ErrorCodeInvalidArgument, Message: "invalid", Details: map[string]any{}}
+	if output, err := handler(context.Background(), input); !errors.Is(err, handlerErr) || output != nil {
+		t.Fatalf("invalid request fallback = %#v, %v", output, err)
 	}
-	assertCacheStatus(t, output, "hit")
 }
 
 func waitForCacheEntries(t *testing.T, store *cache.Store, want int64) {

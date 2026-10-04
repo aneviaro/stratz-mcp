@@ -15,6 +15,7 @@ import (
 
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
 	"github.com/aneviaro/stratz-mcp/internal/domain/batch"
+	"github.com/aneviaro/stratz-mcp/internal/domain/pagination"
 	"github.com/aneviaro/stratz-mcp/internal/graphql/generated"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 	"golang.org/x/sync/singleflight"
@@ -25,6 +26,8 @@ type Options struct {
 	Executor            stratz.Executor
 	MaxUpstreamRequests int
 	MaxBatchSize        int
+	Token               string
+	SchemaVersion       string
 	// ConstantsTTL enables a process-local in-memory cache of the parsed STRATZ
 	// constants aggregate for this duration. A value of zero (the default)
 	// disables caching so every loadConstants call fetches upstream, preserving
@@ -42,6 +45,9 @@ type Service struct {
 	maxBatchSize        int
 	constantsTTL        time.Duration
 	now                 func() time.Time
+	token               string
+	schemaVersion       string
+	cursor              *pagination.Codec
 
 	constantsMu    sync.Mutex
 	constants      *cachedConstants
@@ -65,12 +71,23 @@ func New(options Options) (*Service, error) {
 	if options.Now == nil {
 		options.Now = time.Now
 	}
+	if strings.TrimSpace(options.Token) == "" {
+		// Legacy callers do not paginate. Query callers should provide the
+		// authenticated token used to bind their cursor namespace.
+		options.Token = "legacy-heroconstants-token"
+	}
+	if strings.TrimSpace(options.SchemaVersion) == "" {
+		options.SchemaVersion = contracts.ContractVersion
+	}
 	return &Service{
 		executor:            options.Executor,
 		maxUpstreamRequests: options.MaxUpstreamRequests,
 		maxBatchSize:        options.MaxBatchSize,
 		constantsTTL:        options.ConstantsTTL,
 		now:                 options.Now,
+		token:               options.Token,
+		schemaVersion:       options.SchemaVersion,
+		cursor:              pagination.NewCodec(pagination.Options{Now: options.Now}),
 	}, nil
 }
 
@@ -123,6 +140,336 @@ func (s *Service) BatchHeroes(ctx context.Context, identifiers []any) (*Result[[
 		Raw:        rawData(response.Data),
 		RateLimits: response.RateLimits,
 	}, nil
+}
+
+// QueryHeroes executes the generated v2 exact or bounded local-search request.
+// Constants are loaded once and optional statistics share the same request
+// budget as that load.
+func (s *Service) QueryHeroes(ctx context.Context, request contracts.StratzQueryHeroesRequest) (*Result[HeroQueryData], error) {
+	input, err := requestMap(request)
+	if err != nil {
+		return nil, invalid("Hero query input is invalid", map[string]any{"reason": err.Error()})
+	}
+	mode, _ := input["mode"].(string)
+	if mode != "exact" && mode != "search" {
+		return nil, invalid("Unsupported hero query mode", map[string]any{"mode": mode})
+	}
+	if err := rejectHeroDimensions(input); err != nil {
+		return nil, err
+	}
+	includeStats, _ := input["include_statistics"].(bool)
+	budget := s.budget()
+	response, constants, err := s.loadConstants(ctx, budget)
+	if err != nil {
+		return nil, err
+	}
+
+	var heroes []upstreamHero
+	if mode == "exact" {
+		selectors, parseErr := anySlice(input["heroes"])
+		if parseErr != nil || len(selectors) == 0 || len(selectors) > 25 {
+			return nil, invalid("Hero exact query requires between 1 and 25 selectors", nil)
+		}
+		plan, planErr := batch.NewPlan(selectors, 25, canonicalIdentifier)
+		if planErr != nil {
+			return nil, invalid("Hero exact query input is invalid", map[string]any{"reason": planErr.Error()})
+		}
+		index := newHeroIndex(constants.Heroes)
+		resolved := make(map[string]upstreamHero, len(plan.Unique()))
+		for _, selector := range plan.Unique() {
+			hero, resolveErr := index.resolve(selector)
+			if resolveErr != nil {
+				resolveErr.FailedInput = map[string]any{"index": firstIndex(selectors, selector), "value": selector}
+				return nil, resolveErr
+			}
+			resolved[heroKey(hero.ID)] = *hero
+		}
+		for _, selector := range selectors {
+			hero, resolveErr := index.resolve(selector)
+			if resolveErr != nil {
+				return nil, resolveErr
+			}
+			heroes = append(heroes, resolved[heroKey(hero.ID)])
+		}
+	} else {
+		query, ok := input["query"].(string)
+		if !ok || strings.TrimSpace(query) == "" {
+			return nil, invalid("Hero search query is required", nil)
+		}
+		limit := integerValue(input["limit"], 20)
+		if limit < 1 || limit > 100 {
+			return nil, invalid("Hero search limit must be between 1 and 100", nil)
+		}
+		bindingFilters := map[string]any{"mode": mode, "query": normalizedName(query), "include_statistics": includeStats}
+		if value, ok := input["rank_bracket"].(string); ok {
+			bindingFilters["rank_bracket"] = strings.ToUpper(strings.TrimSpace(value))
+		}
+		if value, ok := input["role"].(string); ok {
+			bindingFilters["role"] = strings.ToLower(strings.TrimSpace(value))
+		}
+		for _, key := range []string{"from", "to"} {
+			if value, ok := input[key]; ok {
+				parsed, parseErr := requestTime(value)
+				if parseErr != nil {
+					return nil, invalid("Hero statistics date is invalid", map[string]any{"field": key})
+				}
+				bindingFilters[key] = parsed.Format(time.RFC3339Nano)
+			}
+		}
+		binding := pagination.Binding{Tool: "stratz_query_heroes", Filters: bindingFilters, PageSize: limit, Token: s.token, SchemaVersion: s.schemaVersion, OperationVersion: "heroes/v1"}
+		var offset int
+		cursorValue, _ := input["cursor"].(string)
+		if cursorValue != "" {
+			if _, decodeErr := s.cursor.Decode(cursorValue, binding, &offset); decodeErr != nil {
+				return nil, cursorError(decodeErr)
+			}
+		}
+		query = strings.ToLower(strings.TrimSpace(query))
+		matches := make([]upstreamHero, 0, len(constants.Heroes))
+		for _, hero := range constants.Heroes {
+			if heroMatches(hero, query) {
+				matches = append(matches, hero)
+			}
+		}
+		sort.SliceStable(matches, func(i, j int) bool { return matches[i].ID < matches[j].ID })
+		if offset > len(matches) {
+			offset = len(matches)
+		}
+		end := offset + limit
+		if end > len(matches) {
+			end = len(matches)
+		}
+		heroes = matches[offset:end]
+		var page *QueryPage
+		if end < len(matches) {
+			nextOffset := end
+			encoded, encodeErr := s.cursor.Encode(binding, pagination.LifetimeHistorical, nextOffset)
+			if encodeErr != nil {
+				return nil, encodeErr
+			}
+			page = &QueryPage{NextCursor: &encoded, HasMore: true}
+		} else {
+			page = &QueryPage{HasMore: false}
+		}
+		items, statsResponse, statsWarnings, effective, statsErr := s.attachHeroStatistics(ctx, budget, heroes, input, includeStats)
+		if statsErr != nil {
+			return nil, statsErr
+		}
+		warnings := statsWarnings
+		raw := rawData(response.Data)
+		rates := response.RateLimits
+		if statsResponse != nil {
+			raw = map[string]any{"constants": raw, "statistics": rawData(statsResponse.Data)}
+			rates = statsResponse.RateLimits
+		}
+		return &Result[HeroQueryData]{Data: HeroQueryData{Mode: mode, Items: items, Page: page}, Raw: raw, RateLimits: rates, Warnings: warnings, EffectiveRange: effective}, nil
+	}
+	items, statsResponse, statsWarnings, effective, statsErr := s.attachHeroStatistics(ctx, budget, heroes, input, includeStats)
+	if statsErr != nil {
+		return nil, statsErr
+	}
+	raw := rawData(response.Data)
+	rates := response.RateLimits
+	if statsResponse != nil {
+		raw = map[string]any{"constants": raw, "statistics": rawData(statsResponse.Data)}
+		rates = statsResponse.RateLimits
+	}
+	return &Result[HeroQueryData]{Data: HeroQueryData{Mode: mode, Items: items}, Raw: raw, RateLimits: rates, Warnings: statsWarnings, EffectiveRange: effective}, nil
+}
+
+// QueryConstants executes the generated v2 types or typed-selectors request.
+func (s *Service) QueryConstants(ctx context.Context, request contracts.StratzQueryConstantsRequest) (*Result[ConstantsQueryData], error) {
+	input, err := requestMap(request)
+	if err != nil {
+		return nil, invalid("Constants query input is invalid", map[string]any{"reason": err.Error()})
+	}
+	mode, _ := input["mode"].(string)
+	if mode != "types" && mode != "typed_selectors" {
+		return nil, invalid("Unsupported constants query mode", map[string]any{"mode": mode})
+	}
+	response, constants, loadErr := s.loadConstants(ctx, s.budget())
+	if loadErr != nil {
+		return nil, loadErr
+	}
+	var items []contracts.Constant
+	var warnings []string
+	if mode == "types" {
+		types, parseErr := stringSlice(input["types"])
+		if parseErr != nil || len(types) == 0 || len(types) > 6 {
+			return nil, invalid("Constants types must contain between 1 and 6 values", nil)
+		}
+		seen := make(map[string]bool, len(types))
+		for _, kind := range types {
+			if !validQueryConstantType(kind) || seen[kind] {
+				return nil, invalid("Unsupported or duplicate constants type", map[string]any{"type": kind})
+			}
+			seen[kind] = true
+			part, partWarnings := constantsForType(constants, kind)
+			items = append(items, part...)
+			warnings = append(warnings, partWarnings...)
+		}
+	} else {
+		selectors, parseErr := anySlice(input["selectors"])
+		if parseErr != nil || len(selectors) == 0 || len(selectors) > 25 {
+			return nil, invalid("Typed constant selectors must contain between 1 and 25 values", nil)
+		}
+		for _, rawSelector := range selectors {
+			selector, ok := rawSelector.(map[string]any)
+			if !ok {
+				return nil, invalid("Typed constant selector is invalid", nil)
+			}
+			kind, _ := selector["type"].(string)
+			if !validQueryConstantType(kind) {
+				return nil, invalid("Unsupported constants type", map[string]any{"type": kind})
+			}
+			ids, idsErr := stringSlice(selector["ids"])
+			if idsErr != nil || len(ids) == 0 || len(ids) > 25 {
+				return nil, invalid("Typed constant selector ids are invalid", map[string]any{"type": kind})
+			}
+			part, selectErr := selectConstants(constants, kind, ids)
+			if selectErr != nil {
+				return nil, selectErr
+			}
+			items = append(items, part...)
+		}
+	}
+	if mode == "types" {
+		items = deterministicConstants(items)
+	}
+	if len(items) > 20000 {
+		items = items[:20000]
+		warnings = append(warnings, "Constants output was truncated to 20000 records")
+	}
+	return &Result[ConstantsQueryData]{Data: ConstantsQueryData{Mode: mode, Items: items}, Raw: rawData(response.Data), RateLimits: response.RateLimits, Warnings: uniqueStrings(warnings)}, nil
+}
+
+func (s *Service) attachHeroStatistics(ctx context.Context, budget *stratz.RequestBudget, heroes []upstreamHero, input map[string]any, include bool) ([]contracts.Hero, *stratz.Response, []string, *DateRange, error) {
+	items := make([]contracts.Hero, 0, len(heroes))
+	for index := range heroes {
+		items = append(items, mapHero(&heroes[index]))
+	}
+	if !include || len(heroes) == 0 {
+		return items, nil, nil, nil, nil
+	}
+	filters, filterErr := queryStatsFilters(input)
+	if filterErr != nil {
+		return nil, nil, nil, nil, filterErr
+	}
+	ids := make([]int64, 0, len(heroes))
+	for _, hero := range heroes {
+		ids = append(ids, hero.ID)
+	}
+	response, rows, effective, statsErr := s.fetchStats(ctx, budget, ids, filters)
+	if statsErr != nil {
+		return nil, nil, nil, nil, statsErr
+	}
+	warnings := []string{"Pick and ban rates are unavailable from the current STRATZ win aggregate"}
+	for index := range items {
+		if row := rows[items[index].HeroID]; row != nil {
+			win := rate(row.WinCount, row.MatchCount)
+			items[index].Statistics = &struct {
+				PickRate   *float64 `json:"pick_rate"`
+				SampleSize int64    `json:"sample_size"`
+				WinRate    *float64 `json:"win_rate"`
+			}{SampleSize: maxZero(row.MatchCount), WinRate: win}
+		}
+	}
+	return items, response, warnings, &effective, nil
+}
+
+func (s *Service) fetchStats(ctx context.Context, budget *stratz.RequestBudget, heroIDs []int64, filters StatsFilters) (*stratz.Response, map[int64]*upstreamStats, DateRange, error) {
+	bucket, effective, rangeErr := translateRange(s.now(), filters.From, filters.To)
+	if rangeErr != nil {
+		return nil, nil, DateRange{}, rangeErr
+	}
+	if filters.PatchID != nil {
+		return nil, nil, DateRange{}, invalid("Patch-filtered hero statistics are not supported by the current STRATZ aggregate", nil)
+	}
+	if filters.Lane != nil {
+		return nil, nil, DateRange{}, invalid("Lane-filtered hero statistics are not supported by the current STRATZ aggregate", nil)
+	}
+	if filters.IncludeMatchups || filters.IncludeSynergies {
+		return nil, nil, DateRange{}, invalid("Matchup and synergy expansion is not supported by the current STRATZ aggregate", nil)
+	}
+	variables := map[string]any{"heroIds": heroIDs}
+	if filters.RankBracket != nil {
+		rank, ok := heroStatsRank(*filters.RankBracket)
+		if !ok {
+			return nil, nil, DateRange{}, invalid("Unsupported hero statistics rank bracket", map[string]any{"rank_bracket": *filters.RankBracket})
+		}
+		variables["bracketIds"] = []string{rank}
+	}
+	if filters.Role != nil {
+		positions, ok := heroStatsPositions(*filters.Role)
+		if !ok {
+			return nil, nil, DateRange{}, invalid("Unsupported hero statistics role", map[string]any{"role": *filters.Role})
+		}
+		variables["positionIds"] = positions
+	}
+	query, operation := statisticsOperation(bucket)
+	response, err := s.execute(ctx, budget, query, operation, variables)
+	if err != nil {
+		return nil, nil, DateRange{}, err
+	}
+	var envelope statsEnvelope
+	if json.Unmarshal(response.Data, &envelope) != nil || envelope.HeroStats == nil {
+		return nil, nil, DateRange{}, protocol("STRATZ returned an invalid hero-statistics payload")
+	}
+	rows := make(map[int64]*upstreamStats, len(heroIDs))
+	statsRows := envelope.HeroStats.Stats
+	if len(heroIDs) > 1 {
+		statsRows = make([]upstreamStats, 0, len(statsRows))
+		for _, row := range envelope.HeroStats.Stats {
+			if row.HeroID != 0 {
+				statsRows = append(statsRows, row)
+			}
+		}
+	}
+	for _, heroID := range heroIDs {
+		if row := aggregateStats(statsRows, effective, heroID); row != nil {
+			rows[heroID] = row
+		}
+	}
+	return response, rows, effective, nil
+}
+
+func queryStatsFilters(input map[string]any) (StatsFilters, error) {
+	filters := StatsFilters{}
+	if value, ok := input["from"]; ok {
+		parsed, err := requestTime(value)
+		if err != nil {
+			return filters, invalid("Hero statistics from is invalid", nil)
+		}
+		filters.From = &parsed
+	}
+	if value, ok := input["to"]; ok {
+		parsed, err := requestTime(value)
+		if err != nil {
+			return filters, invalid("Hero statistics to is invalid", nil)
+		}
+		filters.To = &parsed
+	}
+	if value, ok := input["rank_bracket"].(string); ok {
+		filters.RankBracket = &value
+	}
+	if value, ok := input["role"].(string); ok {
+		filters.Role = &value
+	}
+	if _, ok := input["patch_id"]; ok {
+		value, _ := input["patch_id"].(string)
+		filters.PatchID = &value
+	}
+	if _, ok := input["lane"]; ok {
+		value, _ := input["lane"].(string)
+		filters.Lane = &value
+	}
+	if _, ok := input["matchups"]; ok {
+		filters.IncludeMatchups = true
+	}
+	if _, ok := input["synergies"]; ok {
+		filters.IncludeSynergies = true
+	}
+	return filters, nil
 }
 
 // ResolveHeroID resolves any public hero identifier to its canonical numeric ID.
@@ -185,7 +532,7 @@ func (s *Service) ResolveHeroIDWithBudget(
 }
 
 // FetchConstants returns the requested normalized constants collection.
-func (s *Service) FetchConstants(ctx context.Context, requested string) (*Result[contracts.StratzGetConstantsData], error) {
+func (s *Service) FetchConstants(ctx context.Context, requested string) (*Result[ConstantsData], error) {
 	if !validConstantType(requested) {
 		return nil, invalid("Unsupported constants type", map[string]any{"type": requested})
 	}
@@ -194,8 +541,8 @@ func (s *Service) FetchConstants(ctx context.Context, requested string) (*Result
 		return nil, err
 	}
 	items, warnings := constantsForType(constants, requested)
-	return &Result[contracts.StratzGetConstantsData]{
-		Data: contracts.StratzGetConstantsData{
+	return &Result[ConstantsData]{
+		Data: ConstantsData{
 			Type:  requested,
 			Items: items,
 		},
@@ -206,7 +553,7 @@ func (s *Service) FetchConstants(ctx context.Context, requested string) (*Result
 }
 
 // FetchHeroStats returns bounded aggregate statistics for one hero.
-func (s *Service) FetchHeroStats(ctx context.Context, filters StatsFilters) (*Result[contracts.StratzGetHeroStatsData], error) {
+func (s *Service) FetchHeroStats(ctx context.Context, filters StatsFilters) (*Result[HeroStatsData], error) {
 	budget := s.budget()
 	heroID, constantsResponse, err := s.resolveStatsHero(ctx, budget, filters.Hero)
 	if err != nil {
@@ -262,7 +609,7 @@ func (s *Service) FetchHeroStats(ctx context.Context, filters StatsFilters) (*Re
 		raw = map[string]any{"constants": rawData(constantsResponse.Data), "statistics": raw}
 	}
 	data := mapStats(stats, filters)
-	return &Result[contracts.StratzGetHeroStatsData]{
+	return &Result[HeroStatsData]{
 		Data:           data,
 		Raw:            raw,
 		RateLimits:     response.RateLimits,
@@ -589,8 +936,8 @@ func mapHero(source *upstreamHero) contracts.Hero {
 	}
 }
 
-func constantsForType(constants upstreamConstants, requested string) ([]contracts.ConstantRecord, []string) {
-	var items []contracts.ConstantRecord
+func constantsForType(constants upstreamConstants, requested string) ([]contracts.Constant, []string) {
+	var items []contracts.Constant
 	warnings := []string{}
 	appendConstants := func(kind string, source []upstreamConstant) {
 		for _, item := range source {
@@ -599,8 +946,8 @@ func constantsForType(constants upstreamConstants, requested string) ([]contract
 			if localizedName == nil && item.Language != nil {
 				localizedName = item.Language.DisplayName
 			}
-			items = append(items, contracts.ConstantRecord{
-				ID: item.ID.String(), Name: clean(item.Name, 256), LocalizedName: cleanPointer(localizedName, 256), Metadata: metadata,
+			items = append(items, contracts.Constant{
+				ID: item.ID.String(), Type: kind, Name: clean(item.Name, 256), LocalizedName: cleanPointer(localizedName, 256), Metadata: metadata,
 			})
 		}
 	}
@@ -615,8 +962,8 @@ func constantsForType(constants upstreamConstants, requested string) ([]contract
 			if hero.Stats != nil && hero.Stats.AttackType != nil {
 				metadata["attack_type"] = clean(*hero.Stats.AttackType, 64)
 			}
-			items = append(items, contracts.ConstantRecord{
-				ID: strconv.FormatInt(hero.ID, 10), Name: clean(hero.Name, 256), LocalizedName: cleanPointer(hero.LocalizedName, 256), Metadata: metadata,
+			items = append(items, contracts.Constant{
+				ID: strconv.FormatInt(hero.ID, 10), Type: "heroes", Name: clean(hero.Name, 256), LocalizedName: cleanPointer(hero.LocalizedName, 256), Metadata: metadata,
 			})
 		}
 	}
@@ -631,6 +978,8 @@ func constantsForType(constants upstreamConstants, requested string) ([]contract
 		appendConstants("game_modes", constants.GameModes)
 	case "regions":
 		appendConstants("regions", constants.Regions)
+	case "game_versions":
+		appendConstants("game_versions", constants.GameVersions)
 	case "ranks":
 		appendConstants("ranks", constants.Ranks)
 		if len(constants.Ranks) == 0 {
@@ -662,14 +1011,15 @@ func constantsForType(constants upstreamConstants, requested string) ([]contract
 	return items, warnings
 }
 
-func mapStats(source *upstreamStats, filters StatsFilters) contracts.StratzGetHeroStatsData {
-	result := contracts.StratzGetHeroStatsData{
+func mapStats(source *upstreamStats, filters StatsFilters) HeroStatsData {
+	result := HeroStatsData{
 		HeroID: source.HeroID, SampleSize: maxZero(source.MatchCount),
-		PickRate: rate(source.PickCount, source.PopulationMatchCount),
+		// Pick and ban rates are not derivable from the approved win aggregate.
+		PickRate: nil,
 		WinRate:  rate(source.WinCount, source.MatchCount),
-		BanRate:  rate(source.BanCount, source.PopulationMatchCount),
-		Roles:    []contracts.HeroBreakdown{}, Lanes: []contracts.HeroBreakdown{},
-		Matchups: []contracts.HeroRelation{}, Synergies: []contracts.HeroRelation{},
+		BanRate:  nil,
+		Roles:    []HeroBreakdown{}, Lanes: []HeroBreakdown{},
+		Matchups: []HeroRelation{}, Synergies: []HeroRelation{},
 	}
 	for _, value := range source.Roles {
 		result.Roles = append(result.Roles, mapBreakdown(value))
@@ -686,18 +1036,18 @@ func mapStats(source *upstreamStats, filters StatsFilters) contracts.StratzGetHe
 	return result
 }
 
-func mapBreakdown(source upstreamBreakdown) contracts.HeroBreakdown {
-	return contracts.HeroBreakdown{
+func mapBreakdown(source upstreamBreakdown) HeroBreakdown {
+	return HeroBreakdown{
 		Name: clean(source.Name, 64), SampleSize: maxZero(source.MatchCount),
-		PickRate: rate(source.PickCount, source.PopulationMatchCount), WinRate: rate(source.WinCount, source.MatchCount),
+		PickRate: nil, WinRate: rate(source.WinCount, source.MatchCount),
 	}
 }
 
-func mapRelations(source []upstreamRelation) []contracts.HeroRelation {
+func mapRelations(source []upstreamRelation) []HeroRelation {
 	if len(source) > 50 {
 		source = source[:50]
 	}
-	result := make([]contracts.HeroRelation, 0, len(source))
+	result := make([]HeroRelation, 0, len(source))
 	for _, relation := range source {
 		winRate := rate(relation.WinCount, relation.MatchCount)
 		var advantage *float64
@@ -705,7 +1055,7 @@ func mapRelations(source []upstreamRelation) []contracts.HeroRelation {
 			value := clamp(*winRate-*relation.ExpectedWinRate, -1, 1)
 			advantage = &value
 		}
-		result = append(result, contracts.HeroRelation{
+		result = append(result, HeroRelation{
 			HeroID: relation.HeroID, SampleSize: maxZero(relation.MatchCount), WinRate: winRate, Advantage: advantage,
 		})
 	}
@@ -939,11 +1289,184 @@ func maxZero(value int64) int64 {
 
 func validConstantType(value string) bool {
 	switch value {
-	case "heroes", "items", "abilities", "game_modes", "regions", "ranks", "all":
+	case "heroes", "items", "abilities", "game_modes", "regions", "ranks", "game_versions", "all":
 		return true
 	default:
 		return false
 	}
+}
+
+func validQueryConstantType(value string) bool {
+	switch value {
+	case "heroes", "items", "abilities", "game_modes", "regions", "game_versions":
+		return true
+	default:
+		return false
+	}
+}
+
+func requestMap(request any) (map[string]any, error) {
+	if request == nil {
+		return nil, errors.New("request is nil")
+	}
+	if value, ok := request.(map[string]any); ok {
+		return value, nil
+	}
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	var value map[string]any
+	if err := json.Unmarshal(data, &value); err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
+func anySlice(value any) ([]any, error) {
+	if value == nil {
+		return nil, errors.New("array is required")
+	}
+	if result, ok := value.([]any); ok {
+		return result, nil
+	}
+	data, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+	var result []any
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func stringSlice(value any) ([]string, error) {
+	values, err := anySlice(value)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		text, ok := value.(string)
+		if !ok || strings.TrimSpace(text) == "" {
+			return nil, errors.New("string value is required")
+		}
+		result = append(result, strings.TrimSpace(text))
+	}
+	return result, nil
+}
+
+func integerValue(value any, fallback int) int {
+	switch number := value.(type) {
+	case int:
+		return number
+	case int64:
+		return int(number)
+	case float64:
+		return int(number)
+	case json.Number:
+		parsed, _ := number.Int64()
+		return int(parsed)
+	}
+	return fallback
+}
+
+func requestTime(value any) (time.Time, error) {
+	switch parsed := value.(type) {
+	case time.Time:
+		return parsed.UTC(), nil
+	case *time.Time:
+		if parsed != nil {
+			return parsed.UTC(), nil
+		}
+	}
+	text, ok := value.(string)
+	if !ok {
+		return time.Time{}, errors.New("date-time must be a string")
+	}
+	parsed, err := time.Parse(time.RFC3339Nano, text)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return parsed.UTC(), nil
+}
+
+func rejectHeroDimensions(input map[string]any) error {
+	for _, key := range []string{"patch_id", "patch", "lane", "matchup", "matchups", "synergy", "synergies", "include_matchups", "include_synergies"} {
+		if _, ok := input[key]; ok {
+			return invalid("Unsupported hero statistics dimension", map[string]any{"field": key})
+		}
+	}
+	return nil
+}
+
+func heroMatches(hero upstreamHero, query string) bool {
+	if strings.Contains(strings.ToLower(hero.Name), query) || strings.Contains(strings.ToLower(canonicalHeroSlug(&hero)), query) {
+		return true
+	}
+	if hero.LocalizedName != nil && strings.Contains(strings.ToLower(*hero.LocalizedName), query) {
+		return true
+	}
+	return strings.Contains(strconv.FormatInt(hero.ID, 10), query)
+}
+
+func heroKey(id int64) string { return strconv.FormatInt(id, 10) }
+
+func selectConstants(constants upstreamConstants, kind string, selectors []string) ([]contracts.Constant, error) {
+	all, warnings := constantsForType(constants, kind)
+	_ = warnings
+	result := make([]contracts.Constant, 0, len(selectors))
+	for _, selector := range selectors {
+		needle := normalizedName(selector)
+		matches := make([]contracts.Constant, 0, 1)
+		for _, item := range all {
+			if item.ID == selector || normalizedName(item.Name) == needle || (item.LocalizedName != nil && normalizedName(*item.LocalizedName) == needle) {
+				matches = append(matches, item)
+			}
+		}
+		if len(matches) == 0 {
+			return nil, notFound("Constant was not found", map[string]any{"type": kind, "selector": selector})
+		}
+		if len(matches) > 1 {
+			return nil, invalid("Constant selector is ambiguous", map[string]any{"type": kind, "selector": selector})
+		}
+		result = append(result, matches[0])
+	}
+	return result, nil
+}
+
+func deterministicConstants(items []contracts.Constant) []contracts.Constant {
+	sort.SliceStable(items, func(i, j int) bool {
+		if items[i].Type != items[j].Type {
+			return items[i].Type < items[j].Type
+		}
+		if items[i].ID != items[j].ID {
+			return items[i].ID < items[j].ID
+		}
+		return items[i].Name < items[j].Name
+	})
+	return items
+}
+
+func uniqueStrings(values []string) []string {
+	seen := map[string]bool{}
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if !seen[value] {
+			seen[value] = true
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func cursorError(err error) *Error {
+	var cursorErr *pagination.Error
+	if errors.As(err, &cursorErr) {
+		return &Error{Code: cursorErr.Code, Message: strings.ToLower(cursorErr.Message[:1]) + cursorErr.Message[1:], Details: cursorErr.Details}
+	}
+	return invalid("The pagination cursor is invalid", nil)
 }
 
 func addOptional(request map[string]any, key string, value *string) {

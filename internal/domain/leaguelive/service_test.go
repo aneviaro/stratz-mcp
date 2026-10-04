@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -101,7 +102,11 @@ func TestLeagueNameSearchStopsAtFivePagesAndResumes(t *testing.T) {
 	}}
 	service := mustService(t, executor)
 	query, status, tier := "International", "completed", "PROFESSIONAL"
-	result, err := service.ListLeagues(context.Background(), LeagueFilters{Query: &query, Status: &status, Tier: &tier, Limit: 3})
+	firstRequest := map[string]any{
+		"mode": "search", "query": query, "status": status, "tier": tier,
+		"limit": 3, "fresh": false,
+	}
+	result, err := service.QueryLeagues(context.Background(), firstRequest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +115,10 @@ func TestLeagueNameSearchStopsAtFivePagesAndResumes(t *testing.T) {
 	}
 	cursor := *result.Data.Page.NextCursor
 	executor.calls = 0
-	resumed, err := service.ListLeagues(context.Background(), LeagueFilters{Query: &query, Status: &status, Tier: &tier, Limit: 3, Cursor: cursor})
+	resumed, err := service.QueryLeagues(context.Background(), map[string]any{
+		"mode": "search", "query": query, "status": status, "tier": tier,
+		"limit": 3, "cursor": cursor, "fresh": true,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,6 +162,82 @@ func TestLeagueMatchesUsesNativeFiltersAndContinuation(t *testing.T) {
 	}
 	if second.Data.Items[0].MatchID != "3" {
 		t.Fatalf("second = %#v", second.Data)
+	}
+}
+
+func TestQueryMatchesRoutesLeagueHistoryAndLiveBranches(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(request stratz.Request) (*stratz.Response, error) {
+		switch request.OperationName {
+		case "StratzListLeagueMatches":
+			return response(`{"league":{"id":42,"matches":[{"id":4,"radiantKills":[1,2],"direKills":[1],"parsedDateTime":1}]}}`), nil
+		case "StratzListLiveMatches":
+			return response(`{"live":{"matches":[{"id":5,"spectatorCount":500,"gameModeId":22,"players":[{"steamAccountId":1,"heroId":7,"isRadiant":true,"kills":3,"deaths":1,"assists":2}]}]}}`), nil
+		default:
+			t.Fatalf("operation = %q", request.OperationName)
+			return nil, nil
+		}
+	}}
+	service := mustService(t, executor)
+	league, err := service.QueryMatches(context.Background(), map[string]any{"mode": "league_history", "league_id": "42", "limit": 1})
+	if err != nil || league.Data.Mode != "league_history" {
+		t.Fatalf("league result = %#v, err = %v", league, err)
+	}
+	leagueItems, ok := league.Data.Items.([]contracts.MatchSummary)
+	if !ok || len(leagueItems) != 1 || leagueItems[0].RadiantScore == nil || *leagueItems[0].RadiantScore != 2 {
+		t.Fatalf("league items = %#v", league.Data.Items)
+	}
+	live, err := service.QueryMatches(context.Background(), map[string]any{"mode": "live", "player_id": "1", "minimum_spectators": 100, "limit": 1})
+	if err != nil || live.Data.Mode != "live" {
+		t.Fatalf("live result = %#v, err = %v", live, err)
+	}
+	liveItems, ok := live.Data.Items.([]contracts.LiveMatch)
+	if !ok || len(liveItems) != 1 || len(liveItems[0].Players) != 1 || liveItems[0].Players[0].Kills != 3 {
+		t.Fatalf("live items = %#v", live.Data.Items)
+	}
+	for _, detail := range []string{"standard", "players", "full"} {
+		if _, err := service.QueryMatches(context.Background(), map[string]any{
+			"mode": "league_history", "league_id": "42", "detail_level": detail,
+		}); err == nil {
+			t.Fatalf("%s league-history detail unexpectedly accepted", detail)
+		}
+	}
+}
+
+func TestQueryMatchesLeagueHistoryContinuationUsesReturnedCursor(t *testing.T) {
+	calls := 0
+	executor := &fixtureExecutor{execute: func(request stratz.Request) (*stratz.Response, error) {
+		calls++
+		if request.OperationName != "StratzListLeagueMatches" {
+			t.Fatalf("operation = %q", request.OperationName)
+		}
+		variables := request.Variables.(map[string]any)
+		if variables["id"] != int64(42) {
+			t.Fatalf("variables = %#v", variables)
+		}
+		native := variables["request"].(map[string]any)
+		if native["skip"] != int64(calls-1) || native["take"] != 1 {
+			t.Fatalf("native request = %#v", native)
+		}
+		return response(fmt.Sprintf(`{"league":{"id":42,"matches":[{"id":%d}]}}`, calls)), nil
+	}}
+	service := mustService(t, executor)
+	request := map[string]any{"mode": "league_history", "league_id": "42", "limit": 1}
+	first, err := service.QueryMatches(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(first.Data.Items.([]contracts.MatchSummary)) != 1 || first.Data.Page == nil || first.Data.Page.NextCursor == nil {
+		t.Fatalf("first result = %#v", first.Data)
+	}
+
+	request["cursor"] = *first.Data.Page.NextCursor
+	second, err := service.QueryMatches(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	items, ok := second.Data.Items.([]contracts.MatchSummary)
+	if !ok || len(items) != 1 || items[0].MatchID != "2" {
+		t.Fatalf("second result = %#v", second.Data)
 	}
 }
 
@@ -297,6 +381,43 @@ func TestLiveNewestSortAndUnsupportedRegionContract(t *testing.T) {
 	}
 	if err := contracts.ValidateInput("stratz_list_live_matches", map[string]any{"region_id": json.Number("1")}); err == nil {
 		t.Fatal("region_id unexpectedly accepted by live-match contract")
+	}
+}
+
+func TestQueryLeaguesExactAndBoundedSearch(t *testing.T) {
+	calls := 0
+	executor := &fixtureExecutor{execute: func(request stratz.Request) (*stratz.Response, error) {
+		calls++
+		input := request.Variables.(map[string]any)["request"].(map[string]any)
+		if calls == 1 {
+			if !reflect.DeepEqual(input["leagueIds"], []int64{1, 2}) {
+				t.Fatalf("exact native IDs = %#v", input["leagueIds"])
+			}
+			return response(`{"leagues":[{"id":2,"name":"two"},{"id":1,"name":"one"}]}`), nil
+		}
+		if input["isEnded"] != true || input["tiers"].([]string)[0] != "PROFESSIONAL" {
+			t.Fatalf("search native filters = %#v", input)
+		}
+		return response(`{"leagues":[{"id":9,"name":"Target League"}]}`), nil
+	}}
+	service := mustService(t, executor)
+	exact, err := service.QueryLeagues(context.Background(), map[string]any{
+		"mode": "exact", "league_ids": []any{"1", "2", "1"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := []string{exact.Data.Items[0].LeagueID, exact.Data.Items[1].LeagueID, exact.Data.Items[2].LeagueID}; !reflect.DeepEqual(got, []string{"1", "2", "1"}) {
+		t.Fatalf("exact items = %#v", got)
+	}
+	search, err := service.QueryLeagues(context.Background(), map[string]any{
+		"mode": "search", "query": "target", "status": "completed", "tier": "PROFESSIONAL", "limit": 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(search.Data.Items) != 1 || search.Data.Items[0].LeagueID != "9" || search.Data.Page == nil || search.Data.Page.HasMore {
+		t.Fatalf("search result = %#v", search.Data)
 	}
 }
 

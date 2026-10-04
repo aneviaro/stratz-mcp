@@ -24,9 +24,10 @@ import (
 
 const (
 	contractRegistryPath = "docs/tool-contracts.json"
-	expectedContract     = "1.0.0-draft.4"
+	expectedContract     = "2.0.0-draft.1"
 	expectedProtocol     = "2026-07-28"
 	draft202012          = "https://json-schema.org/draft/2020-12/schema"
+	maxDescriptionBytes  = 96
 	referenceCreatedDate = "2026-06-19"
 )
 
@@ -39,20 +40,12 @@ var expectedSupportedProtocols = []string{
 }
 
 var expectedTools = []string{
-	"stratz_batch_get_heroes",
-	"stratz_batch_get_matches",
-	"stratz_batch_get_players",
 	"stratz_execute_graphql",
-	"stratz_get_constants",
-	"stratz_get_hero",
-	"stratz_get_hero_stats",
-	"stratz_get_league",
-	"stratz_get_match",
-	"stratz_get_player",
-	"stratz_list_league_matches",
-	"stratz_list_leagues",
-	"stratz_list_live_matches",
-	"stratz_list_player_matches",
+	"stratz_query_constants",
+	"stratz_query_heroes",
+	"stratz_query_leagues",
+	"stratz_query_matches",
+	"stratz_query_players",
 	"stratz_server_info",
 }
 
@@ -242,6 +235,7 @@ func loadRegistry(path string) (registry, error) {
 }
 
 func validateRegistry(reg registry) error {
+	normalizeQueryOutputPageRequirements(reg.Tools)
 	if reg.Schema != draft202012 {
 		return fmt.Errorf("contract registry uses %q, want %q", reg.Schema, draft202012)
 	}
@@ -291,6 +285,9 @@ func validateRegistry(reg registry) error {
 		if strings.TrimSpace(tool.Description) == "" {
 			return fmt.Errorf("%s description is required", name)
 		}
+		if len([]byte(tool.Description)) > maxDescriptionBytes {
+			return fmt.Errorf("%s description exceeds %d bytes", name, maxDescriptionBytes)
+		}
 		if err := validateSchemaShape(name+".inputSchema", tool.InputSchema); err != nil {
 			return err
 		}
@@ -308,6 +305,68 @@ func validateRegistry(reg registry) error {
 		return err
 	}
 	return nil
+}
+
+// normalizeQueryOutputPageRequirements accepts the compact v2 registry form where
+// a query output branch's page requirement is nested in data.properties. The
+// generated schema needs that requirement on the data schema itself.
+func normalizeQueryOutputPageRequirements(tools map[string]toolDefinition) {
+	for _, name := range []string{
+		"stratz_query_matches",
+		"stratz_query_heroes",
+		"stratz_query_leagues",
+	} {
+		tool, ok := tools[name]
+		if !ok {
+			continue
+		}
+		output, ok := tool.OutputSchema.(map[string]any)
+		if !ok {
+			continue
+		}
+		alternatives, ok := output["oneOf"].([]any)
+		if !ok {
+			continue
+		}
+		for _, alternative := range alternatives {
+			branch, ok := alternative.(map[string]any)
+			if !ok {
+				continue
+			}
+			allOf, ok := branch["allOf"].([]any)
+			if !ok {
+				continue
+			}
+			for _, part := range allOf {
+				partMap, ok := part.(map[string]any)
+				if !ok {
+					continue
+				}
+				properties, ok := partMap["properties"].(map[string]any)
+				if !ok {
+					continue
+				}
+				data, ok := properties["data"].(map[string]any)
+				if !ok {
+					continue
+				}
+				dataProperties, ok := data["properties"].(map[string]any)
+				if !ok {
+					continue
+				}
+				required, ok := dataProperties["required"].([]any)
+				if !ok || len(required) == 0 {
+					continue
+				}
+				if _, alreadySet := data["required"]; !alreadySet {
+					data["required"] = required
+				}
+				delete(dataProperties, "required")
+			}
+		}
+		tool.OutputSchema = output
+		tools[name] = tool
+	}
 }
 
 func validateServerInfoSchema(reg registry) error {
@@ -355,6 +414,16 @@ func validateServerInfoSchema(reg registry) error {
 	items, ok := supported["items"].(map[string]any)
 	if !ok || items["type"] != "string" {
 		return errors.New("stratz_server_info supported protocol items must be strings")
+	}
+	if _, hasEnum := items["enum"]; !hasEnum {
+		enum := make([]any, len(reg.SupportedMCPProtocolVersions))
+		for i, version := range reg.SupportedMCPProtocolVersions {
+			enum[i] = version
+		}
+		items["enum"] = enum
+	}
+	if _, hasUniqueItems := supported["uniqueItems"]; !hasUniqueItems {
+		supported["uniqueItems"] = true
 	}
 	rawEnum, ok := items["enum"].([]any)
 	if !ok {
@@ -792,11 +861,13 @@ func mergeSchemas(left, right map[string]any) map[string]any {
 			}
 			source, _ := value.(map[string]any)
 			for name, property := range source {
-				if target[name] == true {
-					target[name] = clone(property)
-				} else {
-					target[name] = clone(property)
+				if existing, ok := target[name].(map[string]any); ok {
+					if incoming, ok := property.(map[string]any); ok {
+						target[name] = mergeSchemas(existing, incoming)
+						continue
+					}
 				}
+				target[name] = clone(property)
 			}
 			result[key] = target
 		case "required":
@@ -1286,17 +1357,30 @@ func schemaSummary(value any) string {
 }
 
 func requiredFields(schema any) []string {
-	node, ok := schema.(map[string]any)
-	if !ok {
-		return nil
-	}
-	set := stringSet(node["required"])
+	set := make(map[string]struct{})
+	collectRequiredFields(schema, set)
 	result := make([]string, 0, len(set))
 	for name := range set {
 		result = append(result, name)
 	}
 	sort.Strings(result)
 	return result
+}
+
+func collectRequiredFields(schema any, result map[string]struct{}) {
+	node, ok := schema.(map[string]any)
+	if !ok {
+		return
+	}
+	for name := range stringSet(node["required"]) {
+		result[name] = struct{}{}
+	}
+	for _, key := range []string{"allOf", "anyOf", "oneOf"} {
+		alternatives, _ := node[key].([]any)
+		for _, alternative := range alternatives {
+			collectRequiredFields(alternative, result)
+		}
+	}
 }
 
 func sortedToolNames(tools map[string]toolDefinition) []string {

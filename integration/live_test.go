@@ -179,81 +179,292 @@ func TestEveryPublicToolAgainstLiveSTRATZ(t *testing.T) {
 	probePluralMatchEndpoint(ctx, t, recorder, fixture.MatchIDs)
 
 	t.Run("server_info", func(t *testing.T) {
-		call(t, "stratz_server_info", map[string]any{})
+		output := call(t, "stratz_server_info", map[string]any{})
+		data := objectField(t, output, "data")
+		if data["mcp_protocol_version"] != contracts.MCPProtocolVersion {
+			t.Fatalf("server info protocol version = %#v, want %s", data["mcp_protocol_version"], contracts.MCPProtocolVersion)
+		}
+		if data["cache_status"] != "disabled" {
+			t.Fatalf("server info cache status = %#v, want disabled for live coverage", data["cache_status"])
+		}
 	})
 	t.Run("raw_graphql", func(t *testing.T) {
-		call(t, "stratz_execute_graphql", map[string]any{
+		output := call(t, "stratz_execute_graphql", map[string]any{
 			"query":          `query IntegrationRaw($id: Long!) { match(id: $id) { id } }`,
 			"operation_name": "IntegrationRaw",
 			"variables":      map[string]any{"id": mustInt64(t, fixture.MatchID)},
 		})
+		graphql := objectField(t, objectField(t, output, "data"), "graphql")
+		if len(arrayField(t, graphql, "errors")) != 0 {
+			t.Fatalf("raw GraphQL returned errors: %#v", graphql["errors"])
+		}
+		match := objectField(t, objectField(t, graphql, "data"), "match")
+		if positiveIntField(match, "id") != mustInt64(t, fixture.MatchID) {
+			t.Fatalf("raw GraphQL match id = %#v, want %s", match["id"], fixture.MatchID)
+		}
 	})
 	t.Run("players", func(t *testing.T) {
-		call(t, "stratz_get_player", map[string]any{"player_id": fixture.PlayerID, "detail_level": "summary"})
-		call(t, "stratz_batch_get_players", map[string]any{"player_ids": []any{fixture.PlayerID}, "detail_level": "summary"})
-		call(t, "stratz_list_player_matches", map[string]any{"player_id": fixture.PlayerID, "limit": 1})
+		defaultOutput := call(t, "stratz_query_players", map[string]any{
+			"mode": "exact", "player_ids": []any{fixture.PlayerID},
+		})
+		defaultItems := queryItems(t, defaultOutput, "exact")
+		if len(defaultItems) != 1 {
+			t.Fatalf("default player item count = %d, want 1", len(defaultItems))
+		}
+		defaultPlayer := objectValue(t, defaultItems[0])
+		if defaultPlayer["account_id"] != fixture.PlayerID {
+			t.Fatalf("default player account_id = %#v, want %s", defaultPlayer["account_id"], fixture.PlayerID)
+		}
+		if _, present := defaultPlayer["statistics"]; present {
+			t.Fatalf("default player unexpectedly contains statistics: %#v", defaultPlayer)
+		}
+
+		statisticsOutput := call(t, "stratz_query_players", map[string]any{
+			"mode": "exact", "player_ids": []any{fixture.PlayerID}, "include_profile_statistics": true,
+		})
+		statisticsItems := queryItems(t, statisticsOutput, "exact")
+		if len(statisticsItems) != 1 {
+			t.Fatalf("statistics player item count = %d, want 1", len(statisticsItems))
+		}
+		statistics := objectValue(t, statisticsItems[0])
+		profileStatistics := objectField(t, statistics, "statistics")
+		if positiveIntField(profileStatistics, "match_count") <= 0 || positiveIntField(profileStatistics, "win_count") <= 0 {
+			t.Fatalf("player statistics are not representative: %#v", profileStatistics)
+		}
 	})
 	t.Run("matches", func(t *testing.T) {
-		for _, detail := range []string{"summary", "standard", "full"} {
-			output := call(t, "stratz_get_match", map[string]any{"match_id": fixture.MatchID, "detail_level": detail})
-			match := objectField(t, output, "data")
-			if positiveIntField(match, "radiant_score")+positiveIntField(match, "dire_score") == 0 {
-				t.Fatalf("%s match has no observed score: %#v", detail, match)
-			}
-			if detail != "summary" && len(arrayField(t, match, "objectives")) == 0 {
-				t.Fatalf("%s match has no objectives: %#v", detail, match)
-			}
-			if detail == "full" {
-				if len(arrayField(t, match, "timeline")) == 0 {
-					t.Fatalf("full match has no timeline: %#v", match)
-				}
-				if len(arrayField(t, output, "warnings")) == 0 {
-					t.Fatalf("full match did not report unavailable detail fields: %#v", output)
-				}
-			}
-		}
-		for _, detail := range []string{"summary", "standard", "full"} {
-			t.Run("batch_"+detail, func(t *testing.T) {
-				matchIDs := []any{fixture.MatchID, fixture.MatchID}
-				output := call(t, "stratz_batch_get_matches", map[string]any{
-					"match_ids": matchIDs, "detail_level": detail,
+		for _, test := range []struct {
+			detail     string
+			objectives bool
+			timeline   bool
+		}{
+			{detail: "summary"},
+			{detail: "players"},
+			{detail: "standard", objectives: true},
+			{detail: "full", objectives: true, timeline: true},
+		} {
+			t.Run(test.detail, func(t *testing.T) {
+				output := call(t, "stratz_query_matches", map[string]any{
+					"mode": "exact", "match_ids": []any{fixture.MatchID}, "detail_level": test.detail,
 				})
-				items := arrayField(t, objectField(t, output, "data"), "items")
-				if len(items) != 2 {
-					t.Fatalf("%s batch item count = %d, want 2", detail, len(items))
+				items := queryItems(t, output, "exact")
+				if len(items) != 1 {
+					t.Fatalf("%s exact item count = %d, want 1", test.detail, len(items))
 				}
-				first := objectValue(t, items[0])
-				second := objectValue(t, items[1])
-				if first["match_id"] != second["match_id"] {
-					t.Fatalf("%s batch did not reconstruct duplicate input: %#v", detail, items)
+				match := objectValue(t, items[0])
+				if match["match_id"] != fixture.MatchID {
+					t.Fatalf("%s match_id = %#v, want %s", test.detail, match["match_id"], fixture.MatchID)
+				}
+				assertMatchScoreAndPlayers(t, match, test.detail)
+				if players, ok := match["players"].([]any); !ok || len(players) == 0 {
+					t.Fatalf("%s match has no player rows: %#v", test.detail, match)
+				}
+				if test.objectives && len(arrayField(t, match, "objectives")) == 0 {
+					t.Fatalf("%s match has no objectives: %#v", test.detail, match)
+				}
+				if test.timeline && len(arrayField(t, match, "timeline")) == 0 {
+					t.Fatalf("%s match has no timeline: %#v", test.detail, match)
 				}
 			})
 		}
 	})
 	t.Run("heroes_and_constants", func(t *testing.T) {
-		constants := call(t, "stratz_get_constants", map[string]any{"type": "heroes"})
-		if len(arrayField(t, objectField(t, constants, "data"), "items")) == 0 {
-			t.Fatal("hero constants returned no items")
+		single := call(t, "stratz_query_constants", map[string]any{
+			"mode": "types", "types": []any{"heroes"},
+		})
+		assertConstantItems(t, single, "types", "heroes")
+
+		multi := call(t, "stratz_query_constants", map[string]any{
+			"mode": "types", "types": []any{"heroes", "items"},
+		})
+		multiItems := queryItems(t, multi, "types")
+		if len(multiItems) == 0 {
+			t.Fatal("multi-type constants returned no items")
 		}
-		call(t, "stratz_get_hero", map[string]any{"hero": fixture.HeroID, "detail_level": "summary"})
-		call(t, "stratz_batch_get_heroes", map[string]any{"heroes": []any{fixture.HeroID}, "detail_level": "summary"})
+		types := map[string]bool{}
+		for _, value := range multiItems {
+			item := objectValue(t, value)
+			types[stringField(t, item, "type")] = true
+		}
+		if !types["heroes"] || !types["items"] {
+			t.Fatalf("multi-type constants did not preserve type qualification: %v", types)
+		}
+
+		typed := call(t, "stratz_query_constants", map[string]any{
+			"mode": "typed_selectors",
+			"selectors": []any{map[string]any{
+				"type": "heroes", "ids": []any{strconv.FormatInt(fixture.HeroID, 10)},
+			}},
+		})
+		typedItems := queryItems(t, typed, "typed_selectors")
+		if len(typedItems) != 1 {
+			t.Fatalf("typed hero selector item count = %d, want 1", len(typedItems))
+		}
+		typedItem := objectValue(t, typedItems[0])
+		if typedItem["type"] != "heroes" || typedItem["id"] != strconv.FormatInt(fixture.HeroID, 10) {
+			t.Fatalf("typed hero selector item = %#v", typedItem)
+		}
+
+		defaultHero := call(t, "stratz_query_heroes", map[string]any{
+			"mode": "exact", "heroes": []any{fixture.HeroID},
+		})
+		defaultHeroItems := queryItems(t, defaultHero, "exact")
+		if len(defaultHeroItems) != 1 {
+			t.Fatalf("default hero item count = %d, want 1", len(defaultHeroItems))
+		}
+		hero := objectValue(t, defaultHeroItems[0])
+		if _, present := hero["statistics"]; present {
+			t.Fatalf("default hero unexpectedly contains statistics: %#v", hero)
+		}
+		if positiveIntField(hero, "hero_id") != fixture.HeroID || stringField(t, hero, "slug") == "" {
+			t.Fatalf("default hero has incomplete identity: %#v", hero)
+		}
+
 		for _, days := range []int{7, 60, 240} {
-			output := call(t, "stratz_get_hero_stats", map[string]any{
-				"hero": fixture.HeroID,
-				"from": fixture.HeroStatsTo.AddDate(0, 0, -days).Format(time.RFC3339),
-				"to":   fixture.HeroStatsTo.Format(time.RFC3339),
+			t.Run(fmt.Sprintf("hero_statistics_%dd", days), func(t *testing.T) {
+				output := call(t, "stratz_query_heroes", map[string]any{
+					"mode": "exact", "heroes": []any{fixture.HeroID}, "include_statistics": true,
+					"from": fixture.HeroStatsTo.AddDate(0, 0, -days).Format(time.RFC3339),
+					"to":   fixture.HeroStatsTo.Format(time.RFC3339),
+				})
+				items := queryItems(t, output, "exact")
+				if len(items) != 1 {
+					t.Fatalf("%d-day hero item count = %d, want 1", days, len(items))
+				}
+				statistics := objectField(t, objectValue(t, items[0]), "statistics")
+				if positiveIntField(statistics, "sample_size") <= 0 {
+					t.Fatalf("%d-day hero statistics have no observations: %#v", days, statistics)
+				}
+				winRate, ok := statistics["win_rate"].(float64)
+				if !ok || winRate <= 0 || winRate > 1 {
+					t.Fatalf("%d-day hero win_rate = %#v, want representative value in (0,1]", days, statistics["win_rate"])
+				}
 			})
-			stats := objectField(t, output, "data")
-			if positiveIntField(stats, "sample_size") == 0 || stats["win_rate"] == nil {
-				t.Fatalf("%d-day hero statistics lack observed wins: %#v", days, stats)
-			}
+		}
+
+		search := call(t, "stratz_query_heroes", map[string]any{
+			"mode": "search", "query": "a", "limit": 1,
+		})
+		searchItems := queryItems(t, search, "search")
+		if len(searchItems) != 1 {
+			t.Fatalf("hero search item count = %d, want 1", len(searchItems))
+		}
+		if stringField(t, objectValue(t, searchItems[0]), "slug") == "" {
+			t.Fatal("hero search returned an item without a slug")
+		}
+		cursor := requirePageCursor(t, search, "hero search")
+		searchNext := call(t, "stratz_query_heroes", map[string]any{
+			"mode": "search", "query": "a", "limit": 1, "cursor": cursor,
+		})
+		if len(queryItems(t, searchNext, "search")) == 0 {
+			t.Fatal("hero search continuation returned no item")
 		}
 	})
-	t.Run("leagues_and_live", func(t *testing.T) {
-		call(t, "stratz_list_leagues", map[string]any{"limit": 1})
-		call(t, "stratz_get_league", map[string]any{"league_id": fixture.LeagueID, "detail_level": "summary"})
-		call(t, "stratz_list_league_matches", map[string]any{"league_id": fixture.LeagueID, "limit": 1})
-		call(t, "stratz_list_live_matches", map[string]any{"limit": 1, "sort": "highest_profile"})
+	t.Run("leagues", func(t *testing.T) {
+		exact := call(t, "stratz_query_leagues", map[string]any{
+			"mode": "exact", "league_ids": []any{fixture.LeagueID},
+		})
+		exactItems := queryItems(t, exact, "exact")
+		if len(exactItems) != 1 {
+			t.Fatalf("exact league item count = %d, want 1", len(exactItems))
+		}
+		league := objectValue(t, exactItems[0])
+		if league["league_id"] != fixture.LeagueID || stringField(t, league, "name") == "" {
+			t.Fatalf("exact league has incomplete identity: %#v", league)
+		}
+
+		search := call(t, "stratz_query_leagues", map[string]any{
+			"mode": "search", "limit": 1,
+		})
+		searchItems := queryItems(t, search, "search")
+		if len(searchItems) != 1 {
+			t.Fatalf("league search item count = %d, want 1", len(searchItems))
+		}
+		if stringField(t, objectValue(t, searchItems[0]), "name") == "" {
+			t.Fatal("league search returned an item without a name")
+		}
+		cursor := requirePageCursor(t, search, "league search")
+		searchNext := call(t, "stratz_query_leagues", map[string]any{
+			"mode": "search", "limit": 1, "cursor": cursor,
+		})
+		if len(queryItems(t, searchNext, "search")) == 0 {
+			t.Fatal("league search continuation returned no item")
+		}
+	})
+	t.Run("match_history_and_live", func(t *testing.T) {
+		for _, detail := range []string{"summary", "players"} {
+			t.Run("player_history_"+detail, func(t *testing.T) {
+				arguments := map[string]any{
+					"mode": "player_history", "player_id": fixture.PlayerID, "limit": 1,
+					"detail_level": detail,
+				}
+				output := call(t, "stratz_query_matches", arguments)
+				items := queryItems(t, output, "player_history")
+				if len(items) == 0 {
+					t.Fatal("player history returned no matches")
+				}
+				match := objectValue(t, items[0])
+				assertMatchScoreAndPlayers(t, match, "player_history_"+detail)
+				if detail == "players" {
+					player := objectField(t, match, "player")
+					if player["account_id"] != fixture.PlayerID {
+						t.Fatalf("player history row account_id = %#v, want %s", player["account_id"], fixture.PlayerID)
+					}
+				}
+				cursor := requirePageCursor(t, output, "player history "+detail)
+				continuation := call(t, "stratz_query_matches", map[string]any{
+					"mode": "player_history", "player_id": fixture.PlayerID, "limit": 1,
+					"detail_level": detail, "cursor": cursor,
+				})
+				queryItems(t, continuation, "player_history")
+				pageObject(t, continuation, "player history continuation "+detail)
+			})
+		}
+
+		leagueHistory := call(t, "stratz_query_matches", map[string]any{
+			"mode": "league_history", "league_id": fixture.LeagueID, "limit": 1,
+			"detail_level": "summary",
+		})
+		leagueItems := queryItems(t, leagueHistory, "league_history")
+		if len(leagueItems) == 0 {
+			t.Fatal("league history returned no matches")
+		}
+		assertMatchScoreAndPlayers(t, objectValue(t, leagueItems[0]), "league_history")
+		leagueCursor := requirePageCursor(t, leagueHistory, "league history")
+		leagueContinuation := call(t, "stratz_query_matches", map[string]any{
+			"mode": "league_history", "league_id": fixture.LeagueID, "limit": 1,
+			"detail_level": "summary", "cursor": leagueCursor,
+		})
+		queryItems(t, leagueContinuation, "league_history")
+		pageObject(t, leagueContinuation, "league history continuation")
+		live := call(t, "stratz_query_matches", map[string]any{
+			"mode": "live", "limit": 1, "sort": "highest_profile",
+		})
+		liveItems := queryItems(t, live, "live")
+		for _, value := range liveItems {
+			match := objectValue(t, value)
+			if stringField(t, match, "match_id") == "" {
+				t.Fatalf("live match has no match_id: %#v", match)
+			}
+			players, ok := match["players"].([]any)
+			if !ok {
+				t.Fatalf("live match players type = %T, want array", match["players"])
+			}
+			for _, playerValue := range players {
+				player := objectValue(t, playerValue)
+				team := stringField(t, player, "team")
+				if team != "radiant" && team != "dire" {
+					t.Fatalf("live player team = %q", team)
+				}
+			}
+		}
+		if page := pageObject(t, live, "live matches"); page["has_more"] == true {
+			cursor, _ := page["next_cursor"].(string)
+			continuation := call(t, "stratz_query_matches", map[string]any{
+				"mode": "live", "limit": 1, "sort": "highest_profile", "cursor": cursor,
+			})
+			queryItems(t, continuation, "live")
+		}
 	})
 
 	wantOperations := []string{
@@ -262,20 +473,17 @@ func TestEveryPublicToolAgainstLiveSTRATZ(t *testing.T) {
 		"StratzGetHeroStatsDay",
 		"StratzGetHeroStatsMonth",
 		"StratzGetHeroStatsWeek",
-		"StratzGetLeague",
 		"StratzGetMatchBatchFull",
 		"StratzGetMatchBatchStandard",
 		"StratzGetMatchBatchSummary",
-		"StratzGetMatchFull",
-		"StratzGetMatchStandard",
-		"StratzGetMatchSummary",
 		"StratzGetMatchesSummary",
-		"StratzGetPlayer",
 		"StratzGetPlayers",
+		"StratzGetPlayersLean",
 		"StratzListLeagueMatches",
 		"StratzListLeagues",
 		"StratzListLiveMatches",
 		"StratzListPlayerMatches",
+		"StratzListPlayerMatchesWithPlayers",
 		"StratzMCPHealth",
 	}
 	if got := recorder.operations(); !reflect.DeepEqual(got, wantOperations) {
@@ -564,6 +772,86 @@ func positiveIntField(object map[string]any, field string) int64 {
 	default:
 		return 0
 	}
+}
+
+func queryItems(t *testing.T, output map[string]any, mode string) []any {
+	t.Helper()
+	data := objectField(t, output, "data")
+	if got := data["mode"]; got != mode {
+		t.Fatalf("query mode = %#v, want %s", got, mode)
+	}
+	return arrayField(t, data, "items")
+}
+
+func pageObject(t *testing.T, output map[string]any, label string) map[string]any {
+	t.Helper()
+	data := objectField(t, output, "data")
+	page := objectField(t, data, "page")
+	hasMore, ok := page["has_more"].(bool)
+	if !ok {
+		t.Fatalf("%s has_more type = %T, want bool", label, page["has_more"])
+	}
+	if cursor, present := page["next_cursor"]; present && cursor != nil {
+		if _, ok := cursor.(string); !ok {
+			t.Fatalf("%s next_cursor type = %T, want string or null", label, cursor)
+		}
+	}
+	if hasMore {
+		cursor, _ := page["next_cursor"].(string)
+		if cursor == "" {
+			t.Fatalf("%s advertises more results without a cursor: %#v", label, page)
+		}
+	}
+	return page
+}
+
+func requirePageCursor(t *testing.T, output map[string]any, label string) string {
+	t.Helper()
+	page := pageObject(t, output, label)
+	if page["has_more"] != true {
+		t.Fatalf("%s has_more = %#v, want true for pagination coverage", label, page["has_more"])
+	}
+	cursor, ok := page["next_cursor"].(string)
+	if !ok || cursor == "" {
+		t.Fatalf("%s next_cursor = %#v, want non-empty string", label, page["next_cursor"])
+	}
+	return cursor
+}
+
+func assertConstantItems(t *testing.T, output map[string]any, mode string, wantType string) {
+	t.Helper()
+	items := queryItems(t, output, mode)
+	if len(items) == 0 {
+		t.Fatalf("%s constants returned no items", mode)
+	}
+	for _, value := range items {
+		item := objectValue(t, value)
+		if got := stringField(t, item, "type"); got != wantType {
+			t.Fatalf("constant type = %q, want %s", got, wantType)
+		}
+	}
+}
+
+func assertMatchScoreAndPlayers(t *testing.T, match map[string]any, label string) {
+	t.Helper()
+	if positiveIntField(match, "radiant_score")+positiveIntField(match, "dire_score") <= 0 {
+		t.Fatalf("%s match has no observed score: %#v", label, match)
+	}
+	if players, present := match["players"]; present {
+		rows, ok := players.([]any)
+		if !ok || len(rows) == 0 {
+			t.Fatalf("%s match has no player rows: %#v", label, match)
+		}
+	}
+}
+
+func stringField(t *testing.T, object map[string]any, field string) string {
+	t.Helper()
+	value, ok := object[field].(string)
+	if !ok {
+		t.Fatalf("%s type = %T, want string", field, object[field])
+	}
+	return value
 }
 
 func execute(

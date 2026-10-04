@@ -20,14 +20,14 @@ Use this skill when the user asks for this workflow. User-supplied parameters ar
 
 ## Approved tools
 
-- `stratz_get_match`
-- `stratz_get_player`
+- `stratz_query_matches`
+- `stratz_query_players`
 - `stratz_execute_graphql`
 
 ## Workflow
 
-1. Fetch the match at the requested detail level and freshness.
-2. If a focus player is supplied, normalize the identifier and connect that player to the match record.
+1. Query the match with stratz_query_matches in exact mode using match_ids, the requested detail_level, and fresh when requested.
+2. If a focus player is supplied, query stratz_query_players in exact mode to normalize the identifier and connect that player to the match record; do not request profile statistics unless the analysis consumes them.
 3. Analyze teams, objectives, economy shifts, fights, turning points, and player decisions only where returned data supports them.
 4. Report whole-match findings first, then focus-player observations when requested.
 

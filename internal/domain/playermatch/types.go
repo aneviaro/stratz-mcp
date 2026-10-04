@@ -36,6 +36,117 @@ type Result[T any] struct {
 	Warnings   []string
 }
 
+// PlayerQueryData is the normalized result of the exact player query.
+type PlayerQueryData struct {
+	Mode  string
+	Items []contracts.Player
+}
+
+// MatchQueryData is the tagged match-query result. Items is intentionally an
+// interface because each mode owns a distinct item shape.
+type MatchQueryData struct {
+	Mode  string          `json:"mode"`
+	Items any             `json:"items"`
+	Page  *contracts.Page `json:"page,omitempty"`
+}
+
+// The following legacy match shapes remain domain-local while the v2 contract
+// exposes the consolidated query types.
+type PageInfo struct {
+	NextCursor *string
+	HasMore    bool
+}
+
+type PlayerMatchesData struct {
+	Items []PlayerMatchSummary
+	Page  PageInfo
+}
+
+type PlayerMatchSummary struct {
+	MatchID         contracts.MatchID          `json:"match_id"`
+	StartedAt       contracts.NullableDateTime `json:"started_at"`
+	DurationSeconds *int64                     `json:"duration_seconds"`
+	RadiantWin      *bool                      `json:"radiant_win"`
+	RadiantScore    *int64                     `json:"radiant_score"`
+	DireScore       *int64                     `json:"dire_score"`
+	GameModeID      *int64                     `json:"game_mode_id"`
+	LobbyTypeID     *int64                     `json:"lobby_type_id"`
+	RegionID        *int64                     `json:"region_id"`
+	LeagueID        *string                    `json:"league_id"`
+	PatchID         *string                    `json:"patch_id"`
+	ParseStatus     string                     `json:"parse_status"`
+	Player          *MatchPlayer               `json:"player,omitempty"`
+}
+
+type MatchPlayer struct {
+	AccountID *string  `json:"account_id"`
+	HeroID    int64    `json:"hero_id"`
+	HeroName  *string  `json:"-"`
+	Team      string   `json:"team"`
+	Position  int64    `json:"position"`
+	Kills     int64    `json:"kills"`
+	Deaths    int64    `json:"deaths"`
+	Assists   int64    `json:"assists"`
+	Networth  *int64   `json:"networth"`
+	Level     *int64   `json:"level"`
+	Imp       *float64 `json:"-"`
+	Won       *bool    `json:"won"`
+}
+
+type Match struct {
+	MatchID         contracts.MatchID          `json:"match_id"`
+	StartedAt       contracts.NullableDateTime `json:"started_at"`
+	DurationSeconds *int64                     `json:"duration_seconds"`
+	RadiantWin      *bool                      `json:"radiant_win"`
+	RadiantScore    *int64                     `json:"radiant_score"`
+	DireScore       *int64                     `json:"dire_score"`
+	GameModeID      *int64                     `json:"game_mode_id"`
+	LobbyTypeID     *int64                     `json:"lobby_type_id"`
+	RegionID        *int64                     `json:"region_id"`
+	LeagueID        *string                    `json:"league_id"`
+	PatchID         *string                    `json:"patch_id"`
+	ParseStatus     string                     `json:"parse_status"`
+	Players         []MatchPlayer              `json:"players"`
+	Objectives      []TimelineEvent            `json:"objectives,omitempty"`
+	Timeline        []TimelineEvent            `json:"timeline,omitempty"`
+	Fights          []Fight                    `json:"-"`
+	Economy         []EconomyPoint             `json:"-"`
+}
+
+type TimelineEvent struct {
+	TimeSeconds int64   `json:"time_seconds"`
+	Type        string  `json:"type"`
+	Team        *string `json:"team"`
+	AccountID   *string `json:"account_id"`
+	HeroID      *int64  `json:"hero_id"`
+	HeroName    *string `json:"-"`
+	Value       any     `json:"value"`
+}
+
+type Fight struct {
+	StartTimeSeconds     int64
+	EndTimeSeconds       int64
+	RadiantKills         int64
+	DireKills            int64
+	RadiantNetworthDelta *int64
+	Participants         []struct {
+		AccountID *string `json:"account_id"`
+		Deaths    int64   `json:"deaths"`
+		HeroID    int64   `json:"hero_id"`
+		HeroName  *string `json:"hero_name"`
+		Kills     int64   `json:"kills"`
+		Team      string  `json:"team"`
+	}
+}
+
+type EconomyPoint struct {
+	TimeSeconds       int64
+	RadiantNetworth   *int64
+	DireNetworth      *int64
+	RadiantExperience *int64
+	DireExperience    *int64
+}
+
 type upstreamPlayer struct {
 	SteamAccountID int64 `json:"steamAccountId"`
 	SteamAccount   *struct {

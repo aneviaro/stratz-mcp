@@ -3,6 +3,7 @@ package contractgen
 import (
 	"bytes"
 	"encoding/json"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -20,8 +21,27 @@ func TestBuildGeneratesCompleteDeterministicContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(first) != 78 {
-		t.Fatalf("artifact count = %d, want 78", len(first))
+	catalog := readTestRegistry(t)
+	wantArtifactCount := len(catalog.Tools)*5 + 3
+	if len(first) != wantArtifactCount {
+		t.Fatalf("artifact count = %d, want %d", len(first), wantArtifactCount)
+	}
+	artifactPaths := make(map[string]bool, len(first))
+	for _, artifact := range first {
+		artifactPaths[artifact.Path] = true
+	}
+	for _, name := range expectedTools {
+		for _, path := range []string{
+			"internal/contracts/generated/schemas/" + name + ".input.json",
+			"internal/contracts/generated/schemas/" + name + ".output.json",
+			"internal/contracts/generated/examples/" + name + ".input.json",
+			"internal/contracts/generated/examples/" + name + ".output.json",
+			"internal/contracts/generated/protocol/" + name + ".json",
+		} {
+			if !artifactPaths[path] {
+				t.Fatalf("required artifact %s is missing", path)
+			}
+		}
 	}
 	for i := range first {
 		if first[i].Path != second[i].Path || !bytes.Equal(first[i].Data, second[i].Data) {
@@ -48,8 +68,8 @@ func TestBuildGeneratesCompleteDeterministicContract(t *testing.T) {
 			}
 		}
 	}
-	if schemaCount != 30 {
-		t.Fatalf("schema count = %d, want 30", schemaCount)
+	if schemaCount != len(expectedTools)*2 {
+		t.Fatalf("schema count = %d, want %d", schemaCount, len(expectedTools)*2)
 	}
 }
 
@@ -67,10 +87,22 @@ func TestValidateRegistryRejectsUnsupportedKeyword(t *testing.T) {
 
 func TestValidateRegistryRejectsContractVersionDrift(t *testing.T) {
 	reg := readTestRegistry(t)
-	reg.ContractVersion = "2.0.0"
+	reg.ContractVersion = "1.0.0"
 
 	err := validateRegistry(reg)
 	if err == nil || !strings.Contains(err.Error(), "generator expects") {
+		t.Fatalf("validateRegistry() error = %v", err)
+	}
+}
+
+func TestValidateRegistryRejectsDescriptionOverLimit(t *testing.T) {
+	reg := readTestRegistry(t)
+	tool := reg.Tools["stratz_server_info"]
+	tool.Description = strings.Repeat("x", maxDescriptionBytes+1)
+	reg.Tools["stratz_server_info"] = tool
+
+	err := validateRegistry(reg)
+	if err == nil || !strings.Contains(err.Error(), "description exceeds") {
 		t.Fatalf("validateRegistry() error = %v", err)
 	}
 }
@@ -147,7 +179,7 @@ func TestValidateRegistryRejectsSupportedProtocolSchemaDrift(t *testing.T) {
 	data := properties["data"].(map[string]any)
 	dataProperties := data["properties"].(map[string]any)
 	items := dataProperties["supported_mcp_protocol_versions"].(map[string]any)["items"].(map[string]any)
-	items["enum"].([]any)[1] = "1999-01-01"
+	items["enum"] = []any{"2026-07-28", "1999-01-01", "2025-06-18", "2025-03-26", "2024-11-05"}
 	if err := validateRegistry(reg); err == nil || !strings.Contains(err.Error(), "supported protocol schema") {
 		t.Fatalf("validateRegistry() error = %v", err)
 	}
@@ -169,7 +201,9 @@ func TestGenerateMatchesCheckedInArtifacts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	expectedPaths := make(map[string]struct{}, len(expected))
 	for _, artifact := range expected {
+		expectedPaths[filepath.ToSlash(artifact.Path)] = struct{}{}
 		data, err := os.ReadFile(filepath.Join(root, artifact.Path))
 		if err != nil {
 			t.Fatalf("read %s: %v; run go generate ./...", artifact.Path, err)
@@ -177,6 +211,26 @@ func TestGenerateMatchesCheckedInArtifacts(t *testing.T) {
 		if !bytes.Equal(data, artifact.Data) {
 			t.Fatalf("%s is stale; run go generate ./...", artifact.Path)
 		}
+	}
+	generatedRoot := filepath.Join(root, "internal", "contracts", "generated")
+	err = filepath.WalkDir(generatedRoot, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() {
+			return nil
+		}
+		relative, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		if _, ok := expectedPaths[filepath.ToSlash(relative)]; !ok {
+			t.Errorf("obsolete generated artifact %s remains", relative)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

@@ -1,5 +1,5 @@
 {
-  "$id": "urn:stratz-mcp:contract:1.0.0-draft.4:stratz_execute_graphql:output",
+  "$id": "urn:stratz-mcp:contract:2.0.0-draft.1:stratz_execute_graphql:output",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
     {
@@ -7,7 +7,9 @@
         {
           "additionalProperties": false,
           "properties": {
-            "data": true,
+            "data": {
+              "type": "object"
+            },
             "kind": {
               "const": "success"
             },
@@ -69,21 +71,16 @@
                   ]
                 },
                 "detail_level": {
-                  "oneOf": [
-                    {
-                      "default": "standard",
-                      "description": "Controls normalized match response breadth. players returns summary fields plus player rows without replay-derived objectives or timeline events.",
-                      "enum": [
-                        "summary",
-                        "players",
-                        "standard",
-                        "full"
-                      ],
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
+                  "enum": [
+                    "summary",
+                    "players",
+                    "standard",
+                    "full",
+                    null
+                  ],
+                  "type": [
+                    "string",
+                    "null"
                   ]
                 },
                 "operation": {
@@ -304,132 +301,12 @@
                   "code"
                 ]
               }
-            }
+            },
+            "required": [
+              "error"
+            ]
           },
           "then": {
-            "properties": {
-              "context": {
-                "additionalProperties": false,
-                "properties": {
-                  "match": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "dire_score": {
-                        "minimum": 0,
-                        "type": [
-                          "integer",
-                          "null"
-                        ]
-                      },
-                      "duration_seconds": {
-                        "minimum": 0,
-                        "type": [
-                          "integer",
-                          "null"
-                        ]
-                      },
-                      "game_mode_id": {
-                        "type": [
-                          "integer",
-                          "null"
-                        ]
-                      },
-                      "league_id": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "lobby_type_id": {
-                        "type": [
-                          "integer",
-                          "null"
-                        ]
-                      },
-                      "match_id": {
-                        "pattern": "^[0-9]{1,20}$",
-                        "type": "string"
-                      },
-                      "parse_status": {
-                        "enum": [
-                          "parsed",
-                          "partial",
-                          "pending",
-                          "unavailable",
-                          "unknown"
-                        ],
-                        "type": "string"
-                      },
-                      "patch_id": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "radiant_score": {
-                        "minimum": 0,
-                        "type": [
-                          "integer",
-                          "null"
-                        ]
-                      },
-                      "radiant_win": {
-                        "type": [
-                          "boolean",
-                          "null"
-                        ]
-                      },
-                      "region_id": {
-                        "type": [
-                          "integer",
-                          "null"
-                        ]
-                      },
-                      "started_at": {
-                        "format": "date-time",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "match_id",
-                      "started_at",
-                      "duration_seconds",
-                      "radiant_win",
-                      "radiant_score",
-                      "dire_score",
-                      "game_mode_id",
-                      "lobby_type_id",
-                      "region_id",
-                      "league_id",
-                      "patch_id",
-                      "parse_status"
-                    ],
-                    "type": "object"
-                  },
-                  "requested_detail_level": {
-                    "default": "standard",
-                    "enum": [
-                      "summary",
-                      "standard",
-                      "full"
-                    ],
-                    "type": "string"
-                  },
-                  "type": {
-                    "const": "match_availability"
-                  }
-                },
-                "required": [
-                  "type",
-                  "match",
-                  "requested_detail_level"
-                ],
-                "type": "object"
-              }
-            },
             "required": [
               "context"
             ]
@@ -438,129 +315,125 @@
       ],
       "properties": {
         "context": {
-          "oneOf": [
-            {
+          "additionalProperties": false,
+          "properties": {
+            "match": {
               "additionalProperties": false,
               "properties": {
-                "match": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "dire_score": {
-                      "minimum": 0,
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "duration_seconds": {
-                      "minimum": 0,
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "game_mode_id": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "league_id": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "lobby_type_id": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "match_id": {
-                      "pattern": "^[0-9]{1,20}$",
-                      "type": "string"
-                    },
-                    "parse_status": {
-                      "enum": [
-                        "parsed",
-                        "partial",
-                        "pending",
-                        "unavailable",
-                        "unknown"
-                      ],
-                      "type": "string"
-                    },
-                    "patch_id": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "radiant_score": {
-                      "minimum": 0,
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "radiant_win": {
-                      "type": [
-                        "boolean",
-                        "null"
-                      ]
-                    },
-                    "region_id": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "started_at": {
-                      "format": "date-time",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "match_id",
-                    "started_at",
-                    "duration_seconds",
-                    "radiant_win",
-                    "radiant_score",
-                    "dire_score",
-                    "game_mode_id",
-                    "lobby_type_id",
-                    "region_id",
-                    "league_id",
-                    "patch_id",
-                    "parse_status"
-                  ],
-                  "type": "object"
+                "dire_score": {
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
                 },
-                "requested_detail_level": {
-                  "default": "standard",
+                "duration_seconds": {
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "game_mode_id": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "league_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "lobby_type_id": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "match_id": {
+                  "pattern": "^[0-9]{1,20}$",
+                  "type": "string"
+                },
+                "parse_status": {
                   "enum": [
-                    "summary",
-                    "standard",
-                    "full"
+                    "parsed",
+                    "partial",
+                    "pending",
+                    "unavailable",
+                    "unknown"
                   ],
                   "type": "string"
                 },
-                "type": {
-                  "const": "match_availability"
+                "patch_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "radiant_score": {
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "radiant_win": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "region_id": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "started_at": {
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "required": [
-                "type",
-                "match",
-                "requested_detail_level"
+                "match_id",
+                "started_at",
+                "duration_seconds",
+                "radiant_win",
+                "radiant_score",
+                "dire_score",
+                "game_mode_id",
+                "lobby_type_id",
+                "region_id",
+                "league_id",
+                "patch_id",
+                "parse_status"
               ],
               "type": "object"
+            },
+            "requested_detail_level": {
+              "default": "standard",
+              "enum": [
+                "summary",
+                "standard",
+                "full"
+              ],
+              "type": "string"
+            },
+            "type": {
+              "const": "match_availability"
             }
-          ]
+          },
+          "required": [
+            "type",
+            "match",
+            "requested_detail_level"
+          ],
+          "type": "object"
         },
         "error": {
           "additionalProperties": false,
@@ -605,7 +478,7 @@
               "maxProperties": 32,
               "type": "object"
             },
-            "failed_input": true,
+            "failed_input": {},
             "message": {
               "maxLength": 2048,
               "minLength": 1,

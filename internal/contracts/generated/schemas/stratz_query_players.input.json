@@ -1,0 +1,42 @@
+{
+  "$id": "urn:stratz-mcp:contract:2.0.0-draft.1:stratz_query_players:input",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "fresh": {
+          "default": false,
+          "type": "boolean"
+        },
+        "include_profile_statistics": {
+          "default": false,
+          "type": "boolean"
+        },
+        "include_raw": {
+          "default": false,
+          "type": "boolean"
+        },
+        "mode": {
+          "const": "exact"
+        },
+        "player_ids": {
+          "items": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 25,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "mode",
+        "player_ids"
+      ],
+      "type": "object"
+    }
+  ],
+  "type": "object"
+}

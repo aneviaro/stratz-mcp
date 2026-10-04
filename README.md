@@ -198,7 +198,7 @@ Use exactly one credential source: forwarded `STRATZ_API_TOKEN`, Docker `--env-f
 
 ## MCP capabilities
 
-The server exposes 15 tools covering players, matches, heroes, constants, leagues, live matches, server information, and guarded raw GraphQL. It also exposes local schema/constants resources and five generated prompts/portable skills. See:
+The server exposes exactly seven v2 tools: `stratz_server_info`, `stratz_query_players`, `stratz_query_matches`, `stratz_query_heroes`, `stratz_query_leagues`, `stratz_query_constants`, and guarded `stratz_execute_graphql`. Query tools use explicit modes, and hero/player statistics are opt-in. The v2 cutover has no compatibility aliases; see the [v1-to-v2 migration guide](docs/tool-contracts.md#6-v1-to-v2-migration) before updating a client. It also exposes local schema/constants resources and five generated prompts/portable skills. See:
 
 - [Tool reference](docs/generated-tool-contracts.md)
 - [Resources and prompts](docs/resources-prompts-skills.md)

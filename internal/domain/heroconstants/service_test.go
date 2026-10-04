@@ -83,6 +83,121 @@ func TestHeroResolutionByIDNameSlugAmbiguityAndBatchDuplicates(t *testing.T) {
 	}
 }
 
+func TestQueryHeroesDefaultStatisticsAreOffAndExactIsAtomic(t *testing.T) {
+	var operations []string
+	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
+		operations = append(operations, request.OperationName)
+		return response(constantsFixture), nil
+	}}
+	service := mustService(t, executor)
+	result, err := service.QueryHeroes(context.Background(), map[string]any{"mode": "exact", "heroes": []any{"Axe", "axe", json.Number("2")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Data.Items) != 3 || result.Data.Items[0].HeroID != 1 || result.Data.Items[1].HeroID != 1 || result.Data.Items[2].HeroID != 2 {
+		t.Fatalf("items = %#v", result.Data.Items)
+	}
+	if result.Data.Items[0].Statistics != nil || len(operations) != 1 || operations[0] != "StratzGetConstants" {
+		t.Fatalf("default statistics or operations = %#v", operations)
+	}
+	_, err = service.QueryHeroes(context.Background(), map[string]any{"mode": "exact", "heroes": []any{"Axe", "missing"}})
+	assertCode(t, err, contracts.ErrorCodeNotFound)
+}
+
+func TestQueryHeroesSearchCursorBindsFilters(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
+		return response(constantsFixture), nil
+	}}
+	service, err := New(Options{Executor: executor, MaxUpstreamRequests: 5, Token: "secret", SchemaVersion: contracts.ContractVersion})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := service.QueryHeroes(context.Background(), map[string]any{"mode": "search", "query": "twin", "limit": 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Data.Page == nil || first.Data.Page.NextCursor == nil || len(first.Data.Items) != 1 {
+		t.Fatalf("first page = %#v", first.Data)
+	}
+	second, err := service.QueryHeroes(context.Background(), map[string]any{"mode": "search", "query": "twin", "limit": 1, "cursor": *first.Data.Page.NextCursor})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(second.Data.Items) != 1 || second.Data.Items[0].HeroID == first.Data.Items[0].HeroID {
+		t.Fatalf("second page = %#v", second.Data)
+	}
+	_, err = service.QueryHeroes(context.Background(), map[string]any{"mode": "search", "query": "twin", "limit": 2, "cursor": *first.Data.Page.NextCursor})
+	assertCode(t, err, contracts.ErrorCodeCursorInvalid)
+}
+
+func TestQueryConstantsTypedSelectorsKeepClassesDistinct(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		return response(constantsFixture), nil
+	}}
+	service := mustService(t, executor)
+	result, err := service.QueryConstants(context.Background(), map[string]any{"mode": "typed_selectors", "selectors": []any{
+		map[string]any{"type": "heroes", "ids": []any{"1"}}, map[string]any{"type": "items", "ids": []any{"1"}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	items := result.Data.Items
+	if len(items) != 2 {
+		t.Fatalf("items = %#v", result.Data.Items)
+	}
+	if items[0].Type == items[1].Type || items[0].ID != items[1].ID {
+		t.Fatalf("typed collision = %#v", items)
+	}
+}
+
+func TestQueryConstantsTypedSelectorsPreserveSelectorAndIDOrder(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+		return response(constantsFixture), nil
+	}}
+	service := mustService(t, executor)
+	result, err := service.QueryConstants(context.Background(), map[string]any{"mode": "typed_selectors", "selectors": []any{
+		map[string]any{"type": "items", "ids": []any{"1"}},
+		map[string]any{"type": "heroes", "ids": []any{"2", "1", "2"}},
+		map[string]any{"type": "items", "ids": []any{"1"}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := make([]string, 0, len(result.Data.Items))
+	for _, item := range result.Data.Items {
+		got = append(got, item.Type+":"+item.ID)
+	}
+	want := []string{"items:1", "heroes:2", "heroes:1", "heroes:2", "items:1"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("typed selector order = %v, want %v", got, want)
+	}
+}
+
+func TestQueryHeroesStatisticsShareBudgetAndAggregateByHero(t *testing.T) {
+	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
+		switch request.OperationName {
+		case "StratzGetConstants":
+			return response(constantsFixture), nil
+		case "StratzGetHeroStatsDay":
+			return response(fmt.Sprintf(`{"heroStats":{"stats":[{"heroId":1,"period":%d,"matchCount":8,"winCount":5}]}}`, time.Now().UTC().Truncate(24*time.Hour).Unix())), nil
+		default:
+			t.Fatalf("unexpected operation %q", request.OperationName)
+			return nil, nil
+		}
+	}}
+	service := mustService(t, executor)
+	result, err := service.QueryHeroes(context.Background(), map[string]any{"mode": "exact", "heroes": []any{1}, "include_statistics": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Data.Items[0].Statistics == nil || result.Data.Items[0].Statistics.SampleSize != 8 || result.Data.Items[0].Statistics.WinRate == nil || *result.Data.Items[0].Statistics.WinRate != 0.625 || len(result.Warnings) != 1 {
+		t.Fatalf("statistics = %#v warnings=%#v", result.Data.Items[0].Statistics, result.Warnings)
+	}
+	if executor.calls != 2 {
+		t.Fatalf("upstream calls = %d, want 2", executor.calls)
+	}
+}
+
 func TestHeroBatchHonorsConfiguredMaximum(t *testing.T) {
 	service, err := New(Options{
 		Executor:            &fixtureExecutor{},

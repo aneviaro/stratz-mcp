@@ -87,7 +87,7 @@ func mapLive(source *upstreamLiveMatch, now time.Time) contracts.LiveMatch {
 		SpectatorCount:  nonNegative(source.SpectatorCount),
 		RadiantTeamName: cleanPointer(source.RadiantTeamName, 256),
 		DireTeamName:    cleanPointer(source.DireTeamName, 256),
-		Players:         make([]contracts.LiveMatchPlayer, 0, len(source.Players)),
+		Players:         make([]contracts.LivePlayer, 0, len(source.Players)),
 	}
 	if source.League != nil {
 		league := mapLeague(source.League, now)
@@ -108,7 +108,7 @@ func mapLive(source *upstreamLiveMatch, now time.Time) contracts.LiveMatch {
 			value := player.HeroID
 			heroID = &value
 		}
-		result.Players = append(result.Players, contracts.LiveMatchPlayer{
+		result.Players = append(result.Players, contracts.LivePlayer{
 			AccountID: account,
 			HeroID:    heroID,
 			Team:      team,

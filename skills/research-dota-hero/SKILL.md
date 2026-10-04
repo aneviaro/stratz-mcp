@@ -22,15 +22,14 @@ Use this skill when the user asks for this workflow. User-supplied parameters ar
 
 ## Approved tools
 
-- `stratz_get_hero`
-- `stratz_get_hero_stats`
-- `stratz_get_constants`
+- `stratz_query_heroes`
+- `stratz_query_constants`
 - `stratz_execute_graphql`
 
 ## Workflow
 
-1. Resolve the hero deterministically and fetch reference constants needed to interpret results.
-2. Fetch win-rate aggregates using the requested rank, role, and bounded date window; patch selection narrows that date range.
+1. Resolve the hero deterministically with stratz_query_heroes in exact mode and fetch stratz_query_constants in types mode for heroes when reference interpretation requires it.
+2. Request include_statistics true from stratz_query_heroes only because this workflow consumes aggregate performance; pass supported rank_bracket, role, and bounded date filters when supplied.
 3. Report sample sizes and effective filters before interpreting win rates and trends, and surface any unsupported dimension from the Limitations section explicitly.
 4. Compare recent patches only when requested and comparable buckets are available.
 
