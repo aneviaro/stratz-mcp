@@ -1,6 +1,6 @@
 module github.com/aneviaro/stratz-mcp
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/Khan/genqlient v0.8.1
@@ -9,7 +9,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/vektah/gqlparser/v2 v2.5.34
 	go.yaml.in/yaml/v3 v3.0.4
-	golang.org/x/sync v0.21.0
+	golang.org/x/sync v0.24.0
 	golang.org/x/sys v0.42.0
 	modernc.org/sqlite v1.52.0
 )
