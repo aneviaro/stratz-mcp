@@ -7,8 +7,8 @@ require (
 	github.com/klauspost/compress v1.18.5
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
-	github.com/vektah/gqlparser/v2 v2.5.34
-	go.yaml.in/yaml/v3 v3.0.4
+	github.com/vektah/gqlparser/v2 v2.5.62
+	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/sync v0.21.0
 	golang.org/x/sys v0.42.0
 	modernc.org/sqlite v1.52.0
@@ -22,7 +22,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/jsonschema-go v0.4.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/kr/text v0.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
