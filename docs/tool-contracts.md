@@ -19,7 +19,7 @@ Status: Normative; the machine-readable registry is the source of truth.
 - `stratz_query_constants`
 - `stratz_execute_graphql`
 
-The registry version is `2.0.0-draft.2`. This is an intentional breaking boundary from the thirteen curated v1 retrieval tools. There are no compatibility aliases, and a client must not infer a mode from optional fields. Draft-v2 records the filter-contract migration shipped with issue #31 (and the accompanying issue #32 work) rather than silently changing the draft-v1 contract.
+The registry version is `2.0.0-draft.2`. This is an intentional breaking boundary from the thirteen curated v1 retrieval tools. There are no compatibility aliases, and a client must not infer a mode from optional fields.
 
 Every query tool input is a closed `oneOf` whose branches require a `mode` constant. A request containing fields from another branch fails validation. Every successful query response has the common envelope and `data.mode` plus `data.items`; only paginated modes include `data.page`. `warnings` is non-fatal, and `provenance` records retrieval, operation, schema, cache, date, patch, and rate-limit facts. `raw` is present only when explicitly requested and is never returned with an error.
 
