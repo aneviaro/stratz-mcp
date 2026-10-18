@@ -10,6 +10,7 @@ import (
 
 	"github.com/aneviaro/stratz-mcp/internal/contracts"
 	"github.com/aneviaro/stratz-mcp/internal/domain/pagination"
+	"github.com/aneviaro/stratz-mcp/internal/domain/playermatch"
 	"github.com/aneviaro/stratz-mcp/internal/graphql/generated"
 	"github.com/aneviaro/stratz-mcp/internal/stratz"
 )
@@ -377,6 +378,9 @@ func (s *Service) ListLeagueMatches(ctx context.Context, filters LeagueMatchFilt
 	if domainErr != nil {
 		return nil, domainErr
 	}
+	if normalizeErr := normalizeLeagueMatchFilters(&filters); normalizeErr != nil {
+		return nil, normalizeErr
+	}
 	if err := validateList(filters.Limit, filters.From, filters.To); err != nil {
 		return nil, err
 	}
@@ -562,8 +566,8 @@ func nativeLeagueMatchRequest(filters LeagueMatchFilters, take int, skip int64) 
 	if filters.To != nil {
 		request["endDateTime"] = filters.To.Unix()
 	}
-	if filters.PatchID != nil {
-		request["gameVersionIds"] = []string{*filters.PatchID}
+	if filters.patchID != nil {
+		request["gameVersionIds"] = []int64{*filters.patchID}
 	}
 	return request
 }
@@ -664,7 +668,17 @@ func queryLeagueMatchFilters(input map[string]any) (LeagueMatchFilters, *Error) 
 	if !ok || strings.TrimSpace(league) == "" {
 		return LeagueMatchFilters{}, invalid("league_id is required", nil)
 	}
-	filters := LeagueMatchFilters{LeagueID: league, Limit: integerValue(input["limit"], 0)}
+	filters := LeagueMatchFilters{LeagueID: league}
+	if value, exists := input["limit"]; exists {
+		number, parseErr := playermatch.ParseHistoryInteger(value, "limit")
+		if parseErr != nil {
+			return LeagueMatchFilters{}, invalid(parseErr.Message, parseErr.Details)
+		}
+		if number > int64(^uint(0)>>1) || number < -int64(^uint(0)>>1)-1 {
+			return LeagueMatchFilters{}, invalid("limit must be an integer", nil)
+		}
+		filters.Limit = int(number)
+	}
 	if value, exists := input["cursor"]; exists {
 		cursor, cursorOK := value.(string)
 		if !cursorOK {
@@ -674,29 +688,44 @@ func queryLeagueMatchFilters(input map[string]any) (LeagueMatchFilters, *Error) 
 	}
 	for key, destination := range map[string]**time.Time{"from": &filters.From, "to": &filters.To} {
 		if value, exists := input[key]; exists {
-			text, textOK := value.(string)
-			if !textOK {
-				return LeagueMatchFilters{}, invalid(key+" must be an RFC3339 date-time", nil)
-			}
-			parsed, parseErr := time.Parse(time.RFC3339Nano, text)
+			parsed, parseErr := playermatch.ParseHistoryDate(value, key)
 			if parseErr != nil {
-				return LeagueMatchFilters{}, invalid(key+" must be an RFC3339 date-time", nil)
+				return LeagueMatchFilters{}, invalid(parseErr.Message, parseErr.Details)
 			}
-			parsed = parsed.UTC()
-			*destination = &parsed
+			*destination = parsed
 		}
 	}
 	if filters.From != nil && filters.To != nil && filters.From.After(*filters.To) {
 		return LeagueMatchFilters{}, invalid("from date must not be after to date", nil)
 	}
 	if value, exists := input["patch_id"]; exists {
-		patch, patchOK := value.(string)
-		if !patchOK || strings.TrimSpace(patch) == "" {
-			return LeagueMatchFilters{}, invalid("patch_id must be a non-empty string", nil)
+		patch, patchID, parseErr := playermatch.ParseHistoryPatch(value)
+		if parseErr != nil {
+			return LeagueMatchFilters{}, invalid(parseErr.Message, parseErr.Details)
 		}
 		filters.PatchID = &patch
+		filters.patchID = &patchID
 	}
 	return filters, nil
+}
+
+func normalizeLeagueMatchFilters(filters *LeagueMatchFilters) *Error {
+	if filters.From != nil && filters.To != nil && filters.From.After(*filters.To) {
+		return invalid("from date must not be after to date", nil)
+	}
+	if filters.PatchID == nil {
+		return nil
+	}
+	if filters.patchID != nil {
+		return nil
+	}
+	patch, patchID, parseErr := playermatch.ParseHistoryPatch(*filters.PatchID)
+	if parseErr != nil {
+		return invalid(parseErr.Message, parseErr.Details)
+	}
+	filters.PatchID = &patch
+	filters.patchID = &patchID
+	return nil
 }
 
 func validateHistoryDetail(input map[string]any, player bool) *Error {
@@ -1008,10 +1037,10 @@ func leagueBinding(filters LeagueFilters) map[string]any {
 func leagueMatchBinding(filters LeagueMatchFilters) map[string]any {
 	result := map[string]any{"mode": "league_history", "league_id": filters.LeagueID}
 	if filters.From != nil {
-		result["from"] = filters.From.UTC().Format(time.RFC3339)
+		result["from"] = filters.From.UTC().Format(time.RFC3339Nano)
 	}
 	if filters.To != nil {
-		result["to"] = filters.To.UTC().Format(time.RFC3339)
+		result["to"] = filters.To.UTC().Format(time.RFC3339Nano)
 	}
 	if filters.PatchID != nil {
 		result["patch_id"] = *filters.PatchID

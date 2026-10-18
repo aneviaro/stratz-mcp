@@ -87,6 +87,8 @@ type LeagueMatchFilters struct {
 	PatchID  *string
 	Limit    int
 	Cursor   string
+
+	patchID *int64
 }
 
 // LiveFilters contains the bounded filters for live-match listing.

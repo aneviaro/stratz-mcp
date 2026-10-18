@@ -42,11 +42,11 @@ func (v *LeagueFields) GetStartDateTime() *int64 { return v.StartDateTime }
 func (v *LeagueFields) GetEndDateTime() *int64 { return v.EndDateTime }
 
 type LeagueMatchesRequestType struct {
-	StartDateTime  *int64   `json:"startDateTime"`
-	EndDateTime    *int64   `json:"endDateTime"`
-	GameVersionIds []string `json:"gameVersionIds"`
-	Take           int      `json:"take"`
-	Skip           int      `json:"skip"`
+	StartDateTime  *int64 `json:"startDateTime"`
+	EndDateTime    *int64 `json:"endDateTime"`
+	GameVersionIds []*int `json:"gameVersionIds"`
+	Take           *int   `json:"take"`
+	Skip           *int   `json:"skip"`
 }
 
 // GetStartDateTime returns LeagueMatchesRequestType.StartDateTime, and is useful for accessing the field via an interface.
@@ -56,13 +56,13 @@ func (v *LeagueMatchesRequestType) GetStartDateTime() *int64 { return v.StartDat
 func (v *LeagueMatchesRequestType) GetEndDateTime() *int64 { return v.EndDateTime }
 
 // GetGameVersionIds returns LeagueMatchesRequestType.GameVersionIds, and is useful for accessing the field via an interface.
-func (v *LeagueMatchesRequestType) GetGameVersionIds() []string { return v.GameVersionIds }
+func (v *LeagueMatchesRequestType) GetGameVersionIds() []*int { return v.GameVersionIds }
 
 // GetTake returns LeagueMatchesRequestType.Take, and is useful for accessing the field via an interface.
-func (v *LeagueMatchesRequestType) GetTake() int { return v.Take }
+func (v *LeagueMatchesRequestType) GetTake() *int { return v.Take }
 
 // GetSkip returns LeagueMatchesRequestType.Skip, and is useful for accessing the field via an interface.
-func (v *LeagueMatchesRequestType) GetSkip() int { return v.Skip }
+func (v *LeagueMatchesRequestType) GetSkip() *int { return v.Skip }
 
 type LeagueRequestType struct {
 	LeagueIds     []int    `json:"leagueIds"`
@@ -960,16 +960,18 @@ func (v *PlayerFieldsSteamAccountSteamAccountType) GetName() *string { return v.
 func (v *PlayerFieldsSteamAccountSteamAccountType) GetAvatar() *string { return v.Avatar }
 
 type PlayerMatchesRequestType struct {
-	StartDateTime  *int64   `json:"startDateTime"`
-	EndDateTime    *int64   `json:"endDateTime"`
-	HeroIds        []int    `json:"heroIds"`
-	RoleIds        []string `json:"roleIds"`
-	GameModeIds    []int    `json:"gameModeIds"`
-	LobbyTypeIds   []int    `json:"lobbyTypeIds"`
-	IsVictory      *bool    `json:"isVictory"`
-	GameVersionIds []string `json:"gameVersionIds"`
-	Take           int      `json:"take"`
-	Skip           int      `json:"skip"`
+	StartDateTime  *int64                     `json:"startDateTime"`
+	EndDateTime    *int64                     `json:"endDateTime"`
+	HeroIds        []int                      `json:"heroIds"`
+	RoleIds        []*int                     `json:"roleIds"`
+	PositionIds    []*MatchPlayerPositionType `json:"positionIds"`
+	LaneIds        []*int                     `json:"laneIds"`
+	GameModeIds    []int                      `json:"gameModeIds"`
+	LobbyTypeIds   []int                      `json:"lobbyTypeIds"`
+	IsVictory      *bool                      `json:"isVictory"`
+	GameVersionIds []*int                     `json:"gameVersionIds"`
+	Take           *int                       `json:"take"`
+	Skip           *int                       `json:"skip"`
 }
 
 // GetStartDateTime returns PlayerMatchesRequestType.StartDateTime, and is useful for accessing the field via an interface.
@@ -982,7 +984,13 @@ func (v *PlayerMatchesRequestType) GetEndDateTime() *int64 { return v.EndDateTim
 func (v *PlayerMatchesRequestType) GetHeroIds() []int { return v.HeroIds }
 
 // GetRoleIds returns PlayerMatchesRequestType.RoleIds, and is useful for accessing the field via an interface.
-func (v *PlayerMatchesRequestType) GetRoleIds() []string { return v.RoleIds }
+func (v *PlayerMatchesRequestType) GetRoleIds() []*int { return v.RoleIds }
+
+// GetPositionIds returns PlayerMatchesRequestType.PositionIds, and is useful for accessing the field via an interface.
+func (v *PlayerMatchesRequestType) GetPositionIds() []*MatchPlayerPositionType { return v.PositionIds }
+
+// GetLaneIds returns PlayerMatchesRequestType.LaneIds, and is useful for accessing the field via an interface.
+func (v *PlayerMatchesRequestType) GetLaneIds() []*int { return v.LaneIds }
 
 // GetGameModeIds returns PlayerMatchesRequestType.GameModeIds, and is useful for accessing the field via an interface.
 func (v *PlayerMatchesRequestType) GetGameModeIds() []int { return v.GameModeIds }
@@ -994,13 +1002,13 @@ func (v *PlayerMatchesRequestType) GetLobbyTypeIds() []int { return v.LobbyTypeI
 func (v *PlayerMatchesRequestType) GetIsVictory() *bool { return v.IsVictory }
 
 // GetGameVersionIds returns PlayerMatchesRequestType.GameVersionIds, and is useful for accessing the field via an interface.
-func (v *PlayerMatchesRequestType) GetGameVersionIds() []string { return v.GameVersionIds }
+func (v *PlayerMatchesRequestType) GetGameVersionIds() []*int { return v.GameVersionIds }
 
 // GetTake returns PlayerMatchesRequestType.Take, and is useful for accessing the field via an interface.
-func (v *PlayerMatchesRequestType) GetTake() int { return v.Take }
+func (v *PlayerMatchesRequestType) GetTake() *int { return v.Take }
 
 // GetSkip returns PlayerMatchesRequestType.Skip, and is useful for accessing the field via an interface.
-func (v *PlayerMatchesRequestType) GetSkip() int { return v.Skip }
+func (v *PlayerMatchesRequestType) GetSkip() *int { return v.Skip }
 
 type RankBracket string
 

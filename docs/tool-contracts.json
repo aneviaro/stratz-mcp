@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/aneviaro/stratz-mcp/docs/tool-contracts.json",
-  "contractVersion": "2.0.0-draft.1",
+  "contractVersion": "2.0.0-draft.2",
   "mcpProtocolVersion": "2026-07-28",
   "supportedMcpProtocolVersions": ["2026-07-28", "2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"],
   "description": "Canonical machine-readable MCP tool contract registry for the v2 query surface.",
@@ -23,6 +23,10 @@
     "matchDetailLevel": {"type": "string", "enum": ["summary", "players", "standard", "full"], "default": "standard"},
     "exactMatchDetailLevel": {"$ref": "#/$defs/matchDetailLevel"},
     "playerHistoryDetailLevel": {"type": "string", "enum": ["summary", "players"], "default": "summary"},
+    "playerHistoryRole": {"type": "string", "enum": ["CORE", "LIGHT_SUPPORT", "HARD_SUPPORT"]},
+    "playerHistoryPosition": {"type": "string", "enum": ["POSITION_1", "POSITION_2", "POSITION_3", "POSITION_4", "POSITION_5"]},
+    "playerHistoryLane": {"type": "string", "enum": ["ROAMING", "SAFE_LANE", "MID_LANE", "OFF_LANE", "JUNGLE"]},
+    "patchId": {"type": "string", "pattern": "^([1-9][0-9]{0,8}|1[0-9]{9}|20[0-9]{8}|21[0-3][0-9]{7}|214[0-6][0-9]{6}|2147[0-3][0-9]{5}|21474[0-7][0-9]{4}|214748[0-2][0-9]{3}|2147483[0-5][0-9]{2}|21474836[0-3][0-9]|214748364[0-7])$", "maxLength": 10},
     "leagueHistoryDetailLevel": {"type": "string", "enum": ["summary"], "default": "summary"},
     "pagination": {
       "type": "object",
@@ -131,8 +135,8 @@
       "description": "Query normalized matches by exact IDs, history filters, or live filters.",
       "inputSchema": {"oneOf": [
         {"type": "object", "properties": {"mode": {"const": "exact"}, "match_ids": {"type": "array", "minItems": 1, "maxItems": 25, "items": {"$ref": "#/$defs/matchId"}}, "detail_level": {"$ref": "#/$defs/exactMatchDetailLevel"}, "fresh": {"type": "boolean", "default": false}, "include_raw": {"type": "boolean", "default": false}}, "required": ["mode", "match_ids"], "additionalProperties": false},
-        {"type": "object", "properties": {"mode": {"const": "player_history"}, "player_id": {"$ref": "#/$defs/identifier"}, "from": {"$ref": "#/$defs/dateTime"}, "to": {"$ref": "#/$defs/dateTime"}, "hero": {"$ref": "#/$defs/heroIdentifier"}, "role": {"type": "string", "maxLength": 64}, "game_mode_id": {"type": "integer"}, "lobby_type_id": {"type": "integer"}, "result": {"type": "string", "enum": ["win", "loss"]}, "minimum_duration_seconds": {"type": "integer", "minimum": 0, "maximum": 21600}, "patch_id": {"type": "string", "maxLength": 64}, "detail_level": {"$ref": "#/$defs/playerHistoryDetailLevel"}, "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}, "cursor": {"type": "string", "maxLength": 4096}, "fresh": {"type": "boolean", "default": false}, "include_raw": {"type": "boolean", "default": false}}, "required": ["mode", "player_id"], "additionalProperties": false},
-        {"type": "object", "properties": {"mode": {"const": "league_history"}, "league_id": {"type": "string", "minLength": 1, "maxLength": 32}, "from": {"$ref": "#/$defs/dateTime"}, "to": {"$ref": "#/$defs/dateTime"}, "patch_id": {"type": "string", "maxLength": 64}, "detail_level": {"$ref": "#/$defs/leagueHistoryDetailLevel"}, "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}, "cursor": {"type": "string", "maxLength": 4096}, "fresh": {"type": "boolean", "default": false}, "include_raw": {"type": "boolean", "default": false}}, "required": ["mode", "league_id"], "additionalProperties": false},
+        {"type": "object", "properties": {"mode": {"const": "player_history"}, "player_id": {"$ref": "#/$defs/identifier"}, "from": {"$ref": "#/$defs/dateTime"}, "to": {"$ref": "#/$defs/dateTime"}, "hero": {"$ref": "#/$defs/heroIdentifier"}, "role": {"$ref": "#/$defs/playerHistoryRole"}, "position": {"$ref": "#/$defs/playerHistoryPosition"}, "lane": {"$ref": "#/$defs/playerHistoryLane"}, "game_mode_id": {"type": "integer"}, "lobby_type_id": {"type": "integer"}, "result": {"type": "string", "enum": ["win", "loss"]}, "minimum_duration_seconds": {"type": "integer", "minimum": 0, "maximum": 21600}, "patch_id": {"$ref": "#/$defs/patchId"}, "detail_level": {"$ref": "#/$defs/playerHistoryDetailLevel"}, "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}, "cursor": {"type": "string", "maxLength": 4096}, "fresh": {"type": "boolean", "default": false}, "include_raw": {"type": "boolean", "default": false}}, "required": ["mode", "player_id"], "additionalProperties": false},
+        {"type": "object", "properties": {"mode": {"const": "league_history"}, "league_id": {"type": "string", "minLength": 1, "maxLength": 32}, "from": {"$ref": "#/$defs/dateTime"}, "to": {"$ref": "#/$defs/dateTime"}, "patch_id": {"$ref": "#/$defs/patchId"}, "detail_level": {"$ref": "#/$defs/leagueHistoryDetailLevel"}, "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}, "cursor": {"type": "string", "maxLength": 4096}, "fresh": {"type": "boolean", "default": false}, "include_raw": {"type": "boolean", "default": false}}, "required": ["mode", "league_id"], "additionalProperties": false},
         {"type": "object", "properties": {"mode": {"const": "live"}, "player_id": {"$ref": "#/$defs/identifier"}, "team_id": {"type": "string", "maxLength": 32}, "league_id": {"type": "string", "maxLength": 32}, "hero": {"$ref": "#/$defs/heroIdentifier"}, "game_states": {"type": "array", "maxItems": 16, "items": {"type": "string", "maxLength": 64}}, "tiers": {"type": "array", "maxItems": 10, "items": {"type": "string", "maxLength": 64}}, "game_mode_id": {"type": "integer"}, "minimum_spectators": {"type": "integer", "minimum": 0}, "sort": {"type": "string", "enum": ["newest", "highest_profile"], "default": "highest_profile"}, "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}, "cursor": {"type": "string", "maxLength": 4096}, "fresh": {"type": "boolean", "default": false}, "include_raw": {"type": "boolean", "default": false}}, "required": ["mode"], "additionalProperties": false}
       ]},
       "outputSchema": {"oneOf": [

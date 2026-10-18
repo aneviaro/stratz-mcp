@@ -2,7 +2,7 @@
 
 package contracts
 
-const ContractVersion = "2.0.0-draft.1"
+const ContractVersion = "2.0.0-draft.2"
 const MCPProtocolVersion = "2026-07-28"
 const SchemaDraft = "https://json-schema.org/draft/2020-12/schema"
 
@@ -274,6 +274,8 @@ type Pagination struct {
 	Limit  *int64  `json:"limit,omitempty"`
 }
 
+type PatchID string
+
 type Player struct {
 	AccountID   string           `json:"account_id"`
 	AvatarURL   *string          `json:"avatar_url"`
@@ -299,6 +301,34 @@ type PlayerHistoryDetailLevel string
 const (
 	PlayerHistoryDetailLevelSummary PlayerHistoryDetailLevel = "summary"
 	PlayerHistoryDetailLevelPlayers PlayerHistoryDetailLevel = "players"
+)
+
+type PlayerHistoryLane string
+
+const (
+	PlayerHistoryLaneRoaming  PlayerHistoryLane = "ROAMING"
+	PlayerHistoryLaneSafeLane PlayerHistoryLane = "SAFE_LANE"
+	PlayerHistoryLaneMidLane  PlayerHistoryLane = "MID_LANE"
+	PlayerHistoryLaneOffLane  PlayerHistoryLane = "OFF_LANE"
+	PlayerHistoryLaneJungle   PlayerHistoryLane = "JUNGLE"
+)
+
+type PlayerHistoryPosition string
+
+const (
+	PlayerHistoryPositionPosition1 PlayerHistoryPosition = "POSITION_1"
+	PlayerHistoryPositionPosition2 PlayerHistoryPosition = "POSITION_2"
+	PlayerHistoryPositionPosition3 PlayerHistoryPosition = "POSITION_3"
+	PlayerHistoryPositionPosition4 PlayerHistoryPosition = "POSITION_4"
+	PlayerHistoryPositionPosition5 PlayerHistoryPosition = "POSITION_5"
+)
+
+type PlayerHistoryRole string
+
+const (
+	PlayerHistoryRoleCore         PlayerHistoryRole = "CORE"
+	PlayerHistoryRoleLightSupport PlayerHistoryRole = "LIGHT_SUPPORT"
+	PlayerHistoryRoleHardSupport  PlayerHistoryRole = "HARD_SUPPORT"
 )
 
 type PlayerMatchSummary struct {

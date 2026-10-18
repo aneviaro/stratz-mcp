@@ -418,6 +418,150 @@ func TestMapObjectivesSortsAndBoundsPublicOutput(t *testing.T) {
 	}
 }
 
+func TestPlayerHistoryFilterMappingsAndCursorBinding(t *testing.T) {
+	cases := []struct {
+		name  string
+		field string
+		value any
+	}{
+		{name: "position 1", field: "position", value: "POSITION_1"},
+		{name: "position 2", field: "position", value: "POSITION_2"},
+		{name: "position 3", field: "position", value: "POSITION_3"},
+		{name: "position 4", field: "position", value: "POSITION_4"},
+		{name: "position 5", field: "position", value: "POSITION_5"},
+		{name: "positive decimal patch", field: "patch_id", value: "739"},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			position, patch := "POSITION_1", "739"
+			switch test.field {
+			case "position":
+				position = test.value.(string)
+			case "patch_id":
+				patch = test.value.(string)
+			}
+			executor := &fixtureExecutor{}
+			executor.execute = func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
+				if request.OperationName != "StratzListPlayerMatches" {
+					t.Fatalf("operation = %q", request.OperationName)
+				}
+				variables := request.Variables.(map[string]any)
+				native := variables["request"].(map[string]any)
+				wantSkip := int64(executor.calls - 1)
+				if variables["steamAccountId"] != int64(1) || native["skip"] != wantSkip || native["take"] != 20 ||
+					!reflect.DeepEqual(native["positionIds"], []string{position}) ||
+					!reflect.DeepEqual(native["gameVersionIds"], []int64{739}) {
+					t.Fatalf("history request = %#v", variables)
+				}
+				if _, present := native["roleIds"]; present {
+					t.Fatalf("rejected role filter was sent: %#v", native)
+				}
+				if _, present := native["laneIds"]; present {
+					t.Fatalf("rejected lane filter was sent: %#v", native)
+				}
+				matches := make([]map[string]any, 20)
+				for index := range matches {
+					matches[index] = map[string]any{"id": index + 1, "durationSeconds": 1200}
+				}
+				data, marshalErr := json.Marshal(map[string]any{"player": map[string]any{"steamAccountId": 1, "matches": matches}})
+				if marshalErr != nil {
+					t.Fatal(marshalErr)
+				}
+				return response(string(data)), nil
+			}
+			input := map[string]any{
+				"mode": "player_history", "player_id": "1",
+				"position": position, "patch_id": patch, "limit": 1,
+			}
+			first, err := mustService(t, executor, 5).QueryMatches(context.Background(), input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			items, ok := first.Data.Items.([]PlayerMatchSummary)
+			if !ok || len(items) != 1 || first.Data.Page == nil || first.Data.Page.NextCursor == nil {
+				t.Fatalf("first filtered page = %#v", first.Data)
+			}
+			continuation := make(map[string]any, len(input)+1)
+			for key, value := range input {
+				continuation[key] = value
+			}
+			continuation["cursor"] = *first.Data.Page.NextCursor
+			second, err := mustService(t, executor, 5).QueryMatches(context.Background(), continuation)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if second.Data.Page == nil || executor.calls != 2 {
+				t.Fatalf("continuation = %#v, calls = %d", second.Data, executor.calls)
+			}
+		})
+	}
+
+	invalidValues := []map[string]any{
+		{"role": "POSITION_1"}, {"role": 1}, {"role": "ALL"},
+		{"position": "POSITION_6"}, {"lane": "UNKNOWN"},
+		{"patch_id": " "}, {"patch_id": "7.39"}, {"patch_id": "abc"},
+		{"patch_id": "0"}, {"patch_id": "-1"}, {"patch_id": "2147483648"},
+	}
+	for _, value := range invalidValues {
+		fixture := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+			t.Fatal("upstream should not be called for invalid history filters")
+			return nil, nil
+		}}
+		input := map[string]any{"mode": "player_history", "player_id": "1"}
+		for key, item := range value {
+			input[key] = item
+		}
+		_, err := mustService(t, fixture, 5).QueryMatches(context.Background(), input)
+		assertCode(t, err, contracts.ErrorCodeInvalidArgument)
+		if fixture.calls != 0 {
+			t.Fatalf("invalid %#v made %d upstream calls", value, fixture.calls)
+		}
+	}
+}
+
+func TestPlayerHistoryRoleAndLaneFiltersAreRejectedBeforeExecutor(t *testing.T) {
+	cases := []struct {
+		name    string
+		field   string
+		value   any
+		filters PlayerMatchFilters
+	}{
+		{name: "query role", field: "role", value: "CORE", filters: PlayerMatchFilters{PlayerID: "1"}},
+		{name: "query lane", field: "lane", value: "MID_LANE", filters: PlayerMatchFilters{PlayerID: "1"}},
+		{name: "direct role", field: "role", filters: PlayerMatchFilters{PlayerID: "1", Role: stringPointer("CORE")}},
+		{name: "direct lane", field: "lane", filters: PlayerMatchFilters{PlayerID: "1", Lane: int64Pointer(2)}},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			executor := &fixtureExecutor{execute: func(*stratz.RequestBudget, stratz.Request) (*stratz.Response, error) {
+				t.Fatal("upstream should not be called for unavailable role/lane filters")
+				return nil, nil
+			}}
+			service := mustService(t, executor, 5)
+			var err error
+			if test.value != nil {
+				_, err = service.QueryMatches(context.Background(), map[string]any{
+					"mode": "player_history", "player_id": "1", test.field: test.value,
+				})
+			} else {
+				_, err = service.ListPlayerMatches(context.Background(), test.filters)
+			}
+			assertCode(t, err, contracts.ErrorCodeInvalidArgument)
+			var domainErr *Error
+			if !errors.As(err, &domainErr) || !strings.Contains(domainErr.Message, "temporarily unavailable") ||
+				domainErr.Details["field"] != test.field {
+				t.Fatalf("error = %#v, want unavailable %s filter", err, test.field)
+			}
+			if executor.calls != 0 {
+				t.Fatalf("unavailable %s filter made %d upstream calls", test.field, executor.calls)
+			}
+		})
+	}
+}
+
+func stringPointer(value string) *string { return &value }
+func int64Pointer(value int64) *int64    { return &value }
+
 func TestListPlayerMatchesBoundedContinuation(t *testing.T) {
 	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
 		variables := request.Variables.(map[string]any)

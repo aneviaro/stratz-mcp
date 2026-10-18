@@ -1,5 +1,5 @@
 {
-  "$id": "urn:stratz-mcp:contract:2.0.0-draft.1:stratz_query_constants:output",
+  "$id": "urn:stratz-mcp:contract:2.0.0-draft.2:stratz_query_constants:output",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
     {

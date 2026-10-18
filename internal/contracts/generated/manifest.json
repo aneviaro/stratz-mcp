@@ -1,5 +1,5 @@
 {
-  "contract_version": "2.0.0-draft.1",
+  "contract_version": "2.0.0-draft.2",
   "mcp_protocol_version": "2026-07-28",
   "schema_draft": "https://json-schema.org/draft/2020-12/schema",
   "supported_mcp_protocol_versions": [

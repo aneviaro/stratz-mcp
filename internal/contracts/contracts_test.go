@@ -88,8 +88,12 @@ func TestGeneratedQuerySchemasEnforceModesBoundsAndOptInStatistics(t *testing.T)
 	}{
 		{"stratz_query_players", map[string]any{"mode": "exact", "player_ids": []any{"1"}}},
 		{"stratz_query_matches", map[string]any{"mode": "exact", "match_ids": []any{"1"}}},
-		{"stratz_query_matches", map[string]any{"mode": "player_history", "player_id": "1"}},
-		{"stratz_query_matches", map[string]any{"mode": "league_history", "league_id": "1"}},
+		{"stratz_query_matches", map[string]any{"mode": "player_history", "player_id": "1", "role": "CORE", "position": "POSITION_1", "lane": "ROAMING", "patch_id": "2147483647"}},
+		{"stratz_query_matches", map[string]any{"mode": "player_history", "player_id": "1", "role": "LIGHT_SUPPORT", "position": "POSITION_2", "lane": "SAFE_LANE", "patch_id": "739"}},
+		{"stratz_query_matches", map[string]any{"mode": "player_history", "player_id": "1", "role": "HARD_SUPPORT", "position": "POSITION_3", "lane": "MID_LANE", "patch_id": "1"}},
+		{"stratz_query_matches", map[string]any{"mode": "player_history", "player_id": "1", "position": "POSITION_4", "lane": "OFF_LANE"}},
+		{"stratz_query_matches", map[string]any{"mode": "player_history", "player_id": "1", "position": "POSITION_5", "lane": "JUNGLE"}},
+		{"stratz_query_matches", map[string]any{"mode": "league_history", "league_id": "1", "patch_id": "1"}},
 		{"stratz_query_matches", map[string]any{"mode": "live"}},
 		{"stratz_query_heroes", map[string]any{"mode": "exact", "heroes": []any{1}}},
 		{"stratz_query_heroes", map[string]any{"mode": "search", "query": "anti"}},
@@ -111,6 +115,23 @@ func TestGeneratedQuerySchemasEnforceModesBoundsAndOptInStatistics(t *testing.T)
 		{"stratz_query_matches", map[string]any{"mode": "exact", "match_ids": []any{"1"}, "player_id": "1"}},
 		{"stratz_query_heroes", map[string]any{"mode": "exact", "heroes": []any{1}, "query": "anti"}},
 		{"stratz_query_constants", map[string]any{"mode": "types", "types": []any{"heroes"}, "selectors": []any{}}},
+	}
+	invalidHistoryFilters := []map[string]any{
+		{"mode": "player_history", "player_id": "1", "role": "POSITION_1"},
+		{"mode": "player_history", "player_id": "1", "role": 1},
+		{"mode": "player_history", "player_id": "1", "role": "UNKNOWN"},
+		{"mode": "player_history", "player_id": "1", "position": "POSITION_6"},
+		{"mode": "player_history", "player_id": "1", "lane": "UNKNOWN"},
+		{"mode": "player_history", "player_id": "1", "patch_id": "7.34"},
+		{"mode": "player_history", "player_id": "1", "patch_id": "abc"},
+		{"mode": "player_history", "player_id": "1", "patch_id": "0"},
+		{"mode": "player_history", "player_id": "1", "patch_id": "-1"},
+		{"mode": "player_history", "player_id": "1", "patch_id": "2147483648"},
+	}
+	for _, value := range invalidHistoryFilters {
+		if err := ValidateInput("stratz_query_matches", value); err == nil {
+			t.Errorf("ValidateInput(stratz_query_matches) accepted invalid history filter: %#v", value)
+		}
 	}
 	for _, test := range invalidMixed {
 		if err := ValidateInput(test.name, test.value); err == nil {

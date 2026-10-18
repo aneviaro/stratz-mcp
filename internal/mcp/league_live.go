@@ -78,7 +78,7 @@ func registerLeagueLiveHandlers(
 			if budgetErr != nil {
 				return nil, budgetErr
 			}
-			filters, filterErr := decodeQueryPlayerHistoryFilters(ctx, object, heroes, budget)
+			filters, filterErr := decodeQueryPlayerHistoryFiltersDomain(ctx, object, heroes, budget)
 			if filterErr != nil {
 				return nil, filterErr
 			}
@@ -116,6 +116,40 @@ func registerLeagueLiveHandlers(
 		}
 		return queryMatchesEnvelope(options, resultData, raw, warnings, rates, includeRaw(object), matchDetailInput(object)), nil
 	}
+}
+
+func decodeQueryPlayerHistoryFiltersDomain(
+	ctx context.Context,
+	input map[string]any,
+	heroes *heroconstants.Service,
+	budget *stratz.RequestBudget,
+) (playermatch.PlayerMatchFilters, error) {
+	primitiveInput := make(map[string]any, len(input))
+	for key, value := range input {
+		if key != "hero" {
+			primitiveInput[key] = value
+		}
+	}
+	filters, domainErr := playermatch.ParsePlayerHistoryFilters(primitiveInput)
+	if domainErr != nil {
+		return filters, playerMatchExecutionError(domainErr)
+	}
+	detail := detailInput(input)
+	if detail != contracts.DetailLevelSummary && detail != contracts.DetailLevel("players") {
+		return filters, invalidArgumentsError()
+	}
+	filters.IncludePlayer = detail == contracts.DetailLevel("players")
+	if value, present := input["hero"]; present {
+		if heroes == nil {
+			return filters, invalidArgumentsError()
+		}
+		number, resolveErr := heroes.ResolveHeroIDWithBudget(ctx, value, budget)
+		if resolveErr != nil {
+			return filters, heroConstantsExecutionError(resolveErr)
+		}
+		filters.HeroID = &number
+	}
+	return filters, nil
 }
 
 func decodeQueryLiveFilters(

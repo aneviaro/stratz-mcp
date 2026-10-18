@@ -34,6 +34,7 @@ type seeds struct {
 	MatchID     string
 	MatchIDs    []string
 	LeagueID    string
+	PatchID     string
 	HeroID      int64
 	HeroStatsTo time.Time
 }
@@ -421,6 +422,61 @@ func TestEveryPublicToolAgainstLiveSTRATZ(t *testing.T) {
 			})
 		}
 
+		// Current STRATZ rejects roleIds and laneIds in PlayerMatchesRequestType
+		// with INVALID_OPERATION (HTTP 400), although production mapping is
+		// covered by deterministic fixtures. Use the supported position and
+		// numeric patch filters for the successful live regression; role/lane
+		// boundary validation remains covered below.
+		call(t, "stratz_query_matches", map[string]any{
+			"mode": "player_history", "player_id": fixture.PlayerID, "limit": 1,
+			"position": "POSITION_1", "patch_id": fixture.PatchID,
+		})
+		for _, invalid := range []struct {
+			name  string
+			field string
+			value any
+		}{
+			{name: "role enum", field: "role", value: "POSITION_1"},
+			{name: "role number", field: "role", value: 1},
+			{name: "unsupported position", field: "position", value: "POSITION_6"},
+			{name: "unsupported lane", field: "lane", value: "UNKNOWN"},
+			{name: "dotted patch", field: "patch_id", value: "7.39"},
+			{name: "nonnumeric patch", field: "patch_id", value: "abc"},
+		} {
+			t.Run("invalid_player_history_"+invalid.name, func(t *testing.T) {
+				arguments := map[string]any{"mode": "player_history", "player_id": fixture.PlayerID, invalid.field: invalid.value}
+				arguments["fresh"] = true
+				result, callErr := session.CallTool(ctx, &sdk.CallToolParams{Name: "stratz_query_matches", Arguments: arguments})
+				if callErr != nil {
+					t.Fatal(callErr)
+				}
+				if !result.IsError {
+					t.Fatalf("invalid %s unexpectedly succeeded: %#v", invalid.name, result.StructuredContent)
+				}
+				if validationErr := contracts.ValidateOutput("stratz_query_matches", result.StructuredContent); validationErr != nil {
+					t.Fatal(validationErr)
+				}
+				encoded, marshalErr := json.Marshal(result.StructuredContent)
+				if marshalErr != nil {
+					t.Fatal(marshalErr)
+				}
+				var envelope map[string]any
+				if unmarshalErr := json.Unmarshal(encoded, &envelope); unmarshalErr != nil {
+					t.Fatal(unmarshalErr)
+				}
+				errorObject, ok := envelope["error"].(map[string]any)
+				if !ok {
+					t.Fatalf("invalid %s error envelope = %#v", invalid.name, envelope)
+				}
+				if errorObject["code"] == string(contracts.ErrorCodeUpstreamProtocolError) {
+					t.Fatalf("invalid %s reached UPSTREAM_PROTOCOL_ERROR", invalid.name)
+				}
+				if errorObject["code"] != string(contracts.ErrorCodeInvalidArgument) {
+					t.Fatalf("invalid %s error = %#v, want INVALID_ARGUMENT", invalid.name, envelope)
+				}
+			})
+		}
+
 		leagueHistory := call(t, "stratz_query_matches", map[string]any{
 			"mode": "league_history", "league_id": fixture.LeagueID, "limit": 1,
 			"detail_level": "summary",
@@ -545,6 +601,7 @@ leagueLoop:
 				league(id: $id) {
 					matches(request: $request) {
 						id
+						gameVersionId
 						parsedDateTime
 						statsDateTime
 						radiantKills
@@ -559,6 +616,7 @@ leagueLoop:
 			League *struct {
 				Matches []struct {
 					ID             int64           `json:"id"`
+					GameVersionID  json.RawMessage `json:"gameVersionId"`
 					ParsedDateTime *int64          `json:"parsedDateTime"`
 					StatsDateTime  *int64          `json:"statsDateTime"`
 					RadiantKills   json.RawMessage `json:"radiantKills"`
@@ -570,7 +628,8 @@ leagueLoop:
 			continue
 		}
 		for _, match := range matchEnvelope.League.Matches {
-			if match.ParsedDateTime == nil || match.StatsDateTime == nil ||
+			patchID, hasNumericPatch := numericGameVersionID(match.GameVersionID)
+			if !hasNumericPatch || match.ParsedDateTime == nil || match.StatsDateTime == nil ||
 				killCount(match.RadiantKills)+killCount(match.DireKills) == 0 {
 				continue
 			}
@@ -624,6 +683,7 @@ leagueLoop:
 			candidates = append(candidates, seeds{
 				MatchID:  strconv.FormatInt(match.ID, 10),
 				LeagueID: strconv.FormatInt(league.ID, 10),
+				PatchID:  patchID,
 			})
 			if len(candidates) == 2 {
 				return seeds{
@@ -631,6 +691,7 @@ leagueLoop:
 					MatchID:     candidates[0].MatchID,
 					MatchIDs:    []string{candidates[0].MatchID, candidates[1].MatchID},
 					LeagueID:    candidates[0].LeagueID,
+					PatchID:     candidates[0].PatchID,
 					HeroID:      heroID,
 					HeroStatsTo: heroStatsTo,
 				}
@@ -642,6 +703,21 @@ leagueLoop:
 		playbackProbes,
 	)
 	return seeds{}
+}
+
+func numericGameVersionID(raw json.RawMessage) (string, bool) {
+	var number int64
+	if err := json.Unmarshal(raw, &number); err == nil && number > 0 {
+		return strconv.FormatInt(number, 10), true
+	}
+	var text string
+	if err := json.Unmarshal(raw, &text); err == nil {
+		parsed, parseErr := strconv.ParseInt(text, 10, 64)
+		if parseErr == nil && parsed > 0 {
+			return strconv.FormatInt(parsed, 10), true
+		}
+	}
+	return "", false
 }
 
 func discoverLatestHeroStatsTo(
