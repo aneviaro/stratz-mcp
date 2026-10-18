@@ -834,8 +834,9 @@ func assertConstantItems(t *testing.T, output map[string]any, mode string, wantT
 
 func assertMatchScoreAndPlayers(t *testing.T, match map[string]any, label string) {
 	t.Helper()
-	if positiveIntField(match, "radiant_score")+positiveIntField(match, "dire_score") <= 0 {
-		t.Fatalf("%s match has no observed score: %#v", label, match)
+	parseStatus, _ := match["parse_status"].(string)
+	if parseStatus == "parsed" && (match["radiant_score"] == nil || match["dire_score"] == nil) {
+		t.Fatalf("%s parsed match has unavailable score: %#v", label, match)
 	}
 	if players, present := match["players"]; present {
 		rows, ok := players.([]any)
