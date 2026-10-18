@@ -24,7 +24,7 @@ import (
 
 const (
 	contractRegistryPath = "docs/tool-contracts.json"
-	expectedContract     = "2.0.0-draft.1"
+	expectedContract     = "2.0.0-draft.2"
 	expectedProtocol     = "2026-07-28"
 	draft202012          = "https://json-schema.org/draft/2020-12/schema"
 	maxDescriptionBytes  = 96
@@ -792,7 +792,7 @@ func exampleFor(schema any) (any, error) {
 				return "https://example.invalid/", nil
 			}
 			switch node["pattern"] {
-			case "^[0-9]{1,10}$", "^[0-9]{1,20}$":
+			case "^[0-9]{1,10}$", "^[0-9]{1,20}$", "^([1-9][0-9]{0,8}|1[0-9]{9}|20[0-9]{8}|21[0-3][0-9]{7}|214[0-6][0-9]{6}|2147[0-3][0-9]{5}|21474[0-7][0-9]{4}|214748[0-2][0-9]{3}|2147483[0-5][0-9]{2}|21474836[0-3][0-9]|214748364[0-7])$":
 				return "1", nil
 			case "^[0-9]{17,20}$":
 				return "76561198000000000", nil

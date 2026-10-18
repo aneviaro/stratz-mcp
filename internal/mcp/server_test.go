@@ -52,6 +52,19 @@ func (serverExecutor) Execute(
 	}, nil
 }
 
+type countingServerExecutor struct {
+	calls atomic.Int64
+}
+
+func (executor *countingServerExecutor) Execute(
+	ctx context.Context,
+	budget *stratz.RequestBudget,
+	request stratz.Request,
+) (*stratz.Response, error) {
+	executor.calls.Add(1)
+	return serverExecutor{}.Execute(ctx, budget, request)
+}
+
 type heroCursorExecutor struct{}
 
 func (heroCursorExecutor) Execute(
@@ -150,7 +163,7 @@ func testServerWithExecutor(
 	return server
 }
 
-func callHeroSearch(t *testing.T, server *Server, arguments map[string]any) *sdk.CallToolResult {
+func callTool(t *testing.T, server *Server, name string, arguments map[string]any) *sdk.CallToolResult {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -161,7 +174,7 @@ func callHeroSearch(t *testing.T, server *Server, arguments map[string]any) *sdk
 	}
 	defer serverSession.Close()
 	client := sdk.NewClient(
-		&sdk.Implementation{Name: "hero-cursor-test", Version: "1"},
+		&sdk.Implementation{Name: "boundary-test", Version: "1"},
 		&sdk.ClientOptions{},
 	)
 	clientSession, err := client.Connect(ctx, clientTransport, nil)
@@ -170,12 +183,59 @@ func callHeroSearch(t *testing.T, server *Server, arguments map[string]any) *sdk
 	}
 	defer clientSession.Close()
 	result, err := clientSession.CallTool(ctx, &sdk.CallToolParams{
-		Name: "stratz_query_heroes", Arguments: arguments,
+		Name: name, Arguments: arguments,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	return result
+}
+
+func callHeroSearch(t *testing.T, server *Server, arguments map[string]any) *sdk.CallToolResult {
+	return callTool(t, server, "stratz_query_heroes", arguments)
+}
+
+func TestPlayerHistoryInvalidFiltersFailAtPublicBoundary(t *testing.T) {
+	executor := &countingServerExecutor{}
+	server := testServerWithExecutor(t, slog.New(slog.NewTextHandler(io.Discard, nil)), executor, "fixture-token", "sha256:fixture")
+	cases := []struct {
+		name  string
+		field string
+		value any
+	}{
+		{name: "role position enum", field: "role", value: "POSITION_1"},
+		{name: "role number", field: "role", value: 1},
+		{name: "role valid but unavailable", field: "role", value: "CORE"},
+		{name: "lane valid but unavailable", field: "lane", value: "MID_LANE"},
+		{name: "unsupported position", field: "position", value: "POSITION_6"},
+		{name: "unsupported lane", field: "lane", value: "UNKNOWN"},
+		{name: "dotted patch", field: "patch_id", value: "7.39"},
+		{name: "nonnumeric patch", field: "patch_id", value: "abc"},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			arguments := map[string]any{
+				"mode": "player_history", "player_id": "1", test.field: test.value,
+			}
+			result := callTool(t, server, "stratz_query_matches", arguments)
+			assertResultConforms(t, "stratz_query_matches", result, true)
+			encoded, err := json.Marshal(result.StructuredContent)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var envelope map[string]any
+			if err := json.Unmarshal(encoded, &envelope); err != nil {
+				t.Fatal(err)
+			}
+			errorObject, ok := envelope["error"].(map[string]any)
+			if !ok || errorObject["code"] != string(contracts.ErrorCodeInvalidArgument) {
+				t.Fatalf("error envelope = %#v, want INVALID_ARGUMENT", envelope)
+			}
+			if executor.calls.Load() != 0 {
+				t.Fatalf("invalid history filter made %d upstream calls", executor.calls.Load())
+			}
+		})
+	}
 }
 
 func TestHeroSearchCursorUsesProductionServerBinding(t *testing.T) {

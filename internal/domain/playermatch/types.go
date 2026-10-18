@@ -50,6 +50,29 @@ type MatchQueryData struct {
 	Page  *contracts.Page `json:"page,omitempty"`
 }
 
+// PlayerMatchFilters contains native and bounded client-side list filters.
+// Position and Lane are normalized to their STRATZ request representations.
+type PlayerMatchFilters struct {
+	PlayerID               string
+	From                   *time.Time
+	To                     *time.Time
+	HeroID                 *int64
+	Role                   *string
+	Position               *string
+	Lane                   *int64
+	GameModeID             *int64
+	LobbyTypeID            *int64
+	Result                 *string
+	MinimumDurationSeconds *int64
+	PatchID                *string
+	IncludePlayer          bool
+	Limit                  int
+	Cursor                 string
+
+	roleID  *int64
+	patchID *int64
+}
+
 // The following legacy match shapes remain domain-local while the v2 contract
 // exposes the consolidated query types.
 type PageInfo struct {

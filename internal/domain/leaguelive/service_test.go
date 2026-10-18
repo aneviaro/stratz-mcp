@@ -127,6 +127,27 @@ func TestLeagueNameSearchStopsAtFivePagesAndResumes(t *testing.T) {
 	}
 }
 
+func TestLeagueHistoryRejectsNonCanonicalPatchBeforeExecution(t *testing.T) {
+	invalidPatches := []string{"", " ", "7.39", "0", "-1", "2147483648"}
+	for _, patch := range invalidPatches {
+		executor := &fixtureExecutor{execute: func(stratz.Request) (*stratz.Response, error) {
+			t.Fatal("upstream should not be called for an invalid patch")
+			return nil, nil
+		}}
+		service := mustService(t, executor)
+		_, err := service.QueryMatches(context.Background(), map[string]any{
+			"mode": "league_history", "league_id": "42", "patch_id": patch,
+		})
+		var domainErr *Error
+		if !errors.As(err, &domainErr) || domainErr.Code != contracts.ErrorCodeInvalidArgument {
+			t.Fatalf("patch %q error = %#v", patch, err)
+		}
+		if executor.calls != 0 {
+			t.Fatalf("patch %q made %d upstream calls", patch, executor.calls)
+		}
+	}
+}
+
 func TestLeagueMatchesUsesNativeFiltersAndContinuation(t *testing.T) {
 	call := 0
 	executor := &fixtureExecutor{execute: func(request stratz.Request) (*stratz.Response, error) {
@@ -137,21 +158,24 @@ func TestLeagueMatchesUsesNativeFiltersAndContinuation(t *testing.T) {
 		variables := request.Variables.(map[string]any)
 		native := variables["request"].(map[string]any)
 		wantSkip := int64((call - 1) * 2)
-		if variables["id"] != int64(42) || native["skip"] != wantSkip || native["gameVersionIds"].([]string)[0] != "7.39" {
+		if variables["id"] != int64(42) || native["skip"] != wantSkip ||
+			!reflect.DeepEqual(native["gameVersionIds"], []int64{739}) {
 			t.Fatalf("variables = %#v", variables)
 		}
 		return response(fmt.Sprintf(`{"league":{"id":42,"matches":[
-			{"id":%d,"leagueId":42,"parsedDateTime":1},
-			{"id":%d,"leagueId":42}
+			{"id":%d,"leagueId":42,"gameVersionId":739,"parsedDateTime":1},
+			{"id":%d,"leagueId":42,"gameVersionId":740}
 		]}}`, wantSkip+1, wantSkip+2)), nil
 	}}
 	service := mustService(t, executor)
-	patch := "7.39"
+	patch := "739"
 	first, err := service.ListLeagueMatches(context.Background(), LeagueMatchFilters{LeagueID: "42", PatchID: &patch, Limit: 2})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if first.Data.Items[0].ParseStatus != "parsed" || first.Data.Items[1].ParseStatus != "pending" || first.Data.Page.NextCursor == nil {
+	if first.Data.Items[0].ParseStatus != "parsed" || first.Data.Items[1].ParseStatus != "pending" ||
+		first.Data.Items[0].PatchID == nil || *first.Data.Items[0].PatchID != "739" ||
+		first.Data.Items[1].PatchID == nil || *first.Data.Items[1].PatchID != "740" || first.Data.Page.NextCursor == nil {
 		t.Fatalf("first = %#v", first.Data)
 	}
 	second, err := service.ListLeagueMatches(context.Background(), LeagueMatchFilters{

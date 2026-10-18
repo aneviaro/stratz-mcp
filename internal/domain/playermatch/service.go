@@ -331,108 +331,7 @@ func queryDetail(input map[string]any, history bool) (contracts.DetailLevel, *Er
 }
 
 func queryPlayerMatchFilters(input map[string]any) (PlayerMatchFilters, *Error) {
-	for key := range input {
-		switch key {
-		case "mode", "cursor", "detail_level", "fresh", "include_raw", "player_id", "from", "to", "hero", "role", "game_mode_id", "lobby_type_id", "result", "minimum_duration_seconds", "patch_id", "limit":
-		default:
-			return PlayerMatchFilters{}, invalid("Unsupported player-history field", map[string]any{"field": key})
-		}
-	}
-	player, ok := input["player_id"].(string)
-	if !ok || strings.TrimSpace(player) == "" {
-		return PlayerMatchFilters{}, invalid("player_id is required", nil)
-	}
-	filters := PlayerMatchFilters{PlayerID: player, Limit: integerValue(input["limit"], 0)}
-	if value, exists := input["from"]; exists {
-		parsed, parseErr := queryDate(value, "from")
-		if parseErr != nil {
-			return PlayerMatchFilters{}, parseErr
-		}
-		filters.From = parsed
-	}
-	if value, exists := input["to"]; exists {
-		parsed, parseErr := queryDate(value, "to")
-		if parseErr != nil {
-			return PlayerMatchFilters{}, parseErr
-		}
-		filters.To = parsed
-	}
-	if value, exists := input["hero"]; exists {
-		id, parseErr := queryInteger(value, "hero")
-		if parseErr != nil {
-			return PlayerMatchFilters{}, parseErr
-		}
-		filters.HeroID = &id
-	}
-	if value, exists := input["role"]; exists {
-		role, roleOK := value.(string)
-		if !roleOK || strings.TrimSpace(role) == "" {
-			return PlayerMatchFilters{}, invalid("role must be a non-empty string", nil)
-		}
-		filters.Role = &role
-	}
-	for key, target := range map[string]**int64{"game_mode_id": &filters.GameModeID, "lobby_type_id": &filters.LobbyTypeID, "minimum_duration_seconds": &filters.MinimumDurationSeconds} {
-		if value, exists := input[key]; exists {
-			parsed, parseErr := queryInteger(value, key)
-			if parseErr != nil {
-				return PlayerMatchFilters{}, parseErr
-			}
-			*target = &parsed
-		}
-	}
-	if value, exists := input["result"]; exists {
-		result, resultOK := value.(string)
-		if !resultOK || (result != "win" && result != "loss") {
-			return PlayerMatchFilters{}, invalid("result must be win or loss", nil)
-		}
-		filters.Result = &result
-	}
-	if value, exists := input["patch_id"]; exists {
-		patch, patchOK := value.(string)
-		if !patchOK || strings.TrimSpace(patch) == "" {
-			return PlayerMatchFilters{}, invalid("patch_id must be a non-empty string", nil)
-		}
-		filters.PatchID = &patch
-	}
-	return filters, nil
-}
-
-func queryDate(value any, field string) (*time.Time, *Error) {
-	text, ok := value.(string)
-	if !ok {
-		return nil, invalid(field+" must be an RFC3339 date-time", nil)
-	}
-	parsed, err := time.Parse(time.RFC3339Nano, text)
-	if err != nil {
-		return nil, invalid(field+" must be an RFC3339 date-time", nil)
-	}
-	parsed = parsed.UTC()
-	return &parsed, nil
-}
-
-func queryInteger(value any, field string) (int64, *Error) {
-	switch number := value.(type) {
-	case int:
-		return int64(number), nil
-	case int64:
-		return number, nil
-	case float64:
-		if number != float64(int64(number)) {
-			return 0, invalid(field+" must be an integer", nil)
-		}
-		return int64(number), nil
-	case json.Number:
-		parsed, err := number.Int64()
-		if err == nil {
-			return parsed, nil
-		}
-	case string:
-		parsed, err := strconv.ParseInt(strings.TrimSpace(number), 10, 64)
-		if err == nil {
-			return parsed, nil
-		}
-	}
-	return 0, invalid(field+" must be an integer", nil)
+	return ParsePlayerHistoryFilters(input)
 }
 
 func playerRequestMap(request any) (map[string]any, error) {
@@ -697,23 +596,6 @@ func matchWarnings(detail contracts.DetailLevel) []string {
 	return []string{}
 }
 
-// PlayerMatchFilters contains native and bounded client-side list filters.
-type PlayerMatchFilters struct {
-	PlayerID               string
-	From                   *time.Time
-	To                     *time.Time
-	HeroID                 *int64
-	Role                   *string
-	GameModeID             *int64
-	LobbyTypeID            *int64
-	Result                 *string
-	MinimumDurationSeconds *int64
-	PatchID                *string
-	IncludePlayer          bool
-	Limit                  int
-	Cursor                 string
-}
-
 // ListPlayerMatches returns a bounded filtered page and authenticated continuation.
 func (s *Service) ListPlayerMatches(
 	ctx context.Context,
@@ -732,6 +614,9 @@ func (s *Service) ListPlayerMatchesWithBudget(
 	playerID, err := NormalizePlayerID(filters.PlayerID)
 	if err != nil {
 		return nil, err
+	}
+	if normalizeErr := normalizePlayerHistoryFilters(&filters); normalizeErr != nil {
+		return nil, normalizeErr
 	}
 	if filters.Limit == 0 {
 		filters.Limit = 20
@@ -962,8 +847,14 @@ func nativePlayerMatchRequest(filters PlayerMatchFilters, take int, skip int64) 
 	if filters.HeroID != nil {
 		request["heroIds"] = []int64{*filters.HeroID}
 	}
-	if filters.Role != nil {
-		request["roleIds"] = []string{*filters.Role}
+	if filters.roleID != nil {
+		request["roleIds"] = []int64{*filters.roleID}
+	}
+	if filters.Position != nil {
+		request["positionIds"] = []string{*filters.Position}
+	}
+	if filters.Lane != nil {
+		request["laneIds"] = []int64{*filters.Lane}
 	}
 	if filters.GameModeID != nil {
 		request["gameModeIds"] = []int64{*filters.GameModeID}
@@ -974,8 +865,8 @@ func nativePlayerMatchRequest(filters PlayerMatchFilters, take int, skip int64) 
 	if filters.Result != nil {
 		request["isVictory"] = *filters.Result == "win"
 	}
-	if filters.PatchID != nil {
-		request["gameVersionIds"] = []string{*filters.PatchID}
+	if filters.patchID != nil {
+		request["gameVersionIds"] = []int64{*filters.patchID}
 	}
 	return request
 }
@@ -986,16 +877,22 @@ func filterBinding(id PlayerID, filters PlayerMatchFilters) map[string]any {
 		"player_id": playerKey(id),
 	}
 	if filters.From != nil {
-		result["from"] = filters.From.UTC().Format(time.RFC3339)
+		result["from"] = filters.From.UTC().Format(time.RFC3339Nano)
 	}
 	if filters.To != nil {
-		result["to"] = filters.To.UTC().Format(time.RFC3339)
+		result["to"] = filters.To.UTC().Format(time.RFC3339Nano)
 	}
 	if filters.HeroID != nil {
 		result["hero_id"] = *filters.HeroID
 	}
 	if filters.Role != nil {
 		result["role"] = *filters.Role
+	}
+	if filters.Position != nil {
+		result["position"] = *filters.Position
+	}
+	if filters.Lane != nil {
+		result["lane"] = *filters.Lane
 	}
 	if filters.GameModeID != nil {
 		result["game_mode_id"] = *filters.GameModeID
@@ -1016,23 +913,6 @@ func filterBinding(id PlayerID, filters PlayerMatchFilters) map[string]any {
 		result["include_player"] = true
 	}
 	return result
-}
-
-func integerValue(value any, fallback int) int {
-	switch number := value.(type) {
-	case int:
-		return number
-	case int64:
-		return int(number)
-	case float64:
-		return int(number)
-	case json.Number:
-		parsed, err := number.Int64()
-		if err == nil {
-			return int(parsed)
-		}
-	}
-	return fallback
 }
 
 func optionalState(cursor string, state *pagination.ScanState[int64]) *pagination.ScanState[int64] {

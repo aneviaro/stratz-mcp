@@ -35,9 +35,9 @@ input LeagueRequestType {
 input LeagueMatchesRequestType {
   startDateTime: Long
   endDateTime: Long
-  gameVersionIds: [String!]
-  take: Int!
-  skip: Int!
+  gameVersionIds: [Int]
+  take: Int
+  skip: Int
 }
 
 type LeagueType {
@@ -249,13 +249,15 @@ input PlayerMatchesRequestType {
   startDateTime: Long
   endDateTime: Long
   heroIds: [Int!]
-  roleIds: [String!]
+  roleIds: [Int]
+  positionIds: [MatchPlayerPositionType]
+  laneIds: [Int]
   gameModeIds: [Int!]
   lobbyTypeIds: [Int!]
   isVictory: Boolean
-  gameVersionIds: [String!]
-  take: Int!
-  skip: Int!
+  gameVersionIds: [Int]
+  take: Int
+  skip: Int
 }
 
 type MatchType {

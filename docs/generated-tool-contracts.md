@@ -6,7 +6,7 @@ Status: Generated from docs/tool-contracts.json; do not edit manually
 
 # Generated STRATZ MCP tool contracts
 
-- Contract version: `2.0.0-draft.1`
+- Contract version: `2.0.0-draft.2`
 - Preferred MCP protocol version: `2026-07-28`
 - Supported MCP protocol versions: `2026-07-28`, `2025-11-25`, `2025-06-18`, `2025-03-26`, `2024-11-05`
 - JSON Schema dialect: `https://json-schema.org/draft/2020-12/schema`
