@@ -59,6 +59,10 @@ The modes are:
 
 Exact mode accepts `summary`, `players`, `standard`, and `full`, defaulting to `standard`; these levels select only fields that the committed upstream mapping can provide. `DATA_NOT_READY` is returned instead of silently downgrading replay-dependent detail.
 
+Exact match rows and `player_history` rows at `detail_level: "players"` use the shared `matchPlayer` shape. `player_slot` is the required normalized `0..9` slot copied from upstream `playerSlot`; it is not a semantic Dota position. `position` is the required semantic enum `POSITION_1` through `POSITION_5`, with `UNKNOWN` or explicit `null` when upstream does not provide a usable value. `role` and `role_basic` are required and use `CORE`, `LIGHT_SUPPORT`, `HARD_SUPPORT`, `UNKNOWN`, or `null`; `lane` is required and uses `SAFE_LANE`, `MID_LANE`, `OFF_LANE`, `JUNGLE`, `ROAMING`, `UNKNOWN`, or `null`. `party_id` is a required non-negative integer or explicit `null`. These properties are never inferred from the slot, one another, or other match data. Missing upstream metadata remains `null`/`UNKNOWN` rather than being fabricated.
+
+This metadata contract applies to exact and player-history player rows only. `livePlayer` remains unchanged and continues to expose its normalized slot-valued `position`; live-player semantic metadata is not a goal of this change.
+
 ### 3.3 `stratz_query_heroes`
 
 The modes are:
@@ -130,6 +134,10 @@ Paginated data adds `page: {"next_cursor":null,"has_more":false}`. Errors contai
 
 Clients must discover the seven-tool catalog again and must not send old arguments to a new mode branch. This table is migration guidance; the JSON registry controls validation.
 
-## 7. Change rule
+## 7. Match-player migration: draft.1 to draft.2
+
+The `2.0.0-draft.2` contract versions the match-player semantic-position correction. In `2.0.0-draft.1`, `matchPlayer.position` was an integer normalized slot (`0..9`). Clients must migrate that value to `player_slot`; `position` is now the nullable semantic enum described above. Clients must read the new required metadata keys, preserve explicit `null` and `UNKNOWN`, and must not derive semantic values from `player_slot`. `livePlayer.position` is intentionally unchanged. This is a breaking contract change, not a silent reinterpretation of an existing field.
+
+## 8. Change rule
 
 Any tool-name, mode, field, output-shape, error, cursor, cache, or MCP wire change requires a contract-version decision, registry update, generated-artifact update in the subsequent generation task, compatibility tests, and a migration note when existing clients can break.

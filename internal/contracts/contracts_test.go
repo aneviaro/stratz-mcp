@@ -234,22 +234,118 @@ func TestMatchPlayerIMPValuesValidatePublicContract(t *testing.T) {
 			exactData := exactOutput["data"].(map[string]any)
 			exactItem := exactData["items"].([]any)[0].(map[string]any)
 			exactItem["players"] = []any{map[string]any{
-				"account_id": "1",
-				"hero_id":    1,
-				"team":       "radiant",
-				"position":   0,
-				"kills":      1,
-				"deaths":     0,
-				"assists":    2,
-				"networth":   nil,
-				"level":      nil,
-				"won":        true,
-				"imp":        imp,
+				"account_id":  "1",
+				"hero_id":     1,
+				"team":        "radiant",
+				"player_slot": 0,
+				"position":    "POSITION_1",
+				"role":        "CORE",
+				"role_basic":  "CORE",
+				"lane":        "SAFE_LANE",
+				"party_id":    1,
+				"kills":       1,
+				"deaths":      0,
+				"assists":     2,
+				"networth":    nil,
+				"level":       nil,
+				"won":         true,
+				"imp":         imp,
 			}}
 			if err := ValidateOutput("stratz_query_matches", exactOutput); err != nil {
 				t.Fatalf("exact output with imp=%#v rejected: %v", imp, err)
 			}
 		})
+	}
+}
+
+func TestMatchPlayerMetadataSchemaAndNullability(t *testing.T) {
+	schema, err := Schema("stratz_query_matches", OutputSchema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document any
+	if err := json.Unmarshal(schema, &document); err != nil {
+		t.Fatal(err)
+	}
+	var matchPlayerSchemas []map[string]any
+	var visit func(any)
+	visit = func(value any) {
+		node, ok := value.(map[string]any)
+		if !ok {
+			if values, ok := value.([]any); ok {
+				for _, child := range values {
+					visit(child)
+				}
+			}
+			return
+		}
+		if properties, ok := node["properties"].(map[string]any); ok {
+			if _, ok := properties["player_slot"]; ok {
+				matchPlayerSchemas = append(matchPlayerSchemas, node)
+			}
+		}
+		for _, child := range node {
+			visit(child)
+		}
+	}
+	visit(document)
+	if len(matchPlayerSchemas) == 0 {
+		t.Fatal("generated match output schema does not contain matchPlayer")
+	}
+	for _, playerSchema := range matchPlayerSchemas {
+		required, ok := playerSchema["required"].([]any)
+		if !ok {
+			t.Fatal("matchPlayer schema has no required list")
+		}
+		requiredSet := make(map[string]bool, len(required))
+		for _, field := range required {
+			if name, ok := field.(string); ok {
+				requiredSet[name] = true
+			}
+		}
+		for _, field := range []string{"player_slot", "position", "role", "role_basic", "lane", "party_id"} {
+			if !requiredSet[field] {
+				t.Errorf("matchPlayer schema does not require %q", field)
+			}
+		}
+	}
+
+	output := matchHistoryOutput(t, "player_history", true)
+	player := output["data"].(map[string]any)["items"].([]any)[0].(map[string]any)["player"].(map[string]any)
+	for field, value := range map[string]any{
+		"position":   "UNKNOWN",
+		"role":       "UNKNOWN",
+		"role_basic": "UNKNOWN",
+		"lane":       "UNKNOWN",
+		"party_id":   0,
+	} {
+		player[field] = value
+	}
+	if err := ValidateOutput("stratz_query_matches", output); err != nil {
+		t.Fatalf("UNKNOWN match-player metadata rejected: %v", err)
+	}
+	player["position"] = "POSITION_3"
+	player["role"] = "CORE"
+	player["role_basic"] = "LIGHT_SUPPORT"
+	player["lane"] = "OFF_LANE"
+	player["party_id"] = nil
+	if err := ValidateOutput("stratz_query_matches", output); err != nil {
+		t.Fatalf("independent role/role_basic/lane and null party metadata rejected: %v", err)
+	}
+	for _, field := range []string{"position", "role", "role_basic", "lane", "party_id"} {
+		player[field] = nil
+	}
+	if err := ValidateOutput("stratz_query_matches", output); err != nil {
+		t.Fatalf("null match-player metadata rejected: %v", err)
+	}
+	player["position"] = 0
+	if err := ValidateOutput("stratz_query_matches", output); err == nil {
+		t.Fatal("match-player schema accepted the old integer position")
+	}
+	player["position"] = "POSITION_1"
+	player["party_id"] = -1
+	if err := ValidateOutput("stratz_query_matches", output); err == nil {
+		t.Fatal("match-player schema accepted a negative party_id")
 	}
 }
 
@@ -288,17 +384,22 @@ func matchHistoryOutput(t *testing.T, mode string, includePlayer bool) map[strin
 	delete(item, "players")
 	if includePlayer {
 		item["player"] = map[string]any{
-			"account_id": "1",
-			"hero_id":    1,
-			"team":       "radiant",
-			"position":   0,
-			"kills":      1,
-			"deaths":     0,
-			"assists":    2,
-			"networth":   nil,
-			"level":      nil,
-			"won":        true,
-			"imp":        nil,
+			"account_id":  "1",
+			"hero_id":     1,
+			"team":        "radiant",
+			"player_slot": 0,
+			"position":    "POSITION_1",
+			"role":        "CORE",
+			"role_basic":  "CORE",
+			"lane":        "SAFE_LANE",
+			"party_id":    1,
+			"kills":       1,
+			"deaths":      0,
+			"assists":     2,
+			"networth":    nil,
+			"level":       nil,
+			"won":         true,
+			"imp":         nil,
 		}
 	}
 	data["mode"] = mode

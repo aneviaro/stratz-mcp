@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -257,9 +258,11 @@ func TestEveryPublicToolAgainstLiveSTRATZ(t *testing.T) {
 					t.Fatalf("%s match_id = %#v, want %s", test.detail, match["match_id"], fixture.MatchID)
 				}
 				assertMatchScoreAndPlayers(t, match, test.detail)
-				if players, ok := match["players"].([]any); !ok || len(players) == 0 {
+				players, ok := match["players"].([]any)
+				if !ok || len(players) == 0 {
 					t.Fatalf("%s match has no player rows: %#v", test.detail, match)
 				}
+				assertMatchPlayerMetadataRows(t, players, test.detail, true)
 				if test.objectives && len(arrayField(t, match, "objectives")) == 0 {
 					t.Fatalf("%s match has no objectives: %#v", test.detail, match)
 				}
@@ -411,6 +414,7 @@ func TestEveryPublicToolAgainstLiveSTRATZ(t *testing.T) {
 					if player["account_id"] != fixture.PlayerID {
 						t.Fatalf("player history row account_id = %#v, want %s", player["account_id"], fixture.PlayerID)
 					}
+					assertMatchPlayerMetadataRows(t, []any{player}, "player_history_"+detail, false)
 				}
 				cursor := requirePageCursor(t, output, "player history "+detail)
 				continuation := call(t, "stratz_query_matches", map[string]any{
@@ -919,6 +923,108 @@ func assertMatchScoreAndPlayers(t *testing.T, match map[string]any, label string
 		if !ok || len(rows) == 0 {
 			t.Fatalf("%s match has no player rows: %#v", label, match)
 		}
+	}
+}
+
+func assertMatchPlayerMetadataRows(t *testing.T, values []any, label string, requireNonZeroKDA bool) {
+	t.Helper()
+	if len(values) == 0 {
+		t.Fatalf("%s player rows are empty", label)
+	}
+	validPositions := map[string]bool{
+		"POSITION_1": true, "POSITION_2": true, "POSITION_3": true,
+		"POSITION_4": true, "POSITION_5": true, "UNKNOWN": true,
+	}
+	validRoles := map[string]bool{
+		"CORE": true, "LIGHT_SUPPORT": true, "HARD_SUPPORT": true, "UNKNOWN": true,
+	}
+	validLanes := map[string]bool{
+		"ROAMING": true, "SAFE_LANE": true, "MID_LANE": true, "OFF_LANE": true,
+		"JUNGLE": true, "UNKNOWN": true,
+	}
+	nonZeroKDA := false
+	for index, value := range values {
+		player := objectValue(t, value)
+		for _, field := range []string{"player_slot", "position", "role", "role_basic", "lane", "party_id"} {
+			if _, present := player[field]; !present {
+				t.Fatalf("%s player[%d] missing required semantic key %q: %#v", label, index, field, player)
+			}
+		}
+		slot, ok := integerValue(player["player_slot"])
+		if !ok || slot < 0 || slot > 9 {
+			t.Fatalf("%s player[%d].player_slot = %#v, want normalized slot 0..9", label, index, player["player_slot"])
+		}
+		for _, fieldSet := range []struct {
+			field string
+			valid map[string]bool
+		}{
+			{field: "position", valid: validPositions},
+			{field: "role", valid: validRoles},
+			{field: "role_basic", valid: validRoles},
+			{field: "lane", valid: validLanes},
+		} {
+			value, present := player[fieldSet.field]
+			if !present {
+				continue
+			}
+			if value == nil {
+				continue
+			}
+			text, ok := value.(string)
+			if !ok || !fieldSet.valid[text] {
+				t.Fatalf("%s player[%d].%s = %#v, want documented enum or null", label, index, fieldSet.field, value)
+			}
+		}
+		if party := player["party_id"]; party != nil {
+			partyID, ok := integerValue(party)
+			if !ok || partyID < 0 {
+				t.Fatalf("%s player[%d].party_id = %#v, want non-negative integer or null", label, index, party)
+			}
+		}
+		team, ok := player["team"].(string)
+		if !ok || (team != "radiant" && team != "dire") {
+			t.Fatalf("%s player[%d].team = %#v, want radiant or dire", label, index, player["team"])
+		}
+		for _, field := range []string{"kills", "deaths", "assists"} {
+			stat, ok := integerValue(player[field])
+			if !ok || stat < 0 {
+				t.Fatalf("%s player[%d].%s = %#v, want non-negative integer", label, index, field, player[field])
+			}
+			if stat > 0 {
+				nonZeroKDA = true
+			}
+		}
+		won, present := player["won"]
+		if !present {
+			t.Fatalf("%s player[%d] missing win value", label, index)
+		}
+		if won != nil {
+			if _, ok := won.(bool); !ok {
+				t.Fatalf("%s player[%d].won = %#v, want boolean or null", label, index, won)
+			}
+		}
+	}
+	if requireNonZeroKDA && !nonZeroKDA {
+		t.Fatalf("%s player rows have no non-zero KDA observation", label)
+	}
+}
+
+func integerValue(value any) (int64, bool) {
+	switch value := value.(type) {
+	case int:
+		return int64(value), true
+	case int64:
+		return value, true
+	case float64:
+		if math.IsNaN(value) || math.IsInf(value, 0) || math.Trunc(value) != value {
+			return 0, false
+		}
+		return int64(value), true
+	case json.Number:
+		parsed, err := value.Int64()
+		return parsed, err == nil
+	default:
+		return 0, false
 	}
 }
 

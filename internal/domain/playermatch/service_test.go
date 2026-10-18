@@ -326,6 +326,128 @@ func TestMatchDetailLevelsAndDataNotReady(t *testing.T) {
 	}
 }
 
+func TestMatchPlayerMetadataMappingAndMarshal(t *testing.T) {
+	payload := []byte(`{"id":42,"players":[
+		{"steamAccountId":7,"heroId":1,"isRadiant":true,"playerSlot":128,"position":"POSITION_1","role":"CORE","roleBasic":"LIGHT_SUPPORT","lane":"SAFE_LANE","partyId":17,"kills":2,"deaths":1,"assists":3},
+		{"steamAccountId":8,"heroId":2,"isRadiant":false,"playerSlot":2,"position":"POSITION_2","role":"CORE","roleBasic":"CORE","lane":"MID_LANE","partyId":18,"kills":4,"deaths":2,"assists":6},
+		{"steamAccountId":9,"heroId":3,"isRadiant":true,"playerSlot":7,"position":"POSITION_3","role":"LIGHT_SUPPORT","roleBasic":"HARD_SUPPORT","lane":"OFF_LANE","partyId":null,"kills":5,"deaths":3,"assists":7},
+		{"steamAccountId":10,"heroId":4,"isRadiant":false,"playerSlot":9,"position":"POSITION_5","role":"HARD_SUPPORT","roleBasic":"LIGHT_SUPPORT","lane":"SAFE_LANE","partyId":19,"kills":1,"deaths":4,"assists":8},
+		{"steamAccountId":11,"heroId":5,"isRadiant":true,"playerSlot":0,"position":null,"role":"FUTURE_ROLE","roleBasic":null,"lane":"FUTURE_LANE","partyId":-4,"kills":1,"deaths":2,"assists":3}
+	]}`)
+	var source upstreamMatch
+	if err := json.Unmarshal(payload, &source); err != nil {
+		t.Fatalf("json.Unmarshal(metadata fixture): %v", err)
+	}
+
+	mapped := mapMatch(&source, contracts.DetailLevelSummary)
+	if len(mapped.Players) != 5 {
+		t.Fatalf("mapped players = %#v, want carry, mid, offlane, support, and unknown rows", mapped.Players)
+	}
+	want := mapped.Players[0]
+	if want.PlayerSlot != 5 || want.Position == nil || *want.Position != "POSITION_1" ||
+		want.Role == nil || *want.Role != "CORE" ||
+		want.RoleBasic == nil || *want.RoleBasic != "LIGHT_SUPPORT" ||
+		want.Lane == nil || *want.Lane != "SAFE_LANE" ||
+		want.PartyID == nil || *want.PartyID != 17 ||
+		want.Kills != 2 || want.Deaths != 1 || want.Assists != 3 || want.Team != "radiant" {
+		t.Fatalf("carry metadata = %#v, want slot 5 independent of POSITION_1", want)
+	}
+	if want.PlayerSlot == 1 {
+		t.Fatal("carry player_slot was fabricated from semantic position")
+	}
+
+	semanticWant := []struct {
+		name       string
+		index      int
+		position   string
+		role       string
+		roleBasic  string
+		lane       string
+		partyID    *int64
+		playerSlot int64
+	}{
+		{name: "carry", index: 0, position: "POSITION_1", role: "CORE", roleBasic: "LIGHT_SUPPORT", lane: "SAFE_LANE", partyID: int64Pointer(17), playerSlot: 5},
+		{name: "mid", index: 1, position: "POSITION_2", role: "CORE", roleBasic: "CORE", lane: "MID_LANE", partyID: int64Pointer(18), playerSlot: 2},
+		{name: "offlane", index: 2, position: "POSITION_3", role: "LIGHT_SUPPORT", roleBasic: "HARD_SUPPORT", lane: "OFF_LANE", playerSlot: 7},
+		{name: "support", index: 3, position: "POSITION_5", role: "HARD_SUPPORT", roleBasic: "LIGHT_SUPPORT", lane: "SAFE_LANE", partyID: int64Pointer(19), playerSlot: 9},
+	}
+	for _, test := range semanticWant {
+		t.Run(test.name, func(t *testing.T) {
+			player := mapped.Players[test.index]
+			if player.PlayerSlot != test.playerSlot || player.Position == nil || *player.Position != test.position ||
+				player.Role == nil || *player.Role != test.role ||
+				player.RoleBasic == nil || *player.RoleBasic != test.roleBasic ||
+				player.Lane == nil || *player.Lane != test.lane ||
+				!reflect.DeepEqual(player.PartyID, test.partyID) {
+				t.Fatalf("mapped %s player = %#v, want independent semantic metadata", test.name, player)
+			}
+		})
+	}
+
+	for index, accountID := range []int64{7, 8, 9, 10, 11} {
+		history := findMatchPlayer(&source, accountID)
+		if history == nil || !reflect.DeepEqual(history, &mapped.Players[index]) {
+			t.Fatalf("history player %d = %#v, exact player = %#v", accountID, history, mapped.Players[index])
+		}
+	}
+
+	nullable := mapped.Players[4]
+	if nullable.PlayerSlot != 0 || nullable.Position != nil || nullable.PartyID != nil ||
+		nullable.Role == nil || *nullable.Role != "UNKNOWN" ||
+		nullable.RoleBasic != nil || nullable.Lane == nil || *nullable.Lane != "UNKNOWN" {
+		t.Fatalf("null and unknown metadata = %#v", nullable)
+	}
+
+	encodedMatch, err := json.Marshal(mapped)
+	if err != nil {
+		t.Fatalf("json.Marshal(exact metadata match): %v", err)
+	}
+	var publicMatch map[string]any
+	if err := json.Unmarshal(encodedMatch, &publicMatch); err != nil {
+		t.Fatalf("json.Unmarshal(exact metadata match): %v", err)
+	}
+	players, ok := publicMatch["players"].([]any)
+	if !ok || len(players) != 5 {
+		t.Fatalf("public exact players = %#v", publicMatch["players"])
+	}
+	for index, value := range players {
+		assertPublicMatchPlayerMetadata(t, value, "exact", index)
+	}
+
+	encodedHistory, err := json.Marshal(PlayerMatchSummary{Player: &nullable})
+	if err != nil {
+		t.Fatalf("json.Marshal(history metadata player): %v", err)
+	}
+	var publicHistory map[string]any
+	if err := json.Unmarshal(encodedHistory, &publicHistory); err != nil {
+		t.Fatalf("json.Unmarshal(history metadata player): %v", err)
+	}
+	assertPublicMatchPlayerMetadata(t, publicHistory["player"], "history", 4)
+}
+
+func assertPublicMatchPlayerMetadata(t *testing.T, value any, shape string, index int) {
+	t.Helper()
+	player, ok := value.(map[string]any)
+	if !ok {
+		t.Fatalf("%s player[%d] = %#v, want object", shape, index, value)
+	}
+	for _, field := range []string{"player_slot", "position", "role", "role_basic", "lane", "party_id"} {
+		if _, present := player[field]; !present {
+			t.Fatalf("%s player[%d] metadata field %q missing: %#v", shape, index, field, player)
+		}
+	}
+	if index == 4 {
+		for _, field := range []string{"position", "role_basic", "party_id"} {
+			if player[field] != nil {
+				t.Fatalf("%s player[%d].%s = %#v, want explicit null", shape, index, field, player[field])
+			}
+		}
+		if player["role"] != "UNKNOWN" || player["lane"] != "UNKNOWN" {
+			t.Fatalf("%s player[%d] unknown metadata = %#v", shape, index, player)
+		}
+	}
+}
+
 func TestTimelineEventMarshalsNullableFieldsAsNull(t *testing.T) {
 	encoded, err := json.Marshal(TimelineEvent{TimeSeconds: 42, Type: "roshan"})
 	if err != nil {
@@ -619,16 +741,16 @@ func TestListPlayerMatchesBoundedContinuation(t *testing.T) {
 func TestQueryMatchesRoutesExactAndPlayerHistoryBranches(t *testing.T) {
 	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
 		if request.OperationName == "StratzGetMatchBatchSummary" {
-			return response(`{"match0":{"id":9,"players":[
-				{"steamAccountId":1,"heroId":7,"playerSlot":0,"isRadiant":true,"kills":2,"deaths":1,"assists":3,"imp":4.25},
-				{"steamAccountId":2,"heroId":8,"playerSlot":128,"isRadiant":false,"kills":4,"deaths":2,"assists":1,"imp":-3.5},
-				{"steamAccountId":3,"heroId":9,"playerSlot":1,"isRadiant":true,"kills":1,"deaths":3,"assists":2,"imp":null}
+			return response(`{"match0":{"id":9,"didRadiantWin":true,"players":[
+				{"steamAccountId":1,"heroId":7,"playerSlot":128,"position":"POSITION_1","role":"CORE","roleBasic":"LIGHT_SUPPORT","lane":"SAFE_LANE","partyId":17,"isRadiant":true,"kills":2,"deaths":1,"assists":3,"imp":4.25},
+				{"steamAccountId":2,"heroId":8,"playerSlot":2,"position":"POSITION_2","role":"CORE","roleBasic":"CORE","lane":"MID_LANE","partyId":18,"isRadiant":false,"kills":4,"deaths":2,"assists":1,"imp":-3.5},
+				{"steamAccountId":3,"heroId":9,"playerSlot":1,"position":null,"role":"FUTURE_ROLE","roleBasic":null,"lane":"FUTURE_LANE","partyId":null,"isRadiant":true,"kills":1,"deaths":3,"assists":2,"imp":null}
 			]}}`), nil
 		}
 		if request.OperationName == "StratzListPlayerMatchesWithPlayers" {
 			return response(`{"player":{"steamAccountId":1,"matches":[
-				{"id":8,"durationSeconds":1200,"players":[{"steamAccountId":1,"heroId":7,"playerSlot":128,"isRadiant":true,"kills":2,"deaths":1,"assists":3,"imp":5.75}]},
-				{"id":10,"durationSeconds":1500,"players":[{"steamAccountId":1,"heroId":7,"playerSlot":128,"isRadiant":true,"kills":2,"deaths":1,"assists":3,"imp":null}]}
+				{"id":8,"durationSeconds":1200,"didRadiantWin":true,"players":[{"steamAccountId":1,"heroId":7,"playerSlot":128,"position":"POSITION_5","role":"HARD_SUPPORT","roleBasic":"LIGHT_SUPPORT","lane":"SAFE_LANE","partyId":19,"isRadiant":true,"kills":2,"deaths":1,"assists":3,"imp":5.75}]},
+				{"id":10,"durationSeconds":1500,"didRadiantWin":null,"players":[{"steamAccountId":1,"heroId":7,"playerSlot":7,"position":"POSITION_3","role":"CORE","roleBasic":"HARD_SUPPORT","lane":"OFF_LANE","partyId":null,"isRadiant":true,"kills":2,"deaths":1,"assists":3,"imp":null}]}
 			]}}`), nil
 		}
 		if request.OperationName == "StratzListPlayerMatches" {
@@ -663,10 +785,29 @@ func TestQueryMatchesRoutesExactAndPlayerHistoryBranches(t *testing.T) {
 		if !ok {
 			t.Fatalf("public exact player[%d] = %#v", index, publicPlayers[index])
 		}
+		assertPublicMatchPlayerMetadata(t, publicPlayer, "exact", index)
 		got, present := publicPlayer["imp"]
 		if !present || got != want {
 			t.Fatalf("public exact player[%d].imp = %#v (present=%v), want %#v", index, got, present, want)
 		}
+		if index == 0 {
+			if publicPlayer["player_slot"] != float64(5) || publicPlayer["position"] != "POSITION_1" ||
+				publicPlayer["role"] != "CORE" || publicPlayer["role_basic"] != "LIGHT_SUPPORT" ||
+				publicPlayer["lane"] != "SAFE_LANE" || publicPlayer["party_id"] != float64(17) ||
+				publicPlayer["team"] != "radiant" || publicPlayer["won"] != true ||
+				publicPlayer["kills"] != float64(2) || publicPlayer["deaths"] != float64(1) || publicPlayer["assists"] != float64(3) {
+				t.Fatalf("public exact carry player = %#v, want non-zero KDA and independent semantics", publicPlayer)
+			}
+		}
+		if index == 1 && (publicPlayer["player_slot"] != float64(2) || publicPlayer["position"] != "POSITION_2" ||
+			publicPlayer["lane"] != "MID_LANE" || publicPlayer["team"] != "dire") {
+			t.Fatalf("public exact mid player = %#v, want slot 2 and MID_LANE", publicPlayer)
+		}
+	}
+	unknownExact := publicPlayers[2].(map[string]any)
+	if unknownExact["position"] != nil || unknownExact["role"] != "UNKNOWN" || unknownExact["role_basic"] != nil ||
+		unknownExact["lane"] != "UNKNOWN" || unknownExact["party_id"] != nil {
+		t.Fatalf("public exact null/unknown player = %#v", unknownExact)
 	}
 
 	player, err := service.QueryMatches(context.Background(), map[string]any{"mode": "player_history", "player_id": "1", "detail_level": "players", "minimum_duration_seconds": int64(1000)})
@@ -678,6 +819,23 @@ func TestQueryMatchesRoutesExactAndPlayerHistoryBranches(t *testing.T) {
 		items[0].Player.Imp == nil || *items[0].Player.Imp != 5.75 ||
 		items[1].Player == nil || items[1].Player.Imp != nil {
 		t.Fatalf("player items = %#v", player.Data.Items)
+	}
+	firstHistory := items[0].Player
+	if firstHistory.PlayerSlot != 5 || firstHistory.Position == nil || *firstHistory.Position != "POSITION_5" ||
+		firstHistory.Role == nil || *firstHistory.Role != "HARD_SUPPORT" ||
+		firstHistory.RoleBasic == nil || *firstHistory.RoleBasic != "LIGHT_SUPPORT" ||
+		firstHistory.Lane == nil || *firstHistory.Lane != "SAFE_LANE" ||
+		firstHistory.PartyID == nil || *firstHistory.PartyID != 19 || firstHistory.Team != "radiant" ||
+		firstHistory.Won == nil || !*firstHistory.Won || firstHistory.Deaths != 1 || firstHistory.Assists != 3 {
+		t.Fatalf("history support player = %#v, want non-zero KDA/team/win and independent semantics", firstHistory)
+	}
+	secondHistory := items[1].Player
+	if secondHistory.PlayerSlot != 7 || secondHistory.Position == nil || *secondHistory.Position != "POSITION_3" ||
+		secondHistory.Role == nil || *secondHistory.Role != "CORE" ||
+		secondHistory.RoleBasic == nil || *secondHistory.RoleBasic != "HARD_SUPPORT" ||
+		secondHistory.Lane == nil || *secondHistory.Lane != "OFF_LANE" || secondHistory.PartyID != nil ||
+		secondHistory.Won != nil {
+		t.Fatalf("history offlane player = %#v, want null party and unknown win preserved", secondHistory)
 	}
 	historyJSON, err := json.Marshal(items)
 	if err != nil {
@@ -692,10 +850,23 @@ func TestQueryMatchesRoutesExactAndPlayerHistoryBranches(t *testing.T) {
 		if !ok {
 			t.Fatalf("public history player[%d] = %#v", index, publicHistory[index]["player"])
 		}
+		assertPublicMatchPlayerMetadata(t, publicPlayer, "history", index)
 		got, present := publicPlayer["imp"]
 		if !present || got != want {
 			t.Fatalf("public history player[%d].imp = %#v (present=%v), want %#v", index, got, present, want)
 		}
+	}
+	publicHistorySupport := publicHistory[0]["player"].(map[string]any)
+	if publicHistorySupport["player_slot"] != float64(5) || publicHistorySupport["position"] != "POSITION_5" ||
+		publicHistorySupport["role"] != "HARD_SUPPORT" || publicHistorySupport["role_basic"] != "LIGHT_SUPPORT" ||
+		publicHistorySupport["lane"] != "SAFE_LANE" || publicHistorySupport["party_id"] != float64(19) {
+		t.Fatalf("public history support metadata = %#v", publicHistorySupport)
+	}
+	publicHistoryOfflane := publicHistory[1]["player"].(map[string]any)
+	if publicHistoryOfflane["player_slot"] != float64(7) || publicHistoryOfflane["position"] != "POSITION_3" ||
+		publicHistoryOfflane["role"] != "CORE" || publicHistoryOfflane["role_basic"] != "HARD_SUPPORT" ||
+		publicHistoryOfflane["lane"] != "OFF_LANE" || publicHistoryOfflane["party_id"] != nil {
+		t.Fatalf("public history offlane metadata = %#v", publicHistoryOfflane)
 	}
 	defaultResult, err := service.QueryMatches(context.Background(), map[string]any{
 		"mode": "player_history", "player_id": "1",

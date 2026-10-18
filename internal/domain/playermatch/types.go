@@ -102,18 +102,23 @@ type PlayerMatchSummary struct {
 }
 
 type MatchPlayer struct {
-	AccountID *string  `json:"account_id"`
-	HeroID    int64    `json:"hero_id"`
-	HeroName  *string  `json:"-"`
-	Team      string   `json:"team"`
-	Position  int64    `json:"position"`
-	Kills     int64    `json:"kills"`
-	Deaths    int64    `json:"deaths"`
-	Assists   int64    `json:"assists"`
-	Networth  *int64   `json:"networth"`
-	Level     *int64   `json:"level"`
-	Imp       *float64 `json:"imp"`
-	Won       *bool    `json:"won"`
+	AccountID  *string  `json:"account_id"`
+	HeroID     int64    `json:"hero_id"`
+	HeroName   *string  `json:"-"`
+	Team       string   `json:"team"`
+	PlayerSlot int64    `json:"player_slot"`
+	Position   *string  `json:"position"`
+	Role       *string  `json:"role"`
+	RoleBasic  *string  `json:"role_basic"`
+	Lane       *string  `json:"lane"`
+	PartyID    *int64   `json:"party_id"`
+	Kills      int64    `json:"kills"`
+	Deaths     int64    `json:"deaths"`
+	Assists    int64    `json:"assists"`
+	Networth   *int64   `json:"networth"`
+	Level      *int64   `json:"level"`
+	Imp        *float64 `json:"imp"`
+	Won        *bool    `json:"won"`
 }
 
 type Match struct {
@@ -316,6 +321,11 @@ type upstreamMatchPlayer struct {
 	HeroID         int64    `json:"heroId"`
 	IsRadiant      bool     `json:"isRadiant"`
 	PlayerSlot     int64    `json:"playerSlot"`
+	Position       *string  `json:"position"`
+	Role           *string  `json:"role"`
+	RoleBasic      *string  `json:"roleBasic"`
+	Lane           *string  `json:"lane"`
+	PartyID        *int64   `json:"partyId"`
 	Kills          int64    `json:"kills"`
 	Deaths         int64    `json:"deaths"`
 	Assists        int64    `json:"assists"`

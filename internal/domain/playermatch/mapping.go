@@ -114,17 +114,22 @@ func findMatchPlayer(source *upstreamMatch, accountID int64) *MatchPlayer {
 		won := playerWon(source.DidRadiantWin, player.IsRadiant)
 		publicAccountID := strconv.FormatInt(accountID, 10)
 		return &MatchPlayer{
-			AccountID: &publicAccountID,
-			HeroID:    player.HeroID,
-			Team:      team,
-			Position:  normalizedPlayerSlot(player.PlayerSlot),
-			Kills:     maxZero(player.Kills),
-			Deaths:    maxZero(player.Deaths),
-			Assists:   maxZero(player.Assists),
-			Networth:  nonNegative(player.Networth),
-			Level:     nonNegative(player.Level),
-			Imp:       player.IMP,
-			Won:       won,
+			AccountID:  &publicAccountID,
+			HeroID:     player.HeroID,
+			Team:       team,
+			PlayerSlot: normalizedPlayerSlot(player.PlayerSlot),
+			Position:   normalizePosition(player.Position),
+			Role:       normalizeRole(player.Role),
+			RoleBasic:  normalizeRole(player.RoleBasic),
+			Lane:       normalizeLane(player.Lane),
+			PartyID:    nonNegative(player.PartyID),
+			Kills:      maxZero(player.Kills),
+			Deaths:     maxZero(player.Deaths),
+			Assists:    maxZero(player.Assists),
+			Networth:   nonNegative(player.Networth),
+			Level:      nonNegative(player.Level),
+			Imp:        player.IMP,
+			Won:        won,
 		}
 	}
 	return nil
@@ -189,17 +194,22 @@ func mapMatch(source *upstreamMatch, detail contracts.DetailLevel) Match {
 		}
 		won := playerWon(source.DidRadiantWin, player.IsRadiant)
 		match.Players = append(match.Players, MatchPlayer{
-			AccountID: accountID,
-			HeroID:    player.HeroID,
-			Team:      team,
-			Position:  normalizedPlayerSlot(player.PlayerSlot),
-			Kills:     maxZero(player.Kills),
-			Deaths:    maxZero(player.Deaths),
-			Assists:   maxZero(player.Assists),
-			Networth:  nonNegative(player.Networth),
-			Level:     nonNegative(player.Level),
-			Imp:       player.IMP,
-			Won:       won,
+			AccountID:  accountID,
+			HeroID:     player.HeroID,
+			Team:       team,
+			PlayerSlot: normalizedPlayerSlot(player.PlayerSlot),
+			Position:   normalizePosition(player.Position),
+			Role:       normalizeRole(player.Role),
+			RoleBasic:  normalizeRole(player.RoleBasic),
+			Lane:       normalizeLane(player.Lane),
+			PartyID:    nonNegative(player.PartyID),
+			Kills:      maxZero(player.Kills),
+			Deaths:     maxZero(player.Deaths),
+			Assists:    maxZero(player.Assists),
+			Networth:   nonNegative(player.Networth),
+			Level:      nonNegative(player.Level),
+			Imp:        player.IMP,
+			Won:        won,
 		})
 	}
 	if detail == contracts.DetailLevelStandard || detail == contracts.DetailLevelFull {
@@ -400,6 +410,32 @@ func normalizedPlayerSlot(slot int64) int64 {
 		return 9
 	}
 	return slot
+}
+
+func normalizePosition(value *string) *string {
+	return normalizeEnum(value, "POSITION_1", "POSITION_2", "POSITION_3", "POSITION_4", "POSITION_5", "UNKNOWN")
+}
+
+func normalizeRole(value *string) *string {
+	return normalizeEnum(value, "CORE", "LIGHT_SUPPORT", "HARD_SUPPORT", "UNKNOWN")
+}
+
+func normalizeLane(value *string) *string {
+	return normalizeEnum(value, "ROAMING", "SAFE_LANE", "MID_LANE", "OFF_LANE", "JUNGLE", "UNKNOWN")
+}
+
+func normalizeEnum(value *string, recognized ...string) *string {
+	if value == nil {
+		return nil
+	}
+	for _, token := range recognized {
+		if *value == token {
+			normalized := *value
+			return &normalized
+		}
+	}
+	unknown := "UNKNOWN"
+	return &unknown
 }
 
 func mapEvents(source []upstreamEvent) []TimelineEvent {

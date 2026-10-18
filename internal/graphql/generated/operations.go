@@ -334,6 +334,26 @@ func (v *MatchFullFieldsPlaybackDataMatchPlaybackDataTypeWardEventsMatchPlayback
 	return v.FromPlayer
 }
 
+type MatchLaneType string
+
+const (
+	MatchLaneTypeRoaming  MatchLaneType = "ROAMING"
+	MatchLaneTypeSafeLane MatchLaneType = "SAFE_LANE"
+	MatchLaneTypeMidLane  MatchLaneType = "MID_LANE"
+	MatchLaneTypeOffLane  MatchLaneType = "OFF_LANE"
+	MatchLaneTypeJungle   MatchLaneType = "JUNGLE"
+	MatchLaneTypeUnknown  MatchLaneType = "UNKNOWN"
+)
+
+var AllMatchLaneType = []MatchLaneType{
+	MatchLaneTypeRoaming,
+	MatchLaneTypeSafeLane,
+	MatchLaneTypeMidLane,
+	MatchLaneTypeOffLane,
+	MatchLaneTypeJungle,
+	MatchLaneTypeUnknown,
+}
+
 type MatchLiveRequestType struct {
 	LeagueIds   []int    `json:"leagueIds"`
 	HeroIds     []int    `json:"heroIds"`
@@ -367,16 +387,21 @@ func (v *MatchLiveRequestType) GetSkip() int { return v.Skip }
 
 // MatchPlayerFields includes the GraphQL fields of MatchPlayerType requested by the fragment MatchPlayerFields.
 type MatchPlayerFields struct {
-	SteamAccountId *int64   `json:"steamAccountId"`
-	HeroId         int      `json:"heroId"`
-	IsRadiant      bool     `json:"isRadiant"`
-	PlayerSlot     int      `json:"playerSlot"`
-	Kills          int      `json:"kills"`
-	Deaths         int      `json:"deaths"`
-	Assists        int      `json:"assists"`
-	Networth       *int     `json:"networth"`
-	Level          *int     `json:"level"`
-	Imp            *float64 `json:"imp"`
+	SteamAccountId *int64                   `json:"steamAccountId"`
+	HeroId         int                      `json:"heroId"`
+	IsRadiant      bool                     `json:"isRadiant"`
+	PlayerSlot     int                      `json:"playerSlot"`
+	Position       *MatchPlayerPositionType `json:"position"`
+	Role           *MatchPlayerRoleType     `json:"role"`
+	RoleBasic      *MatchPlayerRoleType     `json:"roleBasic"`
+	Lane           *MatchLaneType           `json:"lane"`
+	PartyId        *int                     `json:"partyId"`
+	Kills          int                      `json:"kills"`
+	Deaths         int                      `json:"deaths"`
+	Assists        int                      `json:"assists"`
+	Networth       *int                     `json:"networth"`
+	Level          *int                     `json:"level"`
+	Imp            *float64                 `json:"imp"`
 }
 
 // GetSteamAccountId returns MatchPlayerFields.SteamAccountId, and is useful for accessing the field via an interface.
@@ -390,6 +415,21 @@ func (v *MatchPlayerFields) GetIsRadiant() bool { return v.IsRadiant }
 
 // GetPlayerSlot returns MatchPlayerFields.PlayerSlot, and is useful for accessing the field via an interface.
 func (v *MatchPlayerFields) GetPlayerSlot() int { return v.PlayerSlot }
+
+// GetPosition returns MatchPlayerFields.Position, and is useful for accessing the field via an interface.
+func (v *MatchPlayerFields) GetPosition() *MatchPlayerPositionType { return v.Position }
+
+// GetRole returns MatchPlayerFields.Role, and is useful for accessing the field via an interface.
+func (v *MatchPlayerFields) GetRole() *MatchPlayerRoleType { return v.Role }
+
+// GetRoleBasic returns MatchPlayerFields.RoleBasic, and is useful for accessing the field via an interface.
+func (v *MatchPlayerFields) GetRoleBasic() *MatchPlayerRoleType { return v.RoleBasic }
+
+// GetLane returns MatchPlayerFields.Lane, and is useful for accessing the field via an interface.
+func (v *MatchPlayerFields) GetLane() *MatchLaneType { return v.Lane }
+
+// GetPartyId returns MatchPlayerFields.PartyId, and is useful for accessing the field via an interface.
+func (v *MatchPlayerFields) GetPartyId() *int { return v.PartyId }
 
 // GetKills returns MatchPlayerFields.Kills, and is useful for accessing the field via an interface.
 func (v *MatchPlayerFields) GetKills() int { return v.Kills }
@@ -431,6 +471,22 @@ var AllMatchPlayerPositionType = []MatchPlayerPositionType{
 	MatchPlayerPositionTypePosition4,
 	MatchPlayerPositionTypePosition5,
 	MatchPlayerPositionTypeUnknown,
+}
+
+type MatchPlayerRoleType string
+
+const (
+	MatchPlayerRoleTypeCore         MatchPlayerRoleType = "CORE"
+	MatchPlayerRoleTypeLightSupport MatchPlayerRoleType = "LIGHT_SUPPORT"
+	MatchPlayerRoleTypeHardSupport  MatchPlayerRoleType = "HARD_SUPPORT"
+	MatchPlayerRoleTypeUnknown      MatchPlayerRoleType = "UNKNOWN"
+)
+
+var AllMatchPlayerRoleType = []MatchPlayerRoleType{
+	MatchPlayerRoleTypeCore,
+	MatchPlayerRoleTypeLightSupport,
+	MatchPlayerRoleTypeHardSupport,
+	MatchPlayerRoleTypeUnknown,
 }
 
 // MatchStandardFields includes the GraphQL fields of MatchType requested by the fragment MatchStandardFields.
@@ -682,6 +738,31 @@ func (v *MatchStandardFieldsPlayersMatchPlayerType) GetPlayerSlot() int {
 	return v.MatchPlayerFields.PlayerSlot
 }
 
+// GetPosition returns MatchStandardFieldsPlayersMatchPlayerType.Position, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlayersMatchPlayerType) GetPosition() *MatchPlayerPositionType {
+	return v.MatchPlayerFields.Position
+}
+
+// GetRole returns MatchStandardFieldsPlayersMatchPlayerType.Role, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlayersMatchPlayerType) GetRole() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.Role
+}
+
+// GetRoleBasic returns MatchStandardFieldsPlayersMatchPlayerType.RoleBasic, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlayersMatchPlayerType) GetRoleBasic() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.RoleBasic
+}
+
+// GetLane returns MatchStandardFieldsPlayersMatchPlayerType.Lane, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlayersMatchPlayerType) GetLane() *MatchLaneType {
+	return v.MatchPlayerFields.Lane
+}
+
+// GetPartyId returns MatchStandardFieldsPlayersMatchPlayerType.PartyId, and is useful for accessing the field via an interface.
+func (v *MatchStandardFieldsPlayersMatchPlayerType) GetPartyId() *int {
+	return v.MatchPlayerFields.PartyId
+}
+
 // GetKills returns MatchStandardFieldsPlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
 func (v *MatchStandardFieldsPlayersMatchPlayerType) GetKills() int { return v.MatchPlayerFields.Kills }
 
@@ -740,6 +821,16 @@ type __premarshalMatchStandardFieldsPlayersMatchPlayerType struct {
 
 	PlayerSlot int `json:"playerSlot"`
 
+	Position *MatchPlayerPositionType `json:"position"`
+
+	Role *MatchPlayerRoleType `json:"role"`
+
+	RoleBasic *MatchPlayerRoleType `json:"roleBasic"`
+
+	Lane *MatchLaneType `json:"lane"`
+
+	PartyId *int `json:"partyId"`
+
 	Kills int `json:"kills"`
 
 	Deaths int `json:"deaths"`
@@ -768,6 +859,11 @@ func (v *MatchStandardFieldsPlayersMatchPlayerType) __premarshalJSON() (*__prema
 	retval.HeroId = v.MatchPlayerFields.HeroId
 	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
 	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Position = v.MatchPlayerFields.Position
+	retval.Role = v.MatchPlayerFields.Role
+	retval.RoleBasic = v.MatchPlayerFields.RoleBasic
+	retval.Lane = v.MatchPlayerFields.Lane
+	retval.PartyId = v.MatchPlayerFields.PartyId
 	retval.Kills = v.MatchPlayerFields.Kills
 	retval.Deaths = v.MatchPlayerFields.Deaths
 	retval.Assists = v.MatchPlayerFields.Assists
@@ -3368,6 +3464,31 @@ func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetPla
 	return v.MatchPlayerFields.PlayerSlot
 }
 
+// GetPosition returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.Position, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetPosition() *MatchPlayerPositionType {
+	return v.MatchPlayerFields.Position
+}
+
+// GetRole returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.Role, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetRole() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.Role
+}
+
+// GetRoleBasic returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.RoleBasic, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetRoleBasic() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.RoleBasic
+}
+
+// GetLane returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.Lane, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetLane() *MatchLaneType {
+	return v.MatchPlayerFields.Lane
+}
+
+// GetPartyId returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.PartyId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetPartyId() *int {
+	return v.MatchPlayerFields.PartyId
+}
+
 // GetKills returns StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
 func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) GetKills() int {
 	return v.MatchPlayerFields.Kills
@@ -3432,6 +3553,16 @@ type __premarshalStratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType
 
 	PlayerSlot int `json:"playerSlot"`
 
+	Position *MatchPlayerPositionType `json:"position"`
+
+	Role *MatchPlayerRoleType `json:"role"`
+
+	RoleBasic *MatchPlayerRoleType `json:"roleBasic"`
+
+	Lane *MatchLaneType `json:"lane"`
+
+	PartyId *int `json:"partyId"`
+
 	Kills int `json:"kills"`
 
 	Deaths int `json:"deaths"`
@@ -3460,6 +3591,11 @@ func (v *StratzGetMatchBatchSummaryMatch0MatchTypePlayersMatchPlayerType) __prem
 	retval.HeroId = v.MatchPlayerFields.HeroId
 	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
 	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Position = v.MatchPlayerFields.Position
+	retval.Role = v.MatchPlayerFields.Role
+	retval.RoleBasic = v.MatchPlayerFields.RoleBasic
+	retval.Lane = v.MatchPlayerFields.Lane
+	retval.PartyId = v.MatchPlayerFields.PartyId
 	retval.Kills = v.MatchPlayerFields.Kills
 	retval.Deaths = v.MatchPlayerFields.Deaths
 	retval.Assists = v.MatchPlayerFields.Assists
@@ -3651,6 +3787,31 @@ func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetPla
 	return v.MatchPlayerFields.PlayerSlot
 }
 
+// GetPosition returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.Position, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetPosition() *MatchPlayerPositionType {
+	return v.MatchPlayerFields.Position
+}
+
+// GetRole returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.Role, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetRole() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.Role
+}
+
+// GetRoleBasic returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.RoleBasic, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetRoleBasic() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.RoleBasic
+}
+
+// GetLane returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.Lane, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetLane() *MatchLaneType {
+	return v.MatchPlayerFields.Lane
+}
+
+// GetPartyId returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.PartyId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetPartyId() *int {
+	return v.MatchPlayerFields.PartyId
+}
+
 // GetKills returns StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
 func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) GetKills() int {
 	return v.MatchPlayerFields.Kills
@@ -3715,6 +3876,16 @@ type __premarshalStratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType
 
 	PlayerSlot int `json:"playerSlot"`
 
+	Position *MatchPlayerPositionType `json:"position"`
+
+	Role *MatchPlayerRoleType `json:"role"`
+
+	RoleBasic *MatchPlayerRoleType `json:"roleBasic"`
+
+	Lane *MatchLaneType `json:"lane"`
+
+	PartyId *int `json:"partyId"`
+
 	Kills int `json:"kills"`
 
 	Deaths int `json:"deaths"`
@@ -3743,6 +3914,11 @@ func (v *StratzGetMatchBatchSummaryMatch1MatchTypePlayersMatchPlayerType) __prem
 	retval.HeroId = v.MatchPlayerFields.HeroId
 	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
 	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Position = v.MatchPlayerFields.Position
+	retval.Role = v.MatchPlayerFields.Role
+	retval.RoleBasic = v.MatchPlayerFields.RoleBasic
+	retval.Lane = v.MatchPlayerFields.Lane
+	retval.PartyId = v.MatchPlayerFields.PartyId
 	retval.Kills = v.MatchPlayerFields.Kills
 	retval.Deaths = v.MatchPlayerFields.Deaths
 	retval.Assists = v.MatchPlayerFields.Assists
@@ -3934,6 +4110,31 @@ func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetPla
 	return v.MatchPlayerFields.PlayerSlot
 }
 
+// GetPosition returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.Position, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetPosition() *MatchPlayerPositionType {
+	return v.MatchPlayerFields.Position
+}
+
+// GetRole returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.Role, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetRole() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.Role
+}
+
+// GetRoleBasic returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.RoleBasic, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetRoleBasic() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.RoleBasic
+}
+
+// GetLane returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.Lane, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetLane() *MatchLaneType {
+	return v.MatchPlayerFields.Lane
+}
+
+// GetPartyId returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.PartyId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetPartyId() *int {
+	return v.MatchPlayerFields.PartyId
+}
+
 // GetKills returns StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
 func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) GetKills() int {
 	return v.MatchPlayerFields.Kills
@@ -3998,6 +4199,16 @@ type __premarshalStratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType
 
 	PlayerSlot int `json:"playerSlot"`
 
+	Position *MatchPlayerPositionType `json:"position"`
+
+	Role *MatchPlayerRoleType `json:"role"`
+
+	RoleBasic *MatchPlayerRoleType `json:"roleBasic"`
+
+	Lane *MatchLaneType `json:"lane"`
+
+	PartyId *int `json:"partyId"`
+
 	Kills int `json:"kills"`
 
 	Deaths int `json:"deaths"`
@@ -4026,6 +4237,11 @@ func (v *StratzGetMatchBatchSummaryMatch2MatchTypePlayersMatchPlayerType) __prem
 	retval.HeroId = v.MatchPlayerFields.HeroId
 	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
 	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Position = v.MatchPlayerFields.Position
+	retval.Role = v.MatchPlayerFields.Role
+	retval.RoleBasic = v.MatchPlayerFields.RoleBasic
+	retval.Lane = v.MatchPlayerFields.Lane
+	retval.PartyId = v.MatchPlayerFields.PartyId
 	retval.Kills = v.MatchPlayerFields.Kills
 	retval.Deaths = v.MatchPlayerFields.Deaths
 	retval.Assists = v.MatchPlayerFields.Assists
@@ -4217,6 +4433,31 @@ func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetPla
 	return v.MatchPlayerFields.PlayerSlot
 }
 
+// GetPosition returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.Position, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetPosition() *MatchPlayerPositionType {
+	return v.MatchPlayerFields.Position
+}
+
+// GetRole returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.Role, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetRole() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.Role
+}
+
+// GetRoleBasic returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.RoleBasic, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetRoleBasic() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.RoleBasic
+}
+
+// GetLane returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.Lane, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetLane() *MatchLaneType {
+	return v.MatchPlayerFields.Lane
+}
+
+// GetPartyId returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.PartyId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetPartyId() *int {
+	return v.MatchPlayerFields.PartyId
+}
+
 // GetKills returns StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
 func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) GetKills() int {
 	return v.MatchPlayerFields.Kills
@@ -4281,6 +4522,16 @@ type __premarshalStratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType
 
 	PlayerSlot int `json:"playerSlot"`
 
+	Position *MatchPlayerPositionType `json:"position"`
+
+	Role *MatchPlayerRoleType `json:"role"`
+
+	RoleBasic *MatchPlayerRoleType `json:"roleBasic"`
+
+	Lane *MatchLaneType `json:"lane"`
+
+	PartyId *int `json:"partyId"`
+
 	Kills int `json:"kills"`
 
 	Deaths int `json:"deaths"`
@@ -4309,6 +4560,11 @@ func (v *StratzGetMatchBatchSummaryMatch3MatchTypePlayersMatchPlayerType) __prem
 	retval.HeroId = v.MatchPlayerFields.HeroId
 	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
 	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Position = v.MatchPlayerFields.Position
+	retval.Role = v.MatchPlayerFields.Role
+	retval.RoleBasic = v.MatchPlayerFields.RoleBasic
+	retval.Lane = v.MatchPlayerFields.Lane
+	retval.PartyId = v.MatchPlayerFields.PartyId
 	retval.Kills = v.MatchPlayerFields.Kills
 	retval.Deaths = v.MatchPlayerFields.Deaths
 	retval.Assists = v.MatchPlayerFields.Assists
@@ -4500,6 +4756,31 @@ func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetPla
 	return v.MatchPlayerFields.PlayerSlot
 }
 
+// GetPosition returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.Position, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetPosition() *MatchPlayerPositionType {
+	return v.MatchPlayerFields.Position
+}
+
+// GetRole returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.Role, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetRole() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.Role
+}
+
+// GetRoleBasic returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.RoleBasic, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetRoleBasic() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.RoleBasic
+}
+
+// GetLane returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.Lane, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetLane() *MatchLaneType {
+	return v.MatchPlayerFields.Lane
+}
+
+// GetPartyId returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.PartyId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetPartyId() *int {
+	return v.MatchPlayerFields.PartyId
+}
+
 // GetKills returns StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
 func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) GetKills() int {
 	return v.MatchPlayerFields.Kills
@@ -4564,6 +4845,16 @@ type __premarshalStratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType
 
 	PlayerSlot int `json:"playerSlot"`
 
+	Position *MatchPlayerPositionType `json:"position"`
+
+	Role *MatchPlayerRoleType `json:"role"`
+
+	RoleBasic *MatchPlayerRoleType `json:"roleBasic"`
+
+	Lane *MatchLaneType `json:"lane"`
+
+	PartyId *int `json:"partyId"`
+
 	Kills int `json:"kills"`
 
 	Deaths int `json:"deaths"`
@@ -4592,6 +4883,11 @@ func (v *StratzGetMatchBatchSummaryMatch4MatchTypePlayersMatchPlayerType) __prem
 	retval.HeroId = v.MatchPlayerFields.HeroId
 	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
 	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Position = v.MatchPlayerFields.Position
+	retval.Role = v.MatchPlayerFields.Role
+	retval.RoleBasic = v.MatchPlayerFields.RoleBasic
+	retval.Lane = v.MatchPlayerFields.Lane
+	retval.PartyId = v.MatchPlayerFields.PartyId
 	retval.Kills = v.MatchPlayerFields.Kills
 	retval.Deaths = v.MatchPlayerFields.Deaths
 	retval.Assists = v.MatchPlayerFields.Assists
@@ -5167,6 +5463,31 @@ func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) GetPlayerSlo
 	return v.MatchPlayerFields.PlayerSlot
 }
 
+// GetPosition returns StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType.Position, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) GetPosition() *MatchPlayerPositionType {
+	return v.MatchPlayerFields.Position
+}
+
+// GetRole returns StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType.Role, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) GetRole() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.Role
+}
+
+// GetRoleBasic returns StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType.RoleBasic, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) GetRoleBasic() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.RoleBasic
+}
+
+// GetLane returns StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType.Lane, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) GetLane() *MatchLaneType {
+	return v.MatchPlayerFields.Lane
+}
+
+// GetPartyId returns StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType.PartyId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) GetPartyId() *int {
+	return v.MatchPlayerFields.PartyId
+}
+
 // GetKills returns StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
 func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) GetKills() int {
 	return v.MatchPlayerFields.Kills
@@ -5231,6 +5552,16 @@ type __premarshalStratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType struc
 
 	PlayerSlot int `json:"playerSlot"`
 
+	Position *MatchPlayerPositionType `json:"position"`
+
+	Role *MatchPlayerRoleType `json:"role"`
+
+	RoleBasic *MatchPlayerRoleType `json:"roleBasic"`
+
+	Lane *MatchLaneType `json:"lane"`
+
+	PartyId *int `json:"partyId"`
+
 	Kills int `json:"kills"`
 
 	Deaths int `json:"deaths"`
@@ -5259,6 +5590,11 @@ func (v *StratzGetMatchSummaryMatchMatchTypePlayersMatchPlayerType) __premarshal
 	retval.HeroId = v.MatchPlayerFields.HeroId
 	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
 	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Position = v.MatchPlayerFields.Position
+	retval.Role = v.MatchPlayerFields.Role
+	retval.RoleBasic = v.MatchPlayerFields.RoleBasic
+	retval.Lane = v.MatchPlayerFields.Lane
+	retval.PartyId = v.MatchPlayerFields.PartyId
 	retval.Kills = v.MatchPlayerFields.Kills
 	retval.Deaths = v.MatchPlayerFields.Deaths
 	retval.Assists = v.MatchPlayerFields.Assists
@@ -5812,6 +6148,31 @@ func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) GetPlaye
 	return v.MatchPlayerFields.PlayerSlot
 }
 
+// GetPosition returns StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType.Position, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) GetPosition() *MatchPlayerPositionType {
+	return v.MatchPlayerFields.Position
+}
+
+// GetRole returns StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType.Role, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) GetRole() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.Role
+}
+
+// GetRoleBasic returns StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType.RoleBasic, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) GetRoleBasic() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.RoleBasic
+}
+
+// GetLane returns StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType.Lane, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) GetLane() *MatchLaneType {
+	return v.MatchPlayerFields.Lane
+}
+
+// GetPartyId returns StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType.PartyId, and is useful for accessing the field via an interface.
+func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) GetPartyId() *int {
+	return v.MatchPlayerFields.PartyId
+}
+
 // GetKills returns StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
 func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) GetKills() int {
 	return v.MatchPlayerFields.Kills
@@ -5876,6 +6237,16 @@ type __premarshalStratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType s
 
 	PlayerSlot int `json:"playerSlot"`
 
+	Position *MatchPlayerPositionType `json:"position"`
+
+	Role *MatchPlayerRoleType `json:"role"`
+
+	RoleBasic *MatchPlayerRoleType `json:"roleBasic"`
+
+	Lane *MatchLaneType `json:"lane"`
+
+	PartyId *int `json:"partyId"`
+
 	Kills int `json:"kills"`
 
 	Deaths int `json:"deaths"`
@@ -5904,6 +6275,11 @@ func (v *StratzGetMatchesSummaryMatchesMatchTypePlayersMatchPlayerType) __premar
 	retval.HeroId = v.MatchPlayerFields.HeroId
 	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
 	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Position = v.MatchPlayerFields.Position
+	retval.Role = v.MatchPlayerFields.Role
+	retval.RoleBasic = v.MatchPlayerFields.RoleBasic
+	retval.Lane = v.MatchPlayerFields.Lane
+	retval.PartyId = v.MatchPlayerFields.PartyId
 	retval.Kills = v.MatchPlayerFields.Kills
 	retval.Deaths = v.MatchPlayerFields.Deaths
 	retval.Assists = v.MatchPlayerFields.Assists
@@ -7117,6 +7493,31 @@ func (v *StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlaye
 	return v.MatchPlayerFields.PlayerSlot
 }
 
+// GetPosition returns StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.Position, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetPosition() *MatchPlayerPositionType {
+	return v.MatchPlayerFields.Position
+}
+
+// GetRole returns StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.Role, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetRole() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.Role
+}
+
+// GetRoleBasic returns StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.RoleBasic, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetRoleBasic() *MatchPlayerRoleType {
+	return v.MatchPlayerFields.RoleBasic
+}
+
+// GetLane returns StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.Lane, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetLane() *MatchLaneType {
+	return v.MatchPlayerFields.Lane
+}
+
+// GetPartyId returns StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.PartyId, and is useful for accessing the field via an interface.
+func (v *StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetPartyId() *int {
+	return v.MatchPlayerFields.PartyId
+}
+
 // GetKills returns StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType.Kills, and is useful for accessing the field via an interface.
 func (v *StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlayersMatchPlayerType) GetKills() int {
 	return v.MatchPlayerFields.Kills
@@ -7181,6 +7582,16 @@ type __premarshalStratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchT
 
 	PlayerSlot int `json:"playerSlot"`
 
+	Position *MatchPlayerPositionType `json:"position"`
+
+	Role *MatchPlayerRoleType `json:"role"`
+
+	RoleBasic *MatchPlayerRoleType `json:"roleBasic"`
+
+	Lane *MatchLaneType `json:"lane"`
+
+	PartyId *int `json:"partyId"`
+
 	Kills int `json:"kills"`
 
 	Deaths int `json:"deaths"`
@@ -7209,6 +7620,11 @@ func (v *StratzListPlayerMatchesWithPlayersPlayerPlayerTypeMatchesMatchTypePlaye
 	retval.HeroId = v.MatchPlayerFields.HeroId
 	retval.IsRadiant = v.MatchPlayerFields.IsRadiant
 	retval.PlayerSlot = v.MatchPlayerFields.PlayerSlot
+	retval.Position = v.MatchPlayerFields.Position
+	retval.Role = v.MatchPlayerFields.Role
+	retval.RoleBasic = v.MatchPlayerFields.RoleBasic
+	retval.Lane = v.MatchPlayerFields.Lane
+	retval.PartyId = v.MatchPlayerFields.PartyId
 	retval.Kills = v.MatchPlayerFields.Kills
 	retval.Deaths = v.MatchPlayerFields.Deaths
 	retval.Assists = v.MatchPlayerFields.Assists
@@ -7809,6 +8225,11 @@ fragment MatchPlayerFields on MatchPlayerType {
 	heroId
 	isRadiant
 	playerSlot
+	position
+	role
+	roleBasic
+	lane
+	partyId
 	kills
 	deaths
 	assists
@@ -7912,6 +8333,11 @@ fragment MatchPlayerFields on MatchPlayerType {
 	heroId
 	isRadiant
 	playerSlot
+	position
+	role
+	roleBasic
+	lane
+	partyId
 	kills
 	deaths
 	assists
@@ -8008,6 +8434,11 @@ fragment MatchPlayerFields on MatchPlayerType {
 	heroId
 	isRadiant
 	playerSlot
+	position
+	role
+	roleBasic
+	lane
+	partyId
 	kills
 	deaths
 	assists
@@ -8115,6 +8546,11 @@ fragment MatchPlayerFields on MatchPlayerType {
 	heroId
 	isRadiant
 	playerSlot
+	position
+	role
+	roleBasic
+	lane
+	partyId
 	kills
 	deaths
 	assists
@@ -8198,6 +8634,11 @@ fragment MatchPlayerFields on MatchPlayerType {
 	heroId
 	isRadiant
 	playerSlot
+	position
+	role
+	roleBasic
+	lane
+	partyId
 	kills
 	deaths
 	assists
@@ -8262,6 +8703,11 @@ fragment MatchPlayerFields on MatchPlayerType {
 	heroId
 	isRadiant
 	playerSlot
+	position
+	role
+	roleBasic
+	lane
+	partyId
 	kills
 	deaths
 	assists
@@ -8361,6 +8807,11 @@ fragment MatchPlayerFields on MatchPlayerType {
 	heroId
 	isRadiant
 	playerSlot
+	position
+	role
+	roleBasic
+	lane
+	partyId
 	kills
 	deaths
 	assists
@@ -8444,6 +8895,11 @@ fragment MatchPlayerFields on MatchPlayerType {
 	heroId
 	isRadiant
 	playerSlot
+	position
+	role
+	roleBasic
+	lane
+	partyId
 	kills
 	deaths
 	assists
@@ -8508,6 +8964,11 @@ fragment MatchPlayerFields on MatchPlayerType {
 	heroId
 	isRadiant
 	playerSlot
+	position
+	role
+	roleBasic
+	lane
+	partyId
 	kills
 	deaths
 	assists
@@ -8942,6 +9403,11 @@ fragment MatchPlayerFields on MatchPlayerType {
 	heroId
 	isRadiant
 	playerSlot
+	position
+	role
+	roleBasic
+	lane
+	partyId
 	kills
 	deaths
 	assists

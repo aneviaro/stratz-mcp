@@ -212,6 +212,22 @@ enum MatchPlayerPositionType {
   UNKNOWN
 }
 
+enum MatchPlayerRoleType {
+  CORE
+  LIGHT_SUPPORT
+  HARD_SUPPORT
+  UNKNOWN
+}
+
+enum MatchLaneType {
+  ROAMING
+  SAFE_LANE
+  MID_LANE
+  OFF_LANE
+  JUNGLE
+  UNKNOWN
+}
+
 enum FilterHeroWinRequestGroupBy {
   ALL
   HERO_ID
@@ -321,6 +337,11 @@ type MatchPlayerType {
   heroId: Int!
   isRadiant: Boolean!
   playerSlot: Int!
+  position: MatchPlayerPositionType
+  role: MatchPlayerRoleType
+  roleBasic: MatchPlayerRoleType
+  lane: MatchLaneType
+  partyId: Int
   kills: Int!
   deaths: Int!
   assists: Int!
