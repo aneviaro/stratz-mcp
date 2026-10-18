@@ -423,10 +423,10 @@ func TestEveryPublicToolAgainstLiveSTRATZ(t *testing.T) {
 		}
 
 		// Current STRATZ rejects roleIds and laneIds in PlayerMatchesRequestType
-		// with INVALID_OPERATION (HTTP 400), although production mapping is
-		// covered by deterministic fixtures. Use the supported position and
-		// numeric patch filters for the successful live regression; role/lane
-		// boundary validation remains covered below.
+		// with INVALID_OPERATION (HTTP 400). The domain rejects those filters
+		// locally with INVALID_ARGUMENT, so this live regression exercises the
+		// supported position and numeric patch filters; role/lane behavior is
+		// covered below.
 		call(t, "stratz_query_matches", map[string]any{
 			"mode": "player_history", "player_id": fixture.PlayerID, "limit": 1,
 			"position": "POSITION_1", "patch_id": fixture.PatchID,
