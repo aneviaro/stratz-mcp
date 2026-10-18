@@ -127,7 +127,7 @@ The complete wire examples and result schemas are normative in [tool-contracts.m
 
 ## 5. MCP surface
 
-All public tool names use the `stratz_` prefix. Contract version `2.0.0-draft.2` intentionally replaces the v1 curated catalog; this is a breaking boundary, not an alias or deprecation period. Draft-v2 records the issue #31 filter-contract migration (shipped with issue #32), including the closed player-history role, position, lane, and numeric patch filters. The exact registry and mode branches are normative in [tool-contracts.json](./tool-contracts.json).
+All public tool names use the `stratz_` prefix. Contract version `2.0.0-draft.1` intentionally replaces the v1 curated catalog; this is a breaking boundary, not an alias or deprecation period. The exact registry and mode branches are normative in [tool-contracts.json](./tool-contracts.json).
 
 The complete public catalog is exactly:
 
@@ -144,7 +144,7 @@ Every query input is a closed discriminator union. A mode branch rejects selecto
 ### 5.1 Query semantics
 
 - Players are exact-only; general player search is not supported.
-- Matches support exact IDs, bounded player history, bounded league history, and bounded live filtering. Player-history role and lane fields remain closed enums, so invalid values are rejected as `INVALID_ARGUMENT`; valid role or lane values are also rejected locally until STRATZ accepts the corresponding `roleIds` or `laneIds` request fields. Position and patch filters remain supported. No role or lane request is sent upstream, ignored, or fabricated; valid role or lane requests are rejected during domain normalization, before any upstream request. Detail availability is explicit and never silently downgraded.
+- Matches support exact IDs, bounded player history, bounded league history, and bounded live filtering. Detail availability is explicit and never silently downgraded.
 - Heroes support exact ID/name/slug lookup and bounded search, with only date, rank-bracket, and role statistics filters. Statistics are opt-in and no unsupported hero dimensions are promised.
 - Leagues support exact IDs and authenticated search with status, tier, and date filters.
 - Constants support `types` and `typed_selectors`; there is no ambiguous `all` shortcut or unsupported rank class.
