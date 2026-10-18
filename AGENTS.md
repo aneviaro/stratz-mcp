@@ -29,6 +29,7 @@ Status: Current
 - Do not silently ignore public filters or return requested filters in provenance unless they were applied upstream or locally.
 - If STRATZ cannot represent a public filter or detail field honestly, return an explicit `INVALID_ARGUMENT`, warning, or nullable/omitted value according to the contract. Never fabricate zeros or empty collections as if data was observed.
 - Keep compatibility decoding bounded and intentional when STRATZ changes scalar representations, such as numeric IDs becoming enums or kill totals becoming event arrays.
+- For nullable upstream scalars exposed in normalized output, use a pointer without `omitempty`, make the canonical contract property required-but-nullable, and test positive, negative, and explicit-null wire values.
 - Update the bootstrap schema, canonical operations, tolerant domain decoders, mappings, and semantic tests together.
 
 ## Known STRATZ mappings
