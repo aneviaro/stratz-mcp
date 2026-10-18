@@ -89,7 +89,7 @@ type MatchPlayer struct {
 	Assists   int64    `json:"assists"`
 	Networth  *int64   `json:"networth"`
 	Level     *int64   `json:"level"`
-	Imp       *float64 `json:"-"`
+	Imp       *float64 `json:"imp"`
 	Won       *bool    `json:"won"`
 }
 

@@ -66,10 +66,10 @@ Files:
 
 Steps:
 
-- [ ] Update only the canonical `matchPlayer` definition; use a nullable numeric schema and require the `imp` property so missing upstream values are represented as explicit `null`.
-- [ ] Run `make generate` from the repository root.
-- [ ] Review generated diffs to confirm the change is limited to the expected match-output contract artifacts and that no generated file was hand-edited.
-- [ ] Confirm the generated Go type exposes `Imp *float64` with JSON key `imp` and the generated output schema accepts both numbers and `null`.
+- [x] Update only the canonical `matchPlayer` definition; use a nullable numeric schema and require the `imp` property so missing upstream values are represented as explicit `null`.
+- [x] Run `make generate` from the repository root.
+- [x] Review generated diffs to confirm the change is limited to the expected match-output contract artifacts and that no generated file was hand-edited.
+- [x] Confirm the generated Go type exposes `Imp *float64` with JSON key `imp` and the generated output schema accepts both numbers and `null`.
 
 Verification:
 
@@ -100,11 +100,11 @@ Files:
 
 Steps:
 
-- [ ] Change the normalized `MatchPlayer.Imp` JSON tag to `json:"imp"` while retaining type `*float64` and no `omitempty`.
-- [ ] Extend exact-match fixture coverage with a negative IMP and assert the marshaled `Match.players[].imp` is the same negative number.
-- [ ] Extend player-history `detail_level: "players"` coverage with a positive IMP and an upstream `imp: null`; assert the serialized `player.imp` values are the number and JSON `null`, never zero and never omitted.
-- [ ] Exercise the public contract validation path for representative positive, negative, and null player rows so schema acceptance and wire serialization are tested together.
-- [ ] Keep existing internal pointer assertions and query-selection assertions to guard upstream decoding and operation coverage.
+- [x] Change the normalized `MatchPlayer.Imp` JSON tag to `json:"imp"` while retaining type `*float64` and no `omitempty`.
+- [x] Extend exact-match fixture coverage with a negative IMP and assert the marshaled `Match.players[].imp` is the same negative number.
+- [x] Extend player-history `detail_level: "players"` coverage with a positive IMP and an upstream `imp: null`; assert the serialized `player.imp` values are the number and JSON `null`, never zero and never omitted.
+- [x] Exercise the public contract validation path for representative positive, negative, and null player rows so schema acceptance and wire serialization are tested together.
+- [x] Keep existing internal pointer assertions and query-selection assertions to guard upstream decoding and operation coverage.
 
 Verification:
 

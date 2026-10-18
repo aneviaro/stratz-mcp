@@ -475,10 +475,17 @@ func TestListPlayerMatchesBoundedContinuation(t *testing.T) {
 func TestQueryMatchesRoutesExactAndPlayerHistoryBranches(t *testing.T) {
 	executor := &fixtureExecutor{execute: func(_ *stratz.RequestBudget, request stratz.Request) (*stratz.Response, error) {
 		if request.OperationName == "StratzGetMatchBatchSummary" {
-			return response(`{"match0":{"id":9,"players":[]}}`), nil
+			return response(`{"match0":{"id":9,"players":[
+				{"steamAccountId":1,"heroId":7,"playerSlot":0,"isRadiant":true,"kills":2,"deaths":1,"assists":3,"imp":4.25},
+				{"steamAccountId":2,"heroId":8,"playerSlot":128,"isRadiant":false,"kills":4,"deaths":2,"assists":1,"imp":-3.5},
+				{"steamAccountId":3,"heroId":9,"playerSlot":1,"isRadiant":true,"kills":1,"deaths":3,"assists":2,"imp":null}
+			]}}`), nil
 		}
 		if request.OperationName == "StratzListPlayerMatchesWithPlayers" {
-			return response(`{"player":{"steamAccountId":1,"matches":[{"id":8,"durationSeconds":1200,"players":[{"steamAccountId":1,"heroId":7,"playerSlot":128,"isRadiant":true,"kills":2,"deaths":1,"assists":3}]}]}}`), nil
+			return response(`{"player":{"steamAccountId":1,"matches":[
+				{"id":8,"durationSeconds":1200,"players":[{"steamAccountId":1,"heroId":7,"playerSlot":128,"isRadiant":true,"kills":2,"deaths":1,"assists":3,"imp":5.75}]},
+				{"id":10,"durationSeconds":1500,"players":[{"steamAccountId":1,"heroId":7,"playerSlot":128,"isRadiant":true,"kills":2,"deaths":1,"assists":3,"imp":null}]}
+			]}}`), nil
 		}
 		if request.OperationName == "StratzListPlayerMatches" {
 			return response(`{"player":{"steamAccountId":1,"matches":[{"id":8,"durationSeconds":1200}]}}`), nil
@@ -491,13 +498,60 @@ func TestQueryMatchesRoutesExactAndPlayerHistoryBranches(t *testing.T) {
 	if err != nil || exact.Data.Mode != "exact" {
 		t.Fatalf("exact result = %#v, err = %v", exact, err)
 	}
+	exactItems, ok := exact.Data.Items.([]Match)
+	if !ok || len(exactItems) != 1 {
+		t.Fatalf("exact items = %#v", exact.Data.Items)
+	}
+	exactJSON, err := json.Marshal(exactItems)
+	if err != nil {
+		t.Fatalf("json.Marshal(exact matches): %v", err)
+	}
+	var publicExact []map[string]any
+	if err := json.Unmarshal(exactJSON, &publicExact); err != nil {
+		t.Fatalf("json.Unmarshal(exact matches): %v", err)
+	}
+	publicPlayers, ok := publicExact[0]["players"].([]any)
+	if !ok || len(publicPlayers) != 3 {
+		t.Fatalf("public exact players = %#v", publicExact[0]["players"])
+	}
+	for index, want := range []any{4.25, -3.5, nil} {
+		publicPlayer, ok := publicPlayers[index].(map[string]any)
+		if !ok {
+			t.Fatalf("public exact player[%d] = %#v", index, publicPlayers[index])
+		}
+		got, present := publicPlayer["imp"]
+		if !present || got != want {
+			t.Fatalf("public exact player[%d].imp = %#v (present=%v), want %#v", index, got, present, want)
+		}
+	}
+
 	player, err := service.QueryMatches(context.Background(), map[string]any{"mode": "player_history", "player_id": "1", "detail_level": "players", "minimum_duration_seconds": int64(1000)})
 	if err != nil || player.Data.Mode != "player_history" {
 		t.Fatalf("player result = %#v, err = %v", player, err)
 	}
 	items, ok := player.Data.Items.([]PlayerMatchSummary)
-	if !ok || len(items) != 1 || items[0].Player == nil || items[0].Player.Kills != 2 {
+	if !ok || len(items) != 2 || items[0].Player == nil || items[0].Player.Kills != 2 ||
+		items[0].Player.Imp == nil || *items[0].Player.Imp != 5.75 ||
+		items[1].Player == nil || items[1].Player.Imp != nil {
 		t.Fatalf("player items = %#v", player.Data.Items)
+	}
+	historyJSON, err := json.Marshal(items)
+	if err != nil {
+		t.Fatalf("json.Marshal(player history): %v", err)
+	}
+	var publicHistory []map[string]any
+	if err := json.Unmarshal(historyJSON, &publicHistory); err != nil {
+		t.Fatalf("json.Unmarshal(player history): %v", err)
+	}
+	for index, want := range []any{5.75, nil} {
+		publicPlayer, ok := publicHistory[index]["player"].(map[string]any)
+		if !ok {
+			t.Fatalf("public history player[%d] = %#v", index, publicHistory[index]["player"])
+		}
+		got, present := publicPlayer["imp"]
+		if !present || got != want {
+			t.Fatalf("public history player[%d].imp = %#v (present=%v), want %#v", index, got, present, want)
+		}
 	}
 	defaultResult, err := service.QueryMatches(context.Background(), map[string]any{
 		"mode": "player_history", "player_id": "1",
