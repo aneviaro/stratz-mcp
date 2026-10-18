@@ -19,6 +19,11 @@ fragment MatchPlayerFields on MatchPlayerType {
   heroId
   isRadiant
   playerSlot
+  position
+  role
+  roleBasic
+  lane
+  partyId
   kills
   deaths
   assists

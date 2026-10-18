@@ -418,6 +418,21 @@
                               "minimum": 0,
                               "type": "integer"
                             },
+                            "lane": {
+                              "enum": [
+                                "SAFE_LANE",
+                                "MID_LANE",
+                                "OFF_LANE",
+                                "JUNGLE",
+                                "ROAMING",
+                                "UNKNOWN",
+                                null
+                              ],
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
                             "level": {
                               "minimum": 0,
                               "type": [
@@ -432,10 +447,59 @@
                                 "null"
                               ]
                             },
-                            "position": {
+                            "party_id": {
+                              "minimum": 0,
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "player_slot": {
+                              "description": "Normalized directly from the STRATZ upstream playerSlot value; this is a slot index, not a semantic Dota position.",
                               "maximum": 9,
                               "minimum": 0,
                               "type": "integer"
+                            },
+                            "position": {
+                              "enum": [
+                                "POSITION_1",
+                                "POSITION_2",
+                                "POSITION_3",
+                                "POSITION_4",
+                                "POSITION_5",
+                                "UNKNOWN",
+                                null
+                              ],
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "role": {
+                              "enum": [
+                                "CORE",
+                                "LIGHT_SUPPORT",
+                                "HARD_SUPPORT",
+                                "UNKNOWN",
+                                null
+                              ],
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "role_basic": {
+                              "enum": [
+                                "CORE",
+                                "LIGHT_SUPPORT",
+                                "HARD_SUPPORT",
+                                "UNKNOWN",
+                                null
+                              ],
+                              "type": [
+                                "string",
+                                "null"
+                              ]
                             },
                             "team": {
                               "enum": [
@@ -455,7 +519,12 @@
                             "account_id",
                             "hero_id",
                             "team",
+                            "player_slot",
                             "position",
+                            "role",
+                            "role_basic",
+                            "lane",
+                            "party_id",
                             "kills",
                             "deaths",
                             "assists",
@@ -942,6 +1011,21 @@
                                 "minimum": 0,
                                 "type": "integer"
                               },
+                              "lane": {
+                                "enum": [
+                                  "SAFE_LANE",
+                                  "MID_LANE",
+                                  "OFF_LANE",
+                                  "JUNGLE",
+                                  "ROAMING",
+                                  "UNKNOWN",
+                                  null
+                                ],
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "level": {
                                 "minimum": 0,
                                 "type": [
@@ -956,10 +1040,59 @@
                                   "null"
                                 ]
                               },
-                              "position": {
+                              "party_id": {
+                                "minimum": 0,
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "player_slot": {
+                                "description": "Normalized directly from the STRATZ upstream playerSlot value; this is a slot index, not a semantic Dota position.",
                                 "maximum": 9,
                                 "minimum": 0,
                                 "type": "integer"
+                              },
+                              "position": {
+                                "enum": [
+                                  "POSITION_1",
+                                  "POSITION_2",
+                                  "POSITION_3",
+                                  "POSITION_4",
+                                  "POSITION_5",
+                                  "UNKNOWN",
+                                  null
+                                ],
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "role": {
+                                "enum": [
+                                  "CORE",
+                                  "LIGHT_SUPPORT",
+                                  "HARD_SUPPORT",
+                                  "UNKNOWN",
+                                  null
+                                ],
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "role_basic": {
+                                "enum": [
+                                  "CORE",
+                                  "LIGHT_SUPPORT",
+                                  "HARD_SUPPORT",
+                                  "UNKNOWN",
+                                  null
+                                ],
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
                               },
                               "team": {
                                 "enum": [
@@ -979,7 +1112,12 @@
                               "account_id",
                               "hero_id",
                               "team",
+                              "player_slot",
                               "position",
+                              "role",
+                              "role_basic",
+                              "lane",
+                              "party_id",
                               "kills",
                               "deaths",
                               "assists",

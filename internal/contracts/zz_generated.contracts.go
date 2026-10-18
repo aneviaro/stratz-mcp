@@ -234,17 +234,22 @@ const (
 type MatchID string
 
 type MatchPlayer struct {
-	AccountID *string  `json:"account_id"`
-	Assists   int64    `json:"assists"`
-	Deaths    int64    `json:"deaths"`
-	HeroID    *int64   `json:"hero_id"`
-	Imp       *float64 `json:"imp"`
-	Kills     int64    `json:"kills"`
-	Level     *int64   `json:"level"`
-	Networth  *int64   `json:"networth"`
-	Position  int64    `json:"position"`
-	Team      string   `json:"team"`
-	Won       *bool    `json:"won"`
+	AccountID  *string  `json:"account_id"`
+	Assists    int64    `json:"assists"`
+	Deaths     int64    `json:"deaths"`
+	HeroID     *int64   `json:"hero_id"`
+	Imp        *float64 `json:"imp"`
+	Kills      int64    `json:"kills"`
+	Lane       *string  `json:"lane"`
+	Level      *int64   `json:"level"`
+	Networth   *int64   `json:"networth"`
+	PartyID    *int64   `json:"party_id"`
+	PlayerSlot int64    `json:"player_slot"`
+	Position   *string  `json:"position"`
+	Role       *string  `json:"role"`
+	RoleBasic  *string  `json:"role_basic"`
+	Team       string   `json:"team"`
+	Won        *bool    `json:"won"`
 }
 
 type MatchSummary struct {
