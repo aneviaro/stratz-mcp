@@ -408,6 +408,12 @@
                                 "null"
                               ]
                             },
+                            "imp": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
                             "kills": {
                               "minimum": 0,
                               "type": "integer"
@@ -455,7 +461,8 @@
                             "assists",
                             "networth",
                             "level",
-                            "won"
+                            "won",
+                            "imp"
                           ],
                           "type": "object"
                         },
@@ -925,6 +932,12 @@
                                   "null"
                                 ]
                               },
+                              "imp": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
                               "kills": {
                                 "minimum": 0,
                                 "type": "integer"
@@ -972,7 +985,8 @@
                               "assists",
                               "networth",
                               "level",
-                              "won"
+                              "won",
+                              "imp"
                             ],
                             "type": "object"
                           },

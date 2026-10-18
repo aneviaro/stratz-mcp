@@ -193,6 +193,55 @@ func TestMatchHistoryOutputUsesDistinctClosedItemShapes(t *testing.T) {
 	}
 }
 
+func TestMatchPlayerIMPValuesValidatePublicContract(t *testing.T) {
+	for _, imp := range []any{4.25, -3.5, nil} {
+		t.Run(impLabel(imp), func(t *testing.T) {
+			historyOutput := matchHistoryOutput(t, "player_history", true)
+			historyData := historyOutput["data"].(map[string]any)
+			historyItem := historyData["items"].([]any)[0].(map[string]any)
+			historyPlayer := historyItem["player"].(map[string]any)
+			historyPlayer["imp"] = imp
+			if err := ValidateOutput("stratz_query_matches", historyOutput); err != nil {
+				t.Fatalf("player-history output with imp=%#v rejected: %v", imp, err)
+			}
+
+			exactValue, err := Example("stratz_query_matches", OutputSchema)
+			if err != nil {
+				t.Fatal(err)
+			}
+			exactOutput := exactValue.(map[string]any)
+			exactData := exactOutput["data"].(map[string]any)
+			exactItem := exactData["items"].([]any)[0].(map[string]any)
+			exactItem["players"] = []any{map[string]any{
+				"account_id": "1",
+				"hero_id":    1,
+				"team":       "radiant",
+				"position":   0,
+				"kills":      1,
+				"deaths":     0,
+				"assists":    2,
+				"networth":   nil,
+				"level":      nil,
+				"won":        true,
+				"imp":        imp,
+			}}
+			if err := ValidateOutput("stratz_query_matches", exactOutput); err != nil {
+				t.Fatalf("exact output with imp=%#v rejected: %v", imp, err)
+			}
+		})
+	}
+}
+
+func impLabel(imp any) string {
+	if imp == nil {
+		return "null"
+	}
+	if imp.(float64) < 0 {
+		return "negative"
+	}
+	return "positive"
+}
+
 func matchHistoryOutput(t *testing.T, mode string, includePlayer bool) map[string]any {
 	t.Helper()
 	value, err := Example("stratz_query_matches", OutputSchema)
@@ -228,6 +277,7 @@ func matchHistoryOutput(t *testing.T, mode string, includePlayer bool) map[strin
 			"networth":   nil,
 			"level":      nil,
 			"won":        true,
+			"imp":        nil,
 		}
 	}
 	data["mode"] = mode
